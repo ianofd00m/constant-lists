@@ -4540,9 +4540,9 @@ export default function DeckViewEdit() {
     // 4. Fallback: Known commander color identities
     console.log(`[COLOR ID DEBUG] Fallback check - colorIdentity so far:`, colorIdentity);
     console.log(`[COLOR ID DEBUG] Commander names length:`, commanderNames.length);
-    console.log(`[COLOR ID DEBUG] Should use fallback:`, !colorIdentity && commanderNames.length > 0);
+    console.log(`[COLOR ID DEBUG] Should use fallback:`, (!colorIdentity || (Array.isArray(colorIdentity) && colorIdentity.length === 0)) && commanderNames.length > 0);
     
-    if (!colorIdentity && commanderNames.length > 0) {
+    if ((!colorIdentity || (Array.isArray(colorIdentity) && colorIdentity.length === 0)) && commanderNames.length > 0) {
       const knownCommanders = {
         'jason bright, glowing prophet': ['U'],
         'jason bright': ['U'], // Add short version
@@ -4589,7 +4589,8 @@ export default function DeckViewEdit() {
         console.log(`[COLOR ID DEBUG] No match found for: "${normalizedName}"`);
       }
     } else {
-      console.log(`[COLOR ID DEBUG] Skipping fallback - colorIdentity exists or no commander names`);
+      console.log(`[COLOR ID DEBUG] Skipping fallback - colorIdentity already found or no commander names`);
+      console.log(`[COLOR ID DEBUG] Existing colorIdentity:`, colorIdentity);
     }
 
     console.log('[COLOR ID DEBUG] Commander Names:', JSON.stringify(commanderNames));
