@@ -11,7 +11,11 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api|svgs|.*\\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)).*)",
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
