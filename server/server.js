@@ -748,6 +748,32 @@ app.post('/api/decks', authenticateToken, async (req, res) => {
     console.log('✅ Commander already exists in cards array, skipping commander addition');
   }
   
+    // Format commander data to match schema
+    let commanderArray = [];
+    if (commander) {
+      if (typeof commander === 'string') {
+        // Simple string commander name
+        commanderArray = [{
+          name: commander,
+          card: {
+            name: commander
+          }
+        }];
+      } else if (typeof commander === 'object' && commander.name) {
+        // Full commander object from Scryfall
+        commanderArray = [{
+          name: commander.name,
+          card: {
+            id: commander.id || null,
+            name: commander.name,
+            color_identity: commander.color_identity || []
+          }
+        }];
+      }
+    }
+  
+    console.log(`📊 Final commander array:`, commanderArray);
+  
     // Create new deck in MongoDB
     const newDeck = new Deck({
       name: name || 'Untitled Deck',
@@ -755,7 +781,7 @@ app.post('/api/decks', authenticateToken, async (req, res) => {
       colors: colors || [],
       cardCount: initialCards.reduce((count, card) => count + (card.quantity || 1), 0),
       cards: initialCards,
-      commander: commander || [],
+      commander: commanderArray,
       owner: new mongoose.Types.ObjectId(userId)
     });
     

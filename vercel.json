@@ -11,6 +11,10 @@
   ],
   "routes": [
     {
+      "src": "/(.+\\.js)$",
+      "headers": { "Content-Type": "application/javascript; charset=utf-8" }
+    },
+    {
       "handle": "filesystem"
     },
     {
