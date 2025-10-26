@@ -22,6 +22,9 @@ class ProductionOtagSystem {
 
     async initialize() {
         try {
+            // Clear any old cache keys from previous versions
+            this.clearOldCaches();
+            
             // Auto-load OTAG data from your server
             await this.loadOtagDataFromServer();
             
@@ -41,6 +44,49 @@ class ProductionOtagSystem {
             
         } catch (error) {
             console.error('❌ Failed to initialize OTAG system:', error);
+        }
+    }
+
+    clearOldCaches() {
+        // List of all old cache keys that should be cleared
+        const oldCacheKeys = [
+            'production-otag-data-v1',
+            'production-otag-timestamp-v1',
+            'production-otag-data-v2',
+            'production-otag-timestamp-v2',
+            'production-otag-data-v3-full',
+            'production-otag-timestamp-v3-full'
+        ];
+        
+        let clearedCount = 0;
+        for (const key of oldCacheKeys) {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+                clearedCount++;
+            }
+        }
+        
+        if (clearedCount > 0) {
+            console.log(`🧹 Cleared ${clearedCount} old cache entries`);
+        }
+        
+        // Also clear current cache if it contains insufficient data
+        const currentCacheKey = 'production-otag-data-v4-api';
+        const currentData = localStorage.getItem(currentCacheKey);
+        if (currentData) {
+            try {
+                const parsedData = JSON.parse(currentData);
+                if (parsedData && parsedData.length < 1000) {
+                    localStorage.removeItem(currentCacheKey);
+                    localStorage.removeItem('production-otag-timestamp-v4-api');
+                    console.log(`🚫 Cleared current cache (only ${parsedData.length} entries - insufficient data)`);
+                }
+            } catch (e) {
+                // If we can't parse the cache, clear it
+                localStorage.removeItem(currentCacheKey);
+                localStorage.removeItem('production-otag-timestamp-v4-api');
+                console.log('🚫 Cleared corrupted cache data');
+            }
         }
     }
 
@@ -72,9 +118,9 @@ class ProductionOtagSystem {
                     const age = Date.now() - parseInt(cachedTime);
                     console.log(`🕐 Cache age: ${Math.round(age / 1000 / 60)} minutes`);
                     
-                    // Invalidate cache if it's old test data (less than 100 cards)
-                    if (parsedData.length < 100) {
-                        console.log(`🚫 Cache contains only ${parsedData.length} entries (test data), fetching full dataset...`);
+                    // Invalidate cache if it's test data (less than 1000 cards - full dataset has 45k+)
+                    if (parsedData.length < 1000) {
+                        console.log(`🚫 Cache contains only ${parsedData.length} entries (insufficient data), fetching full dataset...`);
                         shouldUseCache = false;
                         // Clear the old cache
                         localStorage.removeItem(cacheKey);
