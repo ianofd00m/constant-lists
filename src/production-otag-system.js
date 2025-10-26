@@ -99,26 +99,49 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize full dataset over test data
+            // Try multiple data sources - prioritize external sources to bypass Vercel file size limits
             const dataSources = [
-                './FULL OTAGS.csv',
+                // External CDN sources for full dataset (bypass Vercel 6MB limit)
+                'https://raw.githubusercontent.com/ianofd00m/constant-lists/main/public/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                'https://github.com/ianofd00m/constant-lists/raw/main/public/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                // Local sources as fallback
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './FULL OTAGS.csv',
                 './data/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './assets/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './otag-data.csv',
-                './test-otag-data.csv'  // Fallback to test data if full dataset not available
+                './test-otag-data.csv'  // Last resort fallback
             ];
             
             for (const source of dataSources) {
                 try {
                     console.log(`🔍 Trying to load from: ${source}`);
+                    
+                    // Show progress for external sources (likely large files)
+                    const isExternal = source.startsWith('http');
+                    if (isExternal) {
+                        console.log(`🌐 Loading full dataset from external source (this may take 10-30 seconds)...`);
+                    }
+                    
                     const response = await fetch(source);
                     console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
                     
                     if (response.ok) {
+                        const contentLength = response.headers.get('content-length');
+                        if (contentLength && isExternal) {
+                            const sizeMB = (parseInt(contentLength) / (1024 * 1024)).toFixed(1);
+                            console.log(`📊 Downloading ${sizeMB}MB of Oracle Tag data...`);
+                        }
+                        
                         const csvText = await response.text();
                         console.log(`✅ Loaded OTAG data from: ${source} (${csvText.length} characters)`);
                         
+                        // Validate we got actual CSV data, not an error page
+                        if (csvText.length < 1000 && !csvText.includes('card_name')) {
+                            throw new Error(`Invalid CSV data received (too short: ${csvText.length} chars)`);
+                        }
+                        
+                        console.log(`🔄 Processing Oracle Tag database...`);
                         const data = this.parseCSV(csvText);
                         this.processOtagData(data);
                         
