@@ -101,9 +101,10 @@ class ProductionOtagSystem {
             
             // Try multiple data sources
             const dataSources = [
-                './scryfall-card-otags-2025-08-06.csv',
-                './data/scryfall-card-otags-2025-08-06.csv',
-                './assets/scryfall-card-otags-2025-08-06.csv',
+                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './FULL OTAGS.csv',
+                './data/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './assets/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './otag-data.csv'
             ];
             
@@ -160,7 +161,10 @@ class ProductionOtagSystem {
             try {
                 // Parse CSV with quoted fields
                 const columns = this.parseCSVLine(line);
+                
+                // Handle both 8-column and 2-column formats
                 if (columns.length >= 8) {
+                    // Full format: cardId, cardName, colors, cmc, typeLine, set, otagCount, otags
                     data.push({
                         cardId: columns[0],
                         cardName: columns[1],
@@ -170,6 +174,22 @@ class ProductionOtagSystem {
                         set: columns[5],
                         otagCount: parseInt(columns[6]) || 0,
                         otags: columns[7] ? columns[7].split('|').filter(Boolean) : []
+                    });
+                } else if (columns.length >= 2) {
+                    // Simple format: card_name, oracle_tags
+                    const cardName = columns[0].replace(/^"|"$/g, ''); // Remove quotes
+                    const otagString = columns[1].replace(/^"|"$/g, ''); // Remove quotes
+                    const otags = otagString ? otagString.split('|').filter(Boolean) : [];
+                    
+                    data.push({
+                        cardId: cardName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                        cardName: cardName,
+                        colors: '',
+                        cmc: 0,
+                        typeLine: '',
+                        set: '',
+                        otagCount: otags.length,
+                        otags: otags
                     });
                 }
             } catch (err) {
