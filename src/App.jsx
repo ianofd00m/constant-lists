@@ -20,6 +20,7 @@ import DeckBuilder from './components/DeckBuilder';
 import PrintingCache from './utils/PrintingCache';
 import RequireAuth from './components/RequireAuth';
 import Profile from './components/Profile';
+import AdminDashboard from './components/AdminDashboard';
 // Lazy load DeckViewEdit to handle large component size
 const DeckViewEdit = React.lazy(() => import('./components/DeckViewEdit'));
 import Navbar from './components/Navbar';
@@ -130,6 +131,11 @@ function App() {
         <Route path="/profile" element={
           <RequireAuth>
             <div className="container"><h2>Profile Page</h2><Profile /></div>
+          </RequireAuth>
+        } />
+        <Route path="/admin" element={
+          <RequireAuth>
+            <AdminDashboard />
           </RequireAuth>
         } />
         <Route path="/decks/:id" element={

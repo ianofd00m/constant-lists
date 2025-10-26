@@ -1416,6 +1416,232 @@ app.get('/api/auth/debug-users', async (req, res) => {
   }
 });
 
+// ===== ADMIN ENDPOINTS FOR PRODUCTION USER MANAGEMENT =====
+
+// Admin middleware - check if user is admin
+function requireAdmin(req, res, next) {
+  // For now, check if user is in admin list - you can expand this
+  const adminUserIds = [
+    '68fda5cb3d80f1a359840add', // ianofdoom
+    '68fda5cb3d80f1a359840ade'  // admin
+  ];
+  
+  const userId = req.user?.user?.id;
+  if (!adminUserIds.includes(userId)) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  next();
+}
+
+// Admin: Get comprehensive user analytics
+app.get('/api/admin/analytics', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const recentUsers = await User.countDocuments({
+      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+    });
+    
+    const totalDecks = await Deck.countDocuments();
+    const publicDecks = 0; // We don't have isPublic field yet, but placeholder
+    
+    // User registration trends (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const userTrends = await User.aggregate([
+      {
+        $match: { createdAt: { $gte: thirtyDaysAgo } }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    res.json({
+      summary: {
+        totalUsers,
+        recentUsers,
+        totalDecks,
+        publicDecks
+      },
+      trends: userTrends
+    });
+  } catch (error) {
+    console.error('Admin analytics error:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+// Admin: Get all users with details
+app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+    
+    const users = await User.find({})
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await User.countDocuments();
+    
+    // Get deck counts for each user
+    const usersWithStats = await Promise.all(users.map(async (user) => {
+      const deckCount = await Deck.countDocuments({ owner: user._id });
+      return {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        deckCount,
+        lastSeen: user.lastSeen || user.createdAt
+      };
+    }));
+    
+    res.json({
+      users: usersWithStats,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Admin: Get specific user details
+app.get('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const decks = await Deck.find({ owner: user._id }).select('name format createdAt updatedAt');
+    
+    res.json({
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        lastSeen: user.lastSeen
+      },
+      decks: decks.map(deck => ({
+        id: deck._id,
+        name: deck.name,
+        format: deck.format,
+        createdAt: deck.createdAt,
+        updatedAt: deck.updatedAt
+      }))
+    });
+  } catch (error) {
+    console.error('Admin user details error:', error);
+    res.status(500).json({ error: 'Failed to fetch user details' });
+  }
+});
+
+// Admin: Delete user and their data
+app.delete('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Prevent deleting admin users
+    const adminUserIds = ['68fda5cb3d80f1a359840add', '68fda5cb3d80f1a359840ade'];
+    if (adminUserIds.includes(userId)) {
+      return res.status(403).json({ error: 'Cannot delete admin users' });
+    }
+    
+    // Delete user's decks first
+    const deletedDecks = await Deck.deleteMany({ owner: userId });
+    
+    // Delete user
+    const deletedUser = await User.findByIdAndDelete(userId);
+    
+    if (!deletedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log(`🗑️ Admin deleted user ${deletedUser.username} and ${deletedDecks.deletedCount} decks`);
+    
+    res.json({
+      message: 'User and associated data deleted successfully',
+      deletedUser: {
+        id: deletedUser._id,
+        username: deletedUser.username,
+        email: deletedUser.email
+      },
+      deletedDecks: deletedDecks.deletedCount
+    });
+  } catch (error) {
+    console.error('Admin delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Admin: Bulk operations
+app.post('/api/admin/bulk-operations', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { operation, userIds } = req.body;
+    
+    if (!operation || !userIds || !Array.isArray(userIds)) {
+      return res.status(400).json({ error: 'Invalid operation or userIds' });
+    }
+    
+    // Prevent bulk operations on admin users
+    const adminUserIds = ['68fda5cb3d80f1a359840add', '68fda5cb3d80f1a359840ade'];
+    const safeUserIds = userIds.filter(id => !adminUserIds.includes(id));
+    
+    let result = {};
+    
+    switch (operation) {
+      case 'delete':
+        // Delete decks first
+        const deletedDecks = await Deck.deleteMany({ owner: { $in: safeUserIds } });
+        // Delete users
+        const deletedUsers = await User.deleteMany({ _id: { $in: safeUserIds } });
+        
+        result = {
+          operation: 'bulk-delete',
+          deletedUsers: deletedUsers.deletedCount,
+          deletedDecks: deletedDecks.deletedCount,
+          skippedAdmins: userIds.length - safeUserIds.length
+        };
+        break;
+        
+      case 'export':
+        const exportUsers = await User.find({ _id: { $in: safeUserIds } }).select('-password');
+        result = {
+          operation: 'export',
+          users: exportUsers,
+          count: exportUsers.length
+        };
+        break;
+        
+      default:
+        return res.status(400).json({ error: 'Unknown operation' });
+    }
+    
+    console.log(`🔧 Admin bulk operation: ${operation} on ${safeUserIds.length} users`);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Admin bulk operation error:', error);
+    res.status(500).json({ error: 'Failed to perform bulk operation' });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
