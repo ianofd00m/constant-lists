@@ -7,7 +7,7 @@
   
   # Environment variables for build
   [build.environment]
-    NODE_VERSION = "18"
+    NODE_VERSION = "20"
     VITE_API_URL = "https://constant-lists-api.onrender.com"
 
 [context.production.environment]
