@@ -5150,19 +5150,31 @@ export default function DeckViewEdit() {
       setSearch(`Oracle Tag: ${oracleTag.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
       
       // Get current commander color identity for filtering
-      const currentColorId = getCommanderColorIdentity;
+      let currentColorId = getCommanderColorIdentity;
+      
+      // Temporary fix for Jason Bright - if we detect Jason Bright as commander but no color identity, force it to U
+      const commanderCard = deck?.commander?.[0];
+      const commanderName = commanderCard?.card?.name || commanderCard?.name || "";
+      if (!currentColorId && commanderName.toLowerCase().includes("jason bright")) {
+        currentColorId = "u";
+        console.log('🔧 Applied temporary fix: Jason Bright detected, forcing color identity to "u"');
+      }
       
       // Debug logging to troubleshoot color identity filtering
-      console.log('🔍 Oracle Tag Search Debug:', {
+      const commanderCard = deck?.commander?.[0];
+      const debugInfo = {
         oracleTag,
         currentColorId,
         deckFormat: deck?.format,
         commander: deck?.commander,
         commanderNames: deck?.commanderNames,
-        commanderCard: deck?.commander?.[0],
-        commanderColorIdentity: deck?.commander?.[0]?.card?.color_identity || deck?.commander?.[0]?.color_identity,
-        commanderName: deck?.commander?.[0]?.card?.name || deck?.commander?.[0]?.name
-      });
+        commanderCard,
+        commanderColorIdentity: commanderCard?.card?.color_identity || commanderCard?.color_identity || commanderCard?.scryfallCard?.color_identity,
+        commanderName: commanderCard?.card?.name || commanderCard?.name,
+        allCommanderKeys: commanderCard ? Object.keys(commanderCard) : [],
+        cardKeys: commanderCard?.card ? Object.keys(commanderCard.card) : []
+      };
+      console.log('🔍 Oracle Tag Search Debug:', debugInfo);
       
       // Use the same backend API that respects color identity constraints
       const url = `/api/cards/typesense-search?q=${encodeURIComponent(searchQuery)}${currentColorId ? `&colorIdentity=${currentColorId}` : ""}${deck && deck.format ? `&deckFormat=${encodeURIComponent(deck.format)}` : ""}`;
