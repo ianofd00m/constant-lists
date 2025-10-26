@@ -14,13 +14,37 @@ const allowedOrigins = [
   'https://admirable-fairy-0fd24b.netlify.app', // Your Netlify deployment (old)
   'https://68fc6f15d22b69b96c1602f5--admirable-fairy-0fd24b.netlify.app', // Current Netlify deployment
   'https://constant-lists.netlify.app', // If you get a custom domain
+  /^https:\/\/constant-lists.*\.vercel\.app$/, // Vercel deployments (regex pattern)
   process.env.CORS_ORIGIN // Production frontend URL from environment
 ].filter(Boolean); // Remove undefined values
 
 console.log('🔒 CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    
+    // Check if origin matches any allowed pattern
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn('🚫 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
