@@ -1249,10 +1249,11 @@ export default function ResearchPage() {
         userDecks={userDecks}
         onOracleTagSearch={(oracleTag) => {
           console.log(`[ResearchPage] Oracle tag search triggered: ${oracleTag}`);
-          // Close the modal and perform the search
+          // Close the modal and perform the search with otag: prefix
           handleCloseModal();
-          setSearchQuery(oracleTag);
-          handleSearch(oracleTag);
+          const searchQuery = `otag:${oracleTag}`;
+          setSearchQuery(searchQuery);
+          handleSearch(searchQuery);
         }}
       />
     </div>
