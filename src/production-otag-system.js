@@ -99,18 +99,15 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize external sources to bypass Vercel file size limits
+            // Try multiple data sources - prioritize API endpoint to bypass all file size limits
             const dataSources = [
-                // External CDN sources for full dataset (bypass Vercel 6MB limit)
-                'https://raw.githubusercontent.com/ianofd00m/constant-lists/main/public/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                'https://github.com/ianofd00m/constant-lists/raw/main/public/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                // Local sources as fallback
+                // API endpoint served from filesystem (bypasses all static file limitations)
+                `${window.location.origin}/api/otag-data`,
+                'https://constant-lists-api.onrender.com/api/otag-data',  // Production API
+                // Fallback to static files (limited by Vercel)
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './FULL OTAGS.csv',
-                './data/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                './assets/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                './otag-data.csv',
-                './test-otag-data.csv'  // Last resort fallback
+                './test-otag-data.csv'  // Last resort fallback (works but limited)
             ];
             
             for (const source of dataSources) {

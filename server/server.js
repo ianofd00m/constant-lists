@@ -430,6 +430,50 @@ app.get('/api/cards/image-proxy', (req, res) => {
   res.redirect(imageUrl);
 });
 
+// OTAG (Oracle Tags) data endpoint - serves full CSV from filesystem
+app.get('/api/otag-data', async (req, res) => {
+  try {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    // Try multiple file paths
+    const possiblePaths = [
+      path.join(__dirname, '..', 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      path.join(__dirname, '..', 'public', 'FULL OTAGS.csv'),
+      path.join(__dirname, '..', 'public', 'test-otag-data.csv')
+    ];
+    
+    for (const filePath of possiblePaths) {
+      try {
+        console.log(`🔍 Trying OTAG file: ${filePath}`);
+        const csvData = await fs.readFile(filePath, 'utf8');
+        console.log(`✅ Loaded OTAG file: ${filePath} (${csvData.length} characters)`);
+        
+        // Set appropriate headers
+        res.set({
+          'Content-Type': 'text/csv',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=86400' // Cache for 24 hours
+        });
+        
+        return res.send(csvData);
+      } catch (err) {
+        console.log(`⚠️ Could not read ${filePath}:`, err.message);
+      }
+    }
+    
+    // If no files found, return error
+    res.status(404).json({ 
+      error: 'OTAG data file not found', 
+      message: 'No Oracle Tags CSV files are available on the server' 
+    });
+    
+  } catch (error) {
+    console.error('❌ Error serving OTAG data:', error);
+    res.status(500).json({ error: 'Failed to load OTAG data', details: error.message });
+  }
+});
+
 // Decks routes
 app.get('/api/decks', (req, res) => {
   res.json({ message: 'Decks endpoint - ready for implementation' });
