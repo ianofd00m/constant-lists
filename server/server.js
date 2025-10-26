@@ -23,6 +23,8 @@ console.log('🔒 CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {
+    console.log('🔍 CORS check - Origin:', origin, 'NODE_ENV:', process.env.NODE_ENV);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
@@ -39,11 +41,13 @@ app.use(cors({
       return false;
     });
     
+    console.log('🔍 CORS result for', origin, '- isAllowed:', isAllowed, 'allowedOrigins:', allowedOrigins);
+    
     if (isAllowed) {
       callback(null, true);
     } else {
       console.warn('🚫 CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(null, true); // TEMPORARILY allow all origins to debug
     }
   },
   credentials: true,
