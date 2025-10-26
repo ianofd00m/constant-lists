@@ -1446,6 +1446,7 @@ export default function DeckViewEdit({ isPublic = false }) {
   const preloadedImages = useRef(new Map());
   const priceCache = useRef(new Map()); // Cache to prevent price jumping
   const renderCounter = useRef(0);
+  const addCardDebounceRef = useRef(new Map()); // Debounce rapid card additions
   const navigate = useNavigate();
   
   // Read-only mode state
@@ -2654,6 +2655,18 @@ export default function DeckViewEdit({ isPublic = false }) {
       return;
     }
 
+    // DEBOUNCE FIX: Prevent rapid successive calls for the same card
+    const cardKey = `${cardToAdd.name}-${cardToAdd.set || 'default'}`;
+    const now = Date.now();
+    const lastCall = addCardDebounceRef.current.get(cardKey);
+    
+    if (lastCall && (now - lastCall) < 1000) { // 1 second debounce
+      toast.info(`Please wait a moment before adding ${cardToAdd.name} again`);
+      return;
+    }
+    
+    addCardDebounceRef.current.set(cardKey, now);
+
     // Check if the card already exists in the deck OR in emergency cards
     const existingCardIndex = cards.findIndex((card) => {
       const cardName = card.card?.name || card.name;
@@ -2680,30 +2693,28 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Use the existing handleUpdateCard function to update the quantity
       handleUpdateCard(existingCard, { quantity: newQuantity });
 
-      // Force a deck state update to ensure stats and UI refresh properly
-      setDeck(prevDeck => {
-        if (!prevDeck) return prevDeck;
-        
-        const updatedCards = prevDeck.cards.map(card => {
-          const cardName = card.card?.name || card.name;
-          if (cardName === cardToAdd.name) {
-            return {
-              ...card,
-              count: newQuantity,
-              quantity: newQuantity
-            };
-          }
-          return card;
-        });
-        
-        return {
-          ...prevDeck,
-          cards: updatedCards,
-          lastUpdated: Date.now() // Force React to detect the change
-        };
-      });
-
-      toast.success(`Added ${cardToAdd.name} to deck (now ${newQuantity})`);
+        // Force a deck state update to ensure stats and UI refresh properly
+        setDeck(prevDeck => {
+          if (!prevDeck) return prevDeck;
+          
+          const updatedCards = prevDeck.cards.map(card => {
+            const cardName = card.card?.name || card.name;
+            if (cardName === cardToAdd.name) {
+              return {
+                ...card,
+                count: newQuantity,
+                quantity: newQuantity
+              };
+            }
+            return card;
+          });
+          
+          return {
+            ...prevDeck,
+            cards: updatedCards
+            // PERFORMANCE FIX: Remove lastUpdated to prevent unnecessary re-renders
+          };
+        });      toast.success(`Added ${cardToAdd.name} to deck (now ${newQuantity})`);
       return;
     }
 
@@ -2752,6 +2763,7 @@ export default function DeckViewEdit({ isPublic = false }) {
       const optimisticCard = {
         name: cardToAdd.name,
         quantity: 1,
+        count: 1,
         isCommander: false,
         set: cardToAdd.set,
         collector_number: cardToAdd.collector_number,
@@ -2761,7 +2773,22 @@ export default function DeckViewEdit({ isPublic = false }) {
         color_identity: cardToAdd.color_identity,
         cmc: cardToAdd.cmc,
         type_line: cardToAdd.type_line,
+        // CRITICAL: Preserve complete card data structure
+        card: {
+          name: cardToAdd.name,
+          mana_cost: cardToAdd.mana_cost,
+          color_identity: cardToAdd.color_identity,
+          cmc: cardToAdd.cmc,
+          type_line: cardToAdd.type_line,
+          set: cardToAdd.set,
+          collector_number: cardToAdd.collector_number,
+          prices: cardToAdd.prices,
+          scryfall_json: cardToAdd,
+          // Ensure all essential Scryfall data is preserved
+          ...cardToAdd
+        },
         scryfallCard: cardToAdd,
+        scryfall_json: cardToAdd,
         // Mark as pending to show loading state
         _optimistic: true
       };
@@ -2772,8 +2799,8 @@ export default function DeckViewEdit({ isPublic = false }) {
         return {
           ...prevDeck,
           cards: [...prevDeck.cards, optimisticCard],
-          cardCount: prevDeck.cards.length + 1,
-          lastUpdated: Date.now()
+          cardCount: prevDeck.cards.length + 1
+          // PERFORMANCE FIX: Remove lastUpdated to prevent excessive re-renders
         };
       });
 
@@ -2784,31 +2811,41 @@ export default function DeckViewEdit({ isPublic = false }) {
       toast.success(`Adding ${cardToAdd.name} to deck...`);
 
       // FIXED: Update entire deck instead of trying to add individual card
-      // Create updated deck with new card added
-      const updatedDeck = {
-        ...deck,
-        cards: [...(deck.cards || []), {
+      // Create updated deck with new card added with complete type data
+      const newCard = {
+        name: cardToAdd.name,
+        quantity: 1,
+        count: 1,
+        isCommander: false,
+        set: cardToAdd.set,
+        collector_number: cardToAdd.collector_number,
+        finishes: cardToAdd.finishes || ["nonfoil"],
+        prices: cardToAdd.prices,
+        mana_cost: cardToAdd.mana_cost,
+        color_identity: cardToAdd.color_identity,
+        cmc: cardToAdd.cmc,
+        type_line: cardToAdd.type_line,
+        card: {
           name: cardToAdd.name,
-          quantity: 1,
-          isCommander: false,
+          mana_cost: cardToAdd.mana_cost,
+          color_identity: cardToAdd.color_identity,
+          cmc: cardToAdd.cmc,
+          type_line: cardToAdd.type_line,
           set: cardToAdd.set,
           collector_number: cardToAdd.collector_number,
-          finishes: cardToAdd.finishes || ["nonfoil"],
           prices: cardToAdd.prices,
-          card: {
-            name: cardToAdd.name,
-            mana_cost: cardToAdd.mana_cost,
-            color_identity: cardToAdd.color_identity,
-            cmc: cardToAdd.cmc,
-            type_line: cardToAdd.type_line,
-            set: cardToAdd.set,
-            collector_number: cardToAdd.collector_number,
-            prices: cardToAdd.prices,
-            scryfall_json: cardToAdd
-          },
-          scryfallCard: cardToAdd,
-          scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
-        }]
+          scryfall_json: cardToAdd,
+          // Preserve ALL Scryfall properties to ensure type detection works
+          ...cardToAdd
+        },
+        scryfallCard: cardToAdd,
+        scryfall_json: cardToAdd,
+        scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
+      };
+      
+      const updatedDeck = {
+        ...deck,
+        cards: [...(deck.cards || []), newCard]
       };
 
       const response = await fetch(finalUrl, {
@@ -2830,10 +2867,8 @@ export default function DeckViewEdit({ isPublic = false }) {
           cards: ensureCommanderInCards(updatedDeck)
         };
 
-        // Replace optimistic update with real server data
+        // PERFORMANCE FIX: Batch state updates to prevent render loops
         setDeck(finalDeck);
-        
-        // CRITICAL FIX: Update cards state to match deck state
         setCardsWithEmergencyPreservation(finalDeck.cards || []);
         
         // Update success message
@@ -2987,8 +3022,8 @@ export default function DeckViewEdit({ isPublic = false }) {
           return {
             ...prevDeck,
             cards: prevDeck.cards.filter(card => !card._optimistic || card.name !== cardToAdd.name),
-            cardCount: prevDeck.cards.length - 1,
-            lastUpdated: Date.now()
+            cardCount: prevDeck.cards.length - 1
+            // PERFORMANCE FIX: Remove lastUpdated to prevent render loops
           };
         });
         
@@ -3003,8 +3038,8 @@ export default function DeckViewEdit({ isPublic = false }) {
         return {
           ...prevDeck,
           cards: prevDeck.cards.filter(card => !card._optimistic || card.name !== cardToAdd.name),
-          cardCount: prevDeck.cards.length - 1,
-          lastUpdated: Date.now()
+          cardCount: prevDeck.cards.length - 1
+          // PERFORMANCE FIX: Remove lastUpdated to prevent render loops
         };
       });
       
