@@ -5152,16 +5152,15 @@ export default function DeckViewEdit() {
       // Get current commander color identity for filtering
       let currentColorId = getCommanderColorIdentity;
       
-      // Temporary fix for Jason Bright - if we detect Jason Bright as commander but no color identity, force it to U
+      // Debug logging and temporary fix for Jason Bright
       const commanderCard = deck?.commander?.[0];
       const commanderName = commanderCard?.card?.name || commanderCard?.name || "";
+      
+      // Temporary fix for Jason Bright - if we detect Jason Bright as commander but no color identity, force it to U
       if (!currentColorId && commanderName.toLowerCase().includes("jason bright")) {
         currentColorId = "u";
         console.log('🔧 Applied temporary fix: Jason Bright detected, forcing color identity to "u"');
       }
-      
-      // Debug logging to troubleshoot color identity filtering
-      const commanderCard = deck?.commander?.[0];
       const debugInfo = {
         oracleTag,
         currentColorId,
