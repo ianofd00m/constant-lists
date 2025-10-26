@@ -442,10 +442,14 @@ app.get('/api/otag-data', async (req, res) => {
     
     // Try multiple file paths with better path resolution
     const possiblePaths = [
-      // Full path variations
+      // Full dataset (6.9MB - might not deploy to some services)
       path.join(__dirname, '..', 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
       path.join(process.cwd(), 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
       path.join(__dirname, 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      // Medium dataset (1.3MB, 5000 cards - reliable deployment)
+      path.join(__dirname, '..', 'public', 'otag-medium-dataset.csv'),
+      path.join(process.cwd(), 'public', 'otag-medium-dataset.csv'),
+      path.join(__dirname, 'public', 'otag-medium-dataset.csv'),
       // Alternative file names
       path.join(__dirname, '..', 'public', 'FULL OTAGS.csv'),
       path.join(process.cwd(), 'public', 'FULL OTAGS.csv'),
