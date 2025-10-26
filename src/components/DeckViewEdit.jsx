@@ -4537,6 +4537,34 @@ export default function DeckViewEdit() {
       }
     }
 
+    // 4. Fallback: Known commander color identities
+    if (!colorIdentity && commanderNames.length > 0) {
+      const knownCommanders = {
+        'jason bright, glowing prophet': ['U'],
+        'atraxa, praetors\' voice': ['W', 'U', 'B', 'G'],
+        'edgar markov': ['W', 'U', 'B', 'R'],
+        'kumena, tyrant of orazca': ['U', 'G'],
+        'meren of clan nel toth': ['B', 'G'],
+        'prossh, skyraider of kher': ['B', 'R', 'G'],
+        'derevi, empyrial tactician': ['W', 'U', 'G'],
+        'oloro, ageless ascetic': ['W', 'U', 'B'],
+        'kaalia of the vast': ['W', 'B', 'R'],
+        'ghave, guru of spores': ['W', 'B', 'G'],
+        'riku of two reflections': ['U', 'R', 'G'],
+        'the ur-dragon': ['W', 'U', 'B', 'R', 'G'],
+        'sliver overlord': ['W', 'U', 'B', 'R', 'G']
+      };
+
+      for (const commanderName of commanderNames) {
+        const normalizedName = commanderName.toLowerCase().trim();
+        if (knownCommanders[normalizedName]) {
+          colorIdentity = knownCommanders[normalizedName];
+          console.log(`🎯 Using known color identity for ${commanderName}:`, colorIdentity);
+          break;
+        }
+      }
+    }
+
     // console.log('[DEBUG] Final color identity for search:', colorIdentity ? colorIdentity.join('').toLowerCase() : 'none', 'Commander names:', commanderNames);
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
   }, [deck, commanderColorCache]);
@@ -5152,15 +5180,20 @@ export default function DeckViewEdit() {
       // Get current commander color identity for filtering
       let currentColorId = getCommanderColorIdentity;
       
-      // Debug logging and temporary fix for Jason Bright
+      // Debug: Log commander color identity detection
       const commanderCard = deck?.commander?.[0];
       const commanderName = commanderCard?.card?.name || commanderCard?.name || "";
       
-      // Temporary fix for Jason Bright - if we detect Jason Bright as commander but no color identity, force it to U
-      if (!currentColorId && commanderName.toLowerCase().includes("jason bright")) {
-        currentColorId = "u";
-        console.log('🔧 Applied temporary fix: Jason Bright detected, forcing color identity to "u"');
-      }
+      console.log('🎯 Commander Color Identity Detection:', {
+        commanderName,
+        detectedColorId: currentColorId,
+        commanderCard: commanderCard,
+        colorIdentitySources: {
+          commander_card_color_identity: commanderCard?.card?.color_identity,
+          commander_color_identity: commanderCard?.color_identity,
+          scryfall_color_identity: commanderCard?.scryfallCard?.color_identity
+        }
+      });
       const debugInfo = {
         oracleTag,
         currentColorId,
