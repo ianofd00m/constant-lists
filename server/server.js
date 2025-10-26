@@ -300,33 +300,65 @@ app.get('/api/cards/search', async (req, res) => {
       searchQuery += ' game:paper';
     }
     
-    const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards`;
-    console.log(`📡 Scryfall query: ${searchQuery}`);
+    // Fetch all pages from Scryfall to ensure we get complete results
+    const allCards = [];
+    let page = 1;
+    let totalCards = 0;
+    let hasMore = true;
     
-    const response = await fetch(scryfallUrl);
+    console.log(`📡 Starting Scryfall query: ${searchQuery}`);
     
-    if (!response.ok) {
-      if (response.status === 404) {
-        // No cards found
-        return res.json({
-          data: [],
-          total_cards: 0,
-          has_more: false
-        });
+    while (hasMore && page <= 50) { // Safety limit of 50 pages (8,750 results max)
+      const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards&page=${page}`;
+      console.log(`📡 Fetching Scryfall page ${page}...`);
+      
+      const response = await fetch(scryfallUrl);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          if (page === 1) {
+            // No cards found at all
+            return res.json({
+              data: [],
+              total_cards: 0,
+              has_more: false
+            });
+          } else {
+            // No more pages
+            hasMore = false;
+            break;
+          }
+        }
+        throw new Error(`Scryfall API error: ${response.status}`);
       }
-      throw new Error(`Scryfall API error: ${response.status}`);
+      
+      const data = await response.json();
+      
+      if (data.data && data.data.length > 0) {
+        allCards.push(...data.data);
+        totalCards = data.total_cards || totalCards;
+        hasMore = data.has_more || false;
+        page++;
+        
+        console.log(`📦 Page ${page - 1}: ${data.data.length} cards (${allCards.length}/${totalCards} total)`);
+        
+        // Small delay to be respectful to Scryfall's API
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        hasMore = false;
+      }
     }
-    
-    const data = await response.json();
     
     // Transform Scryfall data to match expected format
     const transformedData = {
-      data: data.data || [],
-      total_cards: data.total_cards || 0,
-      has_more: data.has_more || false
+      data: allCards,
+      total_cards: totalCards,
+      has_more: false // We fetched all available results
     };
     
-    console.log(`✅ Found ${transformedData.total_cards} cards`);
+    console.log(`✅ Complete search results: ${allCards.length} cards (${totalCards} total available)`);
     res.json(transformedData);
     
   } catch (error) {
@@ -401,28 +433,59 @@ app.get('/api/cards/typesense-search', async (req, res) => {
       searchQuery += ' game:paper';
     }
     
-    const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards`;
-    console.log(`📡 Scryfall query: ${searchQuery}`);
+    // Fetch all pages from Scryfall to ensure we get complete results
+    const allCards = [];
+    let page = 1;
+    let totalCards = 0;
+    let hasMore = true;
     
-    const response = await fetch(scryfallUrl);
+    console.log(`📡 Starting Typesense Scryfall query: ${searchQuery}`);
     
-    if (!response.ok) {
-      if (response.status === 404) {
-        return res.json({
-          data: [],
-          total_cards: 0,
-          has_more: false
-        });
+    while (hasMore && page <= 50) { // Safety limit of 50 pages
+      const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards&page=${page}`;
+      console.log(`📡 Fetching Typesense Scryfall page ${page}...`);
+      
+      const response = await fetch(scryfallUrl);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          if (page === 1) {
+            return res.json({
+              data: [],
+              total_cards: 0,
+              has_more: false
+            });
+          } else {
+            hasMore = false;
+            break;
+          }
+        }
+        throw new Error(`Scryfall API error: ${response.status}`);
       }
-      throw new Error(`Scryfall API error: ${response.status}`);
+      
+      const data = await response.json();
+      
+      if (data.data && data.data.length > 0) {
+        allCards.push(...data.data);
+        totalCards = data.total_cards || totalCards;
+        hasMore = data.has_more || false;
+        page++;
+        
+        console.log(`📦 Typesense page ${page - 1}: ${data.data.length} cards (${allCards.length}/${totalCards} total)`);
+        
+        // Small delay to be respectful to Scryfall's API
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        hasMore = false;
+      }
     }
     
-    const data = await response.json();
-    
     res.json({
-      data: data.data || [],
-      total_cards: data.total_cards || 0,
-      has_more: data.has_more || false
+      data: allCards,
+      total_cards: totalCards,
+      has_more: false
     });
     
   } catch (error) {
