@@ -4163,15 +4163,35 @@ export default function DeckViewEdit({ isPublic = false }) {
           
           // Load sideboard/techIdeas from localStorage
           const storedZones = loadSideboardFromStorage(data._id);
+          
+          // Remove cards from main deck that exist in sideboard/techIdeas to prevent duplication
+          let deduplicatedMainCards = finalDeckData.cards;
+          if (storedZones.sideboard.length > 0 || storedZones.techIdeas.length > 0) {
+            const zoneCardNames = new Set([
+              ...storedZones.sideboard.map(card => card.name || card.card?.name),
+              ...storedZones.techIdeas.map(card => card.name || card.card?.name)
+            ].filter(Boolean));
+            
+            const originalMainCount = deduplicatedMainCards.length;
+            deduplicatedMainCards = deduplicatedMainCards.filter(card => {
+              const cardName = card.name || card.card?.name;
+              return !zoneCardNames.has(cardName);
+            });
+            
+            if (originalMainCount !== deduplicatedMainCards.length) {
+              console.log(`[PERSISTENCE] 🔄 Removed ${originalMainCount - deduplicatedMainCards.length} duplicate cards from main deck that exist in zones`);
+              console.log(`[PERSISTENCE] Zone card names:`, Array.from(zoneCardNames));
+            }
+            
+            console.log(`[PERSISTENCE] ✅ Restored ${storedZones.sideboard.length} sideboard + ${storedZones.techIdeas.length} tech ideas from localStorage`);
+          }
+          
           const finalDeckDataWithZones = {
             ...finalDeckData,
+            cards: deduplicatedMainCards,
             sideboard: storedZones.sideboard,
             techIdeas: storedZones.techIdeas
           };
-          
-          if (storedZones.sideboard.length > 0 || storedZones.techIdeas.length > 0) {
-            console.log(`[PERSISTENCE] ✅ Restored ${storedZones.sideboard.length} sideboard + ${storedZones.techIdeas.length} tech ideas from localStorage`);
-          }
           
           // Check if deck is marked as public/read-only
           if (data.isPublic || data.readOnly) {
@@ -4189,7 +4209,7 @@ export default function DeckViewEdit({ isPublic = false }) {
             isReadOnly: data.isPublic || data.readOnly || false
           });
           setName(data.name);
-          setCards(finalDeckData.cards); // Use the filtered cards from finalDeckData instead of finalCardsWithCommander
+          setCards(deduplicatedMainCards); // Use the deduplicated cards to prevent zone card duplication
           setLoading(false);
 
           preloadCardImages(finalCardsWithCommander, preloadedImages.current);
