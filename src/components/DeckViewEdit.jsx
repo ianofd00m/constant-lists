@@ -2884,6 +2884,9 @@ export default function DeckViewEdit({ isPublic = false }) {
         format: deck.format,
         commander: deck.commander,
         cards: [...cleanedExistingCards, newCard],
+        // Preserve sideboard and techIdeas to prevent disappearing sections
+        ...(deck.sideboard && { sideboard: deck.sideboard }),
+        ...(deck.techIdeas && { techIdeas: deck.techIdeas }),
         // Only include essential properties to avoid server validation issues
         ...(deck.description && { description: deck.description }),
         ...(deck.colors && { colors: deck.colors })
@@ -4303,43 +4306,57 @@ export default function DeckViewEdit({ isPublic = false }) {
         return;
       }
 
-      // Prepare cards with printing field and clean format for server
-      const cardsWithPrinting = (deckToSave.cards || []).map((card) => {
-        if (typeof card === "object" && card !== null) {
-          // Clean card object for server - only include expected fields
-          const cleanCard = {
-            name: card.name,
-            printing: card.printing || null,
-            quantity: card.quantity || 1,
-            modalPrice: card.modalPrice
-          };
-          
-          // Only include additional fields if they exist and are not complex objects
-          if (card.type_line && typeof card.type_line === 'string') {
-            cleanCard.type_line = card.type_line;
-          }
-          if (card.scryfall_json && typeof card.scryfall_json === 'object') {
-            cleanCard.scryfall_json = card.scryfall_json;
-          }
-          
-          return cleanCard;
+      // Use same cleaned card approach as add/remove functions to prevent 500 errors
+      const cleanedCards = (deckToSave.cards || []).map(card => ({
+        name: card.name || card.card?.name,
+        quantity: card.quantity || 1,
+        count: card.count || 1,
+        isCommander: card.isCommander || false,
+        set: card.set || card.card?.set,
+        collector_number: card.collector_number || card.card?.collector_number,
+        finishes: card.finishes || ["nonfoil"],
+        prices: card.prices || {},
+        mana_cost: card.mana_cost || card.card?.mana_cost,
+        color_identity: card.color_identity || card.card?.color_identity,
+        cmc: card.cmc || card.card?.cmc,
+        type_line: card.type_line || card.card?.type_line,
+        scryfall_id: card.scryfall_id || card.card?.scryfall_id,
+        // Minimal card object (NO large scryfall_json to prevent 500 errors)
+        card: {
+          name: card.name || card.card?.name,
+          mana_cost: card.mana_cost || card.card?.mana_cost,
+          color_identity: card.color_identity || card.card?.color_identity,
+          cmc: card.cmc || card.card?.cmc,
+          type_line: card.type_line || card.card?.type_line,
+          set: card.set || card.card?.set,
+          collector_number: card.collector_number || card.card?.collector_number,
+          scryfall_id: card.scryfall_id || card.card?.scryfall_id
         }
-        return { name: card, printing: null, quantity: 1 };
-      });
+      }));
 
-      const requestBody = {
+      // Use same complete deck structure as add/remove functions
+      const cleanDeckForServer = {
+        _id: deckToSave._id,
         name: deckToSave.name,
-        cards: cardsWithPrinting,
-        // Try to include sideboard and techIdeas - will fallback if server doesn't support
-        sideboard: deckToSave.sideboard || [],
-        techIdeas: deckToSave.techIdeas || []
+        format: deckToSave.format,
+        commander: deckToSave.commander,
+        cards: cleanedCards,
+        // Preserve sideboard and techIdeas to prevent disappearing sections
+        ...(deckToSave.sideboard && { sideboard: deckToSave.sideboard }),
+        ...(deckToSave.techIdeas && { techIdeas: deckToSave.techIdeas }),
+        // Only include essential properties to avoid server validation issues
+        ...(deckToSave.description && { description: deckToSave.description }),
+        ...(deckToSave.colors && { colors: deckToSave.colors })
       };
 
+      // Debug payload size (same as add/remove functions)
+      const serializedDeck = JSON.stringify(cleanDeckForServer);
       console.log(`[SAVE DECK] Attempting save with sideboard/techIdeas:`, {
         deckId: deckToSave._id,
-        cardsCount: cardsWithPrinting.length,
+        cardsCount: cleanedCards.length,
         sideboardCount: (deckToSave.sideboard || []).length,
-        techIdeasCount: (deckToSave.techIdeas || []).length
+        techIdeasCount: (deckToSave.techIdeas || []).length,
+        payloadSize: serializedDeck.length
       });
 
       const response = await fetch(`${apiUrl}/api/decks/${deckToSave._id}`, {
@@ -4350,7 +4367,7 @@ export default function DeckViewEdit({ isPublic = false }) {
           "Cache-Control": "no-cache",
         },
         credentials: "include",
-        body: JSON.stringify(requestBody),
+        body: serializedDeck,
       });
 
       if (response.ok) {
@@ -4369,9 +4386,15 @@ export default function DeckViewEdit({ isPublic = false }) {
         console.log(`[SAVE DECK] Server doesn't support zones, using localStorage fallback`);
         
         if (response.status === 500 || response.status === 400) {
-          const fallbackRequestBody = {
+          // Use clean deck structure for fallback too (without sideboard/techIdeas)
+          const fallbackDeck = {
+            _id: deckToSave._id,
             name: deckToSave.name,
-            cards: cardsWithPrinting
+            format: deckToSave.format,
+            commander: deckToSave.commander,
+            cards: cleanedCards,
+            ...(deckToSave.description && { description: deckToSave.description }),
+            ...(deckToSave.colors && { colors: deckToSave.colors })
           };
           
           const fallbackResponse = await fetch(`${apiUrl}/api/decks/${deckToSave._id}`, {
@@ -4382,7 +4405,7 @@ export default function DeckViewEdit({ isPublic = false }) {
               "Cache-Control": "no-cache",
             },
             credentials: "include",
-            body: JSON.stringify(fallbackRequestBody),
+            body: JSON.stringify(fallbackDeck),
           });
           
           if (fallbackResponse.ok) {
@@ -6744,6 +6767,9 @@ export default function DeckViewEdit({ isPublic = false }) {
             format: deck.format,
             commander: deck.commander,
             cards: cleanedCards,
+            // Preserve sideboard and techIdeas to prevent disappearing sections
+            ...(deck.sideboard && { sideboard: deck.sideboard }),
+            ...(deck.techIdeas && { techIdeas: deck.techIdeas }),
             // Only include essential properties to avoid server validation issues
             ...(deck.description && { description: deck.description }),
             ...(deck.colors && { colors: deck.colors })
