@@ -45,8 +45,8 @@ class ProductionOtagSystem {
     }
 
     async loadOtagDataFromServer() {
-        const cacheKey = 'production-otag-data-v2';
-        const cacheTimestamp = 'production-otag-timestamp-v2';
+        const cacheKey = 'production-otag-data-v3-full'; // Updated to force reload with full dataset
+        const cacheTimestamp = 'production-otag-timestamp-v3-full';
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         try {
@@ -99,14 +99,14 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources
+            // Try multiple data sources - prioritize full dataset over test data
             const dataSources = [
-                './test-otag-data.csv',
-                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './FULL OTAGS.csv',
+                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './data/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './assets/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                './otag-data.csv'
+                './otag-data.csv',
+                './test-otag-data.csv'  // Fallback to test data if full dataset not available
             ];
             
             for (const source of dataSources) {
