@@ -5152,12 +5152,23 @@ export default function DeckViewEdit() {
       // Get current commander color identity for filtering
       const currentColorId = getCommanderColorIdentity;
       
+      // Debug logging to troubleshoot color identity filtering
+      console.log('🔍 Oracle Tag Search Debug:', {
+        oracleTag,
+        currentColorId,
+        deckFormat: deck?.format,
+        commander: deck?.commander,
+        commanderNames: deck?.commanderNames
+      });
+      
       // Use the same backend API that respects color identity constraints
       const url = `/api/cards/typesense-search?q=${encodeURIComponent(searchQuery)}${currentColorId ? `&colorIdentity=${currentColorId}` : ""}${deck && deck.format ? `&deckFormat=${encodeURIComponent(deck.format)}` : ""}`;
       
       const apiUrl = import.meta.env.VITE_API_URL;
       const isDev = import.meta.env.DEV;
       const finalUrl = isDev ? url : `${apiUrl}${url}`;
+      
+      console.log('🔗 Oracle Tag Search URL:', finalUrl);
       
       // Oracle tag search with color identity filtering
       

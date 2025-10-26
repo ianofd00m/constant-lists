@@ -337,7 +337,7 @@ app.get('/api/cards/search', async (req, res) => {
 // Typesense search endpoint with commander color identity filtering
 app.get('/api/cards/typesense-search', async (req, res) => {
   const { q: query = '', colorIdentity = '', deckFormat = '', limit = 50 } = req.query;
-  console.log(`🔍 Typesense search request: "${query}" (colorId: ${colorIdentity}, format: ${deckFormat})`);
+  console.log(`🔍 Typesense search request: "${query}" (colorId: "${colorIdentity}", format: "${deckFormat}", hasColorId: ${!!colorIdentity})`);
   
   try {
     // Build the search query
