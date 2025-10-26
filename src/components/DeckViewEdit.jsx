@@ -4565,7 +4565,11 @@ export default function DeckViewEdit() {
       }
     }
 
-    // console.log('[DEBUG] Final color identity for search:', colorIdentity ? colorIdentity.join('').toLowerCase() : 'none', 'Commander names:', commanderNames);
+    console.log('[COLOR ID DEBUG] Final color identity calculation:', {
+      commanderNames,
+      colorIdentity,
+      result: colorIdentity ? colorIdentity.join("").toLowerCase() : ""
+    });
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
   }, [deck, commanderColorCache]);
 
@@ -5079,7 +5083,13 @@ export default function DeckViewEdit() {
       const isDev = import.meta.env.DEV;
       const finalUrl = isDev ? url : `${apiUrl}${url}`;
       
-      // console.log('🔍 Modal search URL:', finalUrl);
+      console.log('🔍 Modal search debug:', {
+        query: query.trim(),
+        currentColorId,
+        deckFormat: deck?.format,
+        url,
+        finalUrl
+      });
       
       const res = await fetch(finalUrl, { signal });
       
@@ -5215,7 +5225,14 @@ export default function DeckViewEdit() {
       const isDev = import.meta.env.DEV;
       const finalUrl = isDev ? url : `${apiUrl}${url}`;
       
-      console.log('🔗 Oracle Tag Search URL:', finalUrl);
+      console.log('🔗 Oracle Tag Search debug:', {
+        oracleTag,
+        searchQuery,
+        currentColorId,
+        deckFormat: deck?.format,
+        url,
+        finalUrl
+      });
       
       // Oracle tag search with color identity filtering
       
