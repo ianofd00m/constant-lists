@@ -45,8 +45,8 @@ class ProductionOtagSystem {
     }
 
     async loadOtagDataFromServer() {
-        const cacheKey = 'production-otag-data-v3-full'; // Updated to force reload with full dataset
-        const cacheTimestamp = 'production-otag-timestamp-v3-full';
+        const cacheKey = 'production-otag-data-v4-api'; // Updated to force reload with API endpoint
+        const cacheTimestamp = 'production-otag-timestamp-v4-api';
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         try {
@@ -72,7 +72,14 @@ class ProductionOtagSystem {
                     const age = Date.now() - parseInt(cachedTime);
                     console.log(`🕐 Cache age: ${Math.round(age / 1000 / 60)} minutes`);
                     
-                    if (age < CACHE_DURATION && parsedData && parsedData.length > 0) {
+                    // Invalidate cache if it's old test data (less than 100 cards)
+                    if (parsedData.length < 100) {
+                        console.log(`🚫 Cache contains only ${parsedData.length} entries (test data), fetching full dataset...`);
+                        shouldUseCache = false;
+                        // Clear the old cache
+                        localStorage.removeItem(cacheKey);
+                        localStorage.removeItem(cacheTimestamp);
+                    } else if (age < CACHE_DURATION && parsedData && parsedData.length > 0) {
                         shouldUseCache = true;
                         console.log('📋 Loading OTAG data from cache...');
                         console.log(`📊 Cached data contains: ${parsedData.length} entries`);
