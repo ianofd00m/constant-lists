@@ -2741,8 +2741,8 @@ export default function DeckViewEdit() {
         requestBody.finishes = cardToAdd.finishes;
       }
 
-      // Construct URL correctly for dev vs production
-      const url = `/api/decks/${deck._id}/cards`;
+      // FIXED: Use existing PUT endpoint to update entire deck instead of non-existent cards endpoint
+      const url = `/api/decks/${deck._id}`;
       const finalUrl = isDev ? url : `${apiUrl}${url}`;
 
       // OPTIMISTIC UPDATE: Immediately add the card to the UI
@@ -2780,15 +2780,42 @@ export default function DeckViewEdit() {
       // Show immediate feedback
       toast.success(`Adding ${cardToAdd.name} to deck...`);
 
-      // Add the card to the deck
+      // FIXED: Update entire deck instead of trying to add individual card
+      // Create updated deck with new card added
+      const updatedDeck = {
+        ...deck,
+        cards: [...(deck.cards || []), {
+          name: cardToAdd.name,
+          quantity: 1,
+          isCommander: false,
+          set: cardToAdd.set,
+          collector_number: cardToAdd.collector_number,
+          finishes: cardToAdd.finishes || ["nonfoil"],
+          prices: cardToAdd.prices,
+          card: {
+            name: cardToAdd.name,
+            mana_cost: cardToAdd.mana_cost,
+            color_identity: cardToAdd.color_identity,
+            cmc: cardToAdd.cmc,
+            type_line: cardToAdd.type_line,
+            set: cardToAdd.set,
+            collector_number: cardToAdd.collector_number,
+            prices: cardToAdd.prices,
+            scryfall_json: cardToAdd
+          },
+          scryfallCard: cardToAdd,
+          scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
+        }]
+      };
+
       const response = await fetch(finalUrl, {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(updatedDeck),
       });
 
       if (response.ok) {
@@ -4538,9 +4565,12 @@ export default function DeckViewEdit() {
     }
 
     // 4. Fallback: Known commander color identities
-    console.log(`[COLOR ID DEBUG] Fallback check - colorIdentity so far:`, colorIdentity);
-    console.log(`[COLOR ID DEBUG] Commander names length:`, commanderNames.length);
-    console.log(`[COLOR ID DEBUG] Should use fallback:`, (!colorIdentity || (Array.isArray(colorIdentity) && colorIdentity.length === 0)) && commanderNames.length > 0);
+    // Reduced debug logging to prevent console spam
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[COLOR ID DEBUG] Fallback check - colorIdentity so far:`, colorIdentity);
+      console.log(`[COLOR ID DEBUG] Commander names length:`, commanderNames.length);
+      console.log(`[COLOR ID DEBUG] Should use fallback:`, (!colorIdentity || (Array.isArray(colorIdentity) && colorIdentity.length === 0)) && commanderNames.length > 0);
+    }
     
     if ((!colorIdentity || (Array.isArray(colorIdentity) && colorIdentity.length === 0)) && commanderNames.length > 0) {
       const knownCommanders = {
@@ -4560,49 +4590,68 @@ export default function DeckViewEdit() {
         'sliver overlord': ['W', 'U', 'B', 'R', 'G']
       };
 
-      console.log(`[COLOR ID DEBUG] Known commanders available:`, Object.keys(knownCommanders));
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[COLOR ID DEBUG] Known commanders available:`, Object.keys(knownCommanders));
+      }
 
       for (const commanderName of commanderNames) {
-        console.log(`[COLOR ID DEBUG] Processing commander: "${commanderName}"`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[COLOR ID DEBUG] Processing commander: "${commanderName}"`);
+        }
         if (!commanderName || typeof commanderName !== 'string') {
-          console.log(`[COLOR ID DEBUG] Skipping - not a string or empty`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[COLOR ID DEBUG] Skipping - not a string or empty`);
+          }
           continue;
         }
         
         const normalizedName = commanderName.toLowerCase().trim();
-        console.log(`🔍 Checking commander name: "${normalizedName}"`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🔍 Checking commander name: "${normalizedName}"`);
+        }
         
         // Direct match
         if (knownCommanders[normalizedName]) {
           colorIdentity = knownCommanders[normalizedName];
-          console.log(`🎯 Direct match - Using known color identity for ${commanderName}:`, colorIdentity);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🎯 Direct match - Using known color identity for ${commanderName}:`, colorIdentity);
+          }
           break;
         }
         
         // Partial match for Jason Bright (more aggressive)
         if (normalizedName.includes('jason bright')) {
           colorIdentity = ['U'];
-          console.log(`🎯 Partial match - Jason Bright detected, using blue color identity:`, colorIdentity);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`🎯 Partial match - Jason Bright detected, using blue color identity:`, colorIdentity);
+          }
           break;
         }
         
-        console.log(`[COLOR ID DEBUG] No match found for: "${normalizedName}"`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[COLOR ID DEBUG] No match found for: "${normalizedName}"`);
+        }
       }
     } else {
-      console.log(`[COLOR ID DEBUG] Skipping fallback - colorIdentity already found or no commander names`);
-      console.log(`[COLOR ID DEBUG] Existing colorIdentity:`, colorIdentity);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[COLOR ID DEBUG] Skipping fallback - colorIdentity already found or no commander names`);
+        console.log(`[COLOR ID DEBUG] Existing colorIdentity:`, colorIdentity);
+      }
     }
 
-    console.log('[COLOR ID DEBUG] Commander Names:', JSON.stringify(commanderNames));
-    console.log('[COLOR ID DEBUG] Color Identity Array:', JSON.stringify(colorIdentity));
-    console.log('[COLOR ID DEBUG] Final Result:', colorIdentity ? colorIdentity.join("").toLowerCase() : "EMPTY");
-    
-    // Test each commander name explicitly
-    commanderNames.forEach((name, index) => {
-      const normalized = (name || '').toLowerCase().trim();
-      console.log(`[COLOR ID DEBUG] Commander ${index}: "${name}" -> normalized: "${normalized}"`);
-      console.log(`[COLOR ID DEBUG] Contains Jason Bright: ${normalized.includes('jason bright')}`);
-    });
+    // Reduced debug logging in production
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[COLOR ID DEBUG] Commander Names:', JSON.stringify(commanderNames));
+      console.log('[COLOR ID DEBUG] Color Identity Array:', JSON.stringify(colorIdentity));
+      console.log('[COLOR ID DEBUG] Final Result:', colorIdentity ? colorIdentity.join("").toLowerCase() : "EMPTY");
+      
+      // Test each commander name explicitly
+      commanderNames.forEach((name, index) => {
+        const normalized = (name || '').toLowerCase().trim();
+        console.log(`[COLOR ID DEBUG] Commander ${index}: "${name}" -> normalized: "${normalized}"`);
+        console.log(`[COLOR ID DEBUG] Contains Jason Bright: ${normalized.includes('jason bright')}`);
+      });
+    }
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
   }, [deck, commanderColorCache]);
 
@@ -8772,37 +8821,49 @@ export default function DeckViewEdit() {
         return;
       }
       
-      // Add the cards to the deck
+      // FIXED: Add all cards to deck by updating entire deck instead of individual calls
       const token = localStorage.getItem("token");
       const apiUrl = import.meta.env.VITE_API_URL;
       
-      for (const card of validCards) {
-        try {
-          const response = await fetch(`${apiUrl}/api/decks/${deck._id}/cards`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              name: card.name,
-              scryfall_id: card.scryfall_id,
-              quantity: card.count,
-              set: card.card.set,
-              collector_number: card.card.collector_number
-            }),
-            credentials: "include",
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.text();
-            console.error(`[IMPORT] Server error for ${card.name}:`, errorData);
-            results.errors.push(`Failed to add ${card.name}: ${response.status}`);
-          }
-        } catch (error) {
-          console.error(`[IMPORT] Error adding ${card.name}:`, error);
-          results.errors.push(`Error adding ${card.name}`);
+      try {
+        // Create new cards to add
+        const cardsToAdd = validCards.map(card => ({
+          name: card.name,
+          quantity: card.count,
+          isCommander: false,
+          set: card.card.set,
+          collector_number: card.card.collector_number,
+          scryfall_id: card.scryfall_id,
+          card: card.card,
+          scryfallCard: card.card
+        }));
+
+        // Update entire deck with new cards
+        const updatedDeck = {
+          ...deck,
+          cards: [...(deck.cards || []), ...cardsToAdd]
+        };
+
+        const response = await fetch(`${apiUrl}/api/decks/${deck._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedDeck),
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error(`[IMPORT] Server error:`, errorData);
+          results.errors.push(`Failed to add cards: ${response.status}`);
+        } else {
+          results.successful = validCards.length;
         }
+      } catch (error) {
+        console.error(`[IMPORT] Error adding cards:`, error);
+        results.errors.push(`Error adding cards: ${error.message}`);
       }
       
       // Refresh the deck data by fetching fresh deck from server
