@@ -2757,7 +2757,16 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       // FIXED: Use existing PUT endpoint to update entire deck instead of non-existent cards endpoint
       const url = `/api/decks/${deck._id}`;
-      const finalUrl = isDev ? url : `${apiUrl}${url}`;
+      
+      // Debug API URL construction
+      console.log('🔧 API URL Debug:', {
+        apiUrl,
+        isDev,
+        url,
+        finalUrl: isDev ? `http://localhost:3001${url}` : `${apiUrl}${url}`
+      });
+      
+      const finalUrl = isDev ? `http://localhost:3001${url}` : `${apiUrl}${url}`;
 
       // OPTIMISTIC UPDATE: Immediately add the card to the UI
       const optimisticCard = {
@@ -2843,10 +2852,28 @@ export default function DeckViewEdit({ isPublic = false }) {
         scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
       };
       
-      const updatedDeck = {
-        ...deck,
-        cards: [...(deck.cards || []), newCard]
+      // Create clean deck object for server update - remove potentially problematic properties
+      const cleanDeckForServer = {
+        _id: deck._id,
+        name: deck.name,
+        format: deck.format,
+        commander: deck.commander,
+        cards: [...(deck.cards || []), newCard],
+        // Only include essential properties to avoid server validation issues
+        ...(deck.description && { description: deck.description }),
+        ...(deck.colors && { colors: deck.colors })
       };
+      
+      const updatedDeck = cleanDeckForServer;
+
+      // Debug request payload
+      console.log('🚀 Sending PUT request to:', finalUrl);
+      console.log('📦 Request body deck structure:', {
+        deckId: updatedDeck._id,
+        cardsCount: updatedDeck.cards?.length,
+        newCardName: newCard.name,
+        requestSize: JSON.stringify(updatedDeck).length
+      });
 
       const response = await fetch(finalUrl, {
         method: "PUT",
@@ -3029,7 +3056,8 @@ export default function DeckViewEdit({ isPublic = false }) {
         
         const errorText = await response.text();
         console.error("Failed to add card to deck:", response.status, response.statusText);
-        toast.error(`Failed to add card to deck: ${response.status} ${response.statusText}`);
+        console.error("Server error response:", errorText);
+        toast.error(`Failed to add card to deck: ${response.status} - ${errorText || response.statusText}`);
       }
     } catch (error) {
       // REVERT OPTIMISTIC UPDATE on network error
