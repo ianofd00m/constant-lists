@@ -10,6 +10,8 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   max-height: calc(90vh - 300px); /* Responsive to viewport height, with 300px buffer for other content */
   min-height: 200px; /* Smaller minimum height for responsiveness */
+  /* LAYOUT FIX: Prevent expansion that breaks click handling */
+  height: 280px; /* Fixed height to prevent modal expansion on hover */
   overflow-y: auto; /* Allow vertical scrolling when content exceeds max height */
   display: flex;
   flex-direction: column;
@@ -161,14 +163,19 @@
 }
 
 .oracle-tag:hover {
-  transform: translateY(-1px);
+  /* LAYOUT FIX: Remove transform that causes modal expansion issues */
+  /* transform: translateY(-1px); */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   filter: brightness(0.95);
+  /* Add slight opacity change instead of transform for feedback */
+  opacity: 0.9;
 }
 
 .oracle-tag:active {
-  transform: translateY(0);
+  /* LAYOUT FIX: Remove transform that prevents clicks from registering */
+  /* transform: translateY(0); */
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0.8;
 }
 
 .oracle-tags-footer {

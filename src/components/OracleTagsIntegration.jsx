@@ -289,7 +289,7 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
           
           return (
             <>
-              <div className="oracle-tags-column">
+                              <div className="oracle-tags-column">
                 {leftColumn.map(([category, tags]) => (
                   <div key={category} className="oracle-tags-category">
                     <div className="category-header">
@@ -309,7 +309,15 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                               '--tag-border': colors.border,
                               '--tag-text': colors.text
                             }}
-                            onClick={() => handleTagClick(tag)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleTagClick(tag);
+                            }}
+                            onMouseDown={(e) => {
+                              // LAYOUT FIX: Prevent default to avoid layout issues
+                              e.preventDefault();
+                            }}
                             title={`Search for cards with "${tag}" functionality`}
                           >
                             {formatTagName(tag)}
@@ -341,7 +349,15 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                               '--tag-border': colors.border,
                               '--tag-text': colors.text
                             }}
-                            onClick={() => handleTagClick(tag)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleTagClick(tag);
+                            }}
+                            onMouseDown={(e) => {
+                              // LAYOUT FIX: Prevent default to avoid layout issues
+                              e.preventDefault();
+                            }}
                             title={`Search for cards with "${tag}" functionality`}
                           >
                             {formatTagName(tag)}
