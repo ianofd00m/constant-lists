@@ -909,6 +909,39 @@ app.get('/api/decks/:deckId', authenticateToken, async (req, res) => {
   }
 });
 
+// PUBLIC: Get deck by ID without authentication (read-only)
+app.get('/api/public/decks/:deckId', async (req, res) => {
+  try {
+    const deckId = req.params.deckId;
+    
+    console.log(`🔍 Fetching public deck: ${deckId}`);
+    
+    // Find deck without owner restriction - allow public access
+    const deck = await Deck.findById(deckId);
+    
+    if (!deck) {
+      console.log(`❌ Public deck ${deckId} not found`);
+      return res.status(404).json({ error: 'Deck not found' });
+    }
+    
+    // Enrich with Scryfall data
+    const enrichedDeck = await enrichDeckWithScryfallData(deck.toObject());
+    
+    // Add public flag to indicate read-only access
+    const publicDeck = {
+      ...enrichedDeck,
+      isPublic: true,
+      readOnly: true
+    };
+    
+    console.log(`✅ Found public deck: ${deck.name}`);
+    res.json(publicDeck);
+  } catch (error) {
+    console.error('❌ Error fetching public deck:', error);
+    res.status(500).json({ error: 'Failed to fetch deck' });
+  }
+});
+
 // Get cards in a specific deck
 app.get('/api/decks/:deckId/cards', (req, res) => {
   const deckId = req.params.deckId;

@@ -142,6 +142,16 @@ function App() {
             <DeckViewEdit />
           </React.Suspense>
         } />
+        <Route path="/public/decks/:id" element={
+          <React.Suspense fallback={
+            <div style={{padding: '2rem', textAlign: 'center'}}>
+              <h2>Loading Public Deck...</h2>
+              <p>Loading the public deck view (read-only)</p>
+            </div>
+          }>
+            <DeckViewEdit isPublic={true} />
+          </React.Suspense>
+        } />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/verify-email" element={<EmailVerification />} />

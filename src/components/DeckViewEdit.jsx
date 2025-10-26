@@ -1421,7 +1421,7 @@ const GridCard = memo(({ cardData, isExplicitlyFoil, price, onMouseEnter, onClic
 
 GridCard.displayName = "GridCard";
 
-export default function DeckViewEdit() {
+export default function DeckViewEdit({ isPublic = false }) {
   const { id } = useParams();
 
   // Debug: Log the deck ID being accessed
@@ -1447,6 +1447,9 @@ export default function DeckViewEdit() {
   const priceCache = useRef(new Map()); // Cache to prevent price jumping
   const renderCounter = useRef(0);
   const navigate = useNavigate();
+  
+  // Read-only mode state
+  const [isReadOnly, setIsReadOnly] = useState(isPublic);
   
   // Track excessive re-renders
   renderCounter.current++;
@@ -3654,13 +3657,18 @@ export default function DeckViewEdit() {
     const cacheBust = `?_cb=${Date.now()}`;
     const apiUrl = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
-    fetch(`${apiUrl}/api/decks/${id}${cacheBust}`, {
+    
+    // Use public endpoint if in public mode
+    const endpoint = isPublic ? `/api/public/decks/${id}` : `/api/decks/${id}`;
+    
+    fetch(`${apiUrl}${endpoint}${cacheBust}`, {
       signal: abortController.signal,
       cache: "no-cache",
       headers: {
         "Cache-Control": "no-cache",
         Pragma: "no-cache",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Only include auth header for private decks
+        ...(!isPublic && token ? { Authorization: `Bearer ${token}` } : {}),
       },
     })
       .then(async (r) => {
@@ -4036,6 +4044,11 @@ export default function DeckViewEdit() {
             console.log(`[PERSISTENCE] ✅ Restored ${storedZones.sideboard.length} sideboard + ${storedZones.techIdeas.length} tech ideas from localStorage`);
           }
           
+          // Check if deck is marked as public/read-only
+          if (data.isPublic || data.readOnly) {
+            setIsReadOnly(true);
+          }
+          
           setDeck(finalDeckDataWithZones);
           
           // DEBUG: Check what actually got stored (will show in next render)
@@ -4043,7 +4056,8 @@ export default function DeckViewEdit() {
             passedCommander: finalDeckDataWithZones.commander,
             passedCommanderNames: finalDeckDataWithZones.commanderNames,
             sideboardCount: storedZones.sideboard.length,
-            techIdeasCount: storedZones.techIdeas.length
+            techIdeasCount: storedZones.techIdeas.length,
+            isReadOnly: data.isPublic || data.readOnly || false
           });
           setName(data.name);
           setCards(finalDeckData.cards); // Use the filtered cards from finalDeckData instead of finalCardsWithCommander
@@ -9578,7 +9592,29 @@ export default function DeckViewEdit() {
             {deck.name || "Untitled Deck"}
           </h2>
           
-          {/* Import and Export Buttons */}
+          {/* Read-only indicator */}
+          {isReadOnly && (
+            <div style={{
+              backgroundColor: "#e3f2fd",
+              border: "1px solid #2196f3",
+              borderRadius: "6px",
+              padding: "8px 12px",
+              marginTop: "8px",
+              marginBottom: "8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#1976d2",
+              fontSize: "14px",
+              fontWeight: "500"
+            }}>
+              <span>👁️</span>
+              <span>Public View (Read-Only) - This deck is shared publicly and cannot be edited</span>
+            </div>
+          )}
+          
+          {/* Import and Export Buttons - Hidden in read-only mode */}
+          {!isReadOnly && (
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             {/* Import Dropdown Menu */}
             <div className="import-dropdown-container" style={{ position: "relative", display: "inline-block" }}>
@@ -9860,6 +9896,7 @@ export default function DeckViewEdit() {
             )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
