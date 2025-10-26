@@ -3626,12 +3626,14 @@ export default function DeckViewEdit() {
     // Add cache-busting parameter to force fresh requests
     const cacheBust = `?_cb=${Date.now()}`;
     const apiUrl = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem('token');
     fetch(`${apiUrl}/api/decks/${id}${cacheBust}`, {
       signal: abortController.signal,
       cache: "no-cache",
       headers: {
         "Cache-Control": "no-cache",
         Pragma: "no-cache",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     })
       .then(async (r) => {
