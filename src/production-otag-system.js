@@ -152,15 +152,19 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize API endpoint to bypass all file size limits
+            // Try multiple data sources - prioritize MongoDB-based API for reliability
             const dataSources = [
-                // API endpoint served from filesystem (bypasses all static file limitations)
+                // MongoDB-based API endpoint (most reliable - bypasses all file serving issues)
+                `${window.location.origin}/api/oracle-tags`,
+                'https://constant-lists-api.onrender.com/api/oracle-tags',
+                // Filesystem-based API endpoints (fallback)
                 `${window.location.origin}/api/otag-data`,
-                'https://constant-lists-api.onrender.com/api/otag-data',  // Production API
-                // Fallback to static files (limited by Vercel)
+                'https://constant-lists-api.onrender.com/api/otag-data',
+                // Static files (last resort - limited by file serving)
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './otag-medium-dataset.csv',
                 './FULL OTAGS.csv',
-                './test-otag-data.csv'  // Last resort fallback (works but limited)
+                './test-otag-data.csv'
             ];
             
             for (const source of dataSources) {

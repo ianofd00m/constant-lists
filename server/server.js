@@ -504,6 +504,79 @@ app.get('/api/otag-data', async (req, res) => {
   }
 });
 
+// MongoDB-based Oracle Tags endpoint - bypasses all file serving issues
+app.get('/api/oracle-tags', async (req, res) => {
+  try {
+    console.log('🏷️ Fetching Oracle Tags from MongoDB...');
+    
+    // Get all Oracle Tags from database
+    const oracleTagsCollection = db.collection('oracleTags');
+    const allCards = await oracleTagsCollection.find({}).toArray();
+    
+    console.log(`📊 Retrieved ${allCards.length} cards from MongoDB`);
+    
+    // Convert to CSV format for compatibility with existing frontend
+    let csvContent = 'card_name,oracle_tags\n';
+    for (const card of allCards) {
+      const cardName = card.cardName.replace(/"/g, '""'); // Escape quotes
+      const oracleTags = card.oracleTags.join('|');
+      csvContent += `"${cardName}","${oracleTags}"\n`;
+    }
+    
+    // Set appropriate headers
+    res.set({
+      'Content-Type': 'text/csv',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+    });
+    
+    console.log(`✅ Serving Oracle Tags CSV: ${csvContent.length} characters for ${allCards.length} cards`);
+    res.send(csvContent);
+    
+  } catch (error) {
+    console.error('❌ Error serving Oracle Tags from MongoDB:', error);
+    res.status(500).json({ 
+      error: 'Failed to load Oracle Tags from database', 
+      details: error.message 
+    });
+  }
+});
+
+// Individual card Oracle Tags lookup
+app.get('/api/oracle-tags/:cardName', async (req, res) => {
+  try {
+    const cardName = decodeURIComponent(req.params.cardName);
+    console.log(`🔍 Looking up Oracle Tags for: ${cardName}`);
+    
+    const oracleTagsCollection = db.collection('oracleTags');
+    const card = await oracleTagsCollection.findOne({ 
+      cardNameLower: cardName.toLowerCase() 
+    });
+    
+    if (card) {
+      console.log(`✅ Found ${card.oracleTags.length} Oracle Tags for ${cardName}`);
+      res.json({
+        cardName: card.cardName,
+        oracleTags: card.oracleTags,
+        tagCount: card.oracleTags.length
+      });
+    } else {
+      console.log(`❌ No Oracle Tags found for: ${cardName}`);
+      res.status(404).json({
+        error: 'Card not found',
+        cardName: cardName
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error looking up Oracle Tags:', error);
+    res.status(500).json({ 
+      error: 'Failed to lookup Oracle Tags', 
+      details: error.message 
+    });
+  }
+});
+
 // Decks routes
 app.get('/api/decks', (req, res) => {
   res.json({ message: 'Decks endpoint - ready for implementation' });
