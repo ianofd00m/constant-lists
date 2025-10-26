@@ -2819,8 +2819,8 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Show immediate feedback
       toast.success(`Adding ${cardToAdd.name} to deck...`);
 
-      // FIXED: Update entire deck instead of trying to add individual card
-      // Create updated deck with new card added with complete type data
+      // FIXED: Create minimal card object for server to avoid payload size issues
+      // Only include essential data for server validation and storage
       const newCard = {
         name: cardToAdd.name,
         quantity: 1,
@@ -2829,11 +2829,13 @@ export default function DeckViewEdit({ isPublic = false }) {
         set: cardToAdd.set,
         collector_number: cardToAdd.collector_number,
         finishes: cardToAdd.finishes || ["nonfoil"],
-        prices: cardToAdd.prices,
+        prices: cardToAdd.prices || {},
         mana_cost: cardToAdd.mana_cost,
         color_identity: cardToAdd.color_identity,
         cmc: cardToAdd.cmc,
         type_line: cardToAdd.type_line,
+        scryfall_id: cardToAdd.id || cardToAdd.scryfall_id,
+        // Minimal card object for type detection
         card: {
           name: cardToAdd.name,
           mana_cost: cardToAdd.mana_cost,
@@ -2842,15 +2844,38 @@ export default function DeckViewEdit({ isPublic = false }) {
           type_line: cardToAdd.type_line,
           set: cardToAdd.set,
           collector_number: cardToAdd.collector_number,
-          prices: cardToAdd.prices,
-          scryfall_json: cardToAdd,
-          // Preserve ALL Scryfall properties to ensure type detection works
-          ...cardToAdd
-        },
-        scryfallCard: cardToAdd,
-        scryfall_json: cardToAdd,
-        scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
+          scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
+          // Removed large scryfall_json to reduce payload size
+        }
       };
+      
+      // Clean existing cards to remove excessive nested data
+      const cleanedExistingCards = (deck.cards || []).map(card => ({
+        name: card.name,
+        quantity: card.quantity || 1,
+        count: card.count || 1,
+        isCommander: card.isCommander || false,
+        set: card.set,
+        collector_number: card.collector_number,
+        finishes: card.finishes || ["nonfoil"],
+        prices: card.prices || {},
+        mana_cost: card.mana_cost,
+        color_identity: card.color_identity,
+        cmc: card.cmc,
+        type_line: card.type_line,
+        scryfall_id: card.scryfall_id || card.card?.scryfall_id,
+        // Minimal card object
+        card: {
+          name: card.name || card.card?.name,
+          mana_cost: card.mana_cost || card.card?.mana_cost,
+          color_identity: card.color_identity || card.card?.color_identity,
+          cmc: card.cmc || card.card?.cmc,
+          type_line: card.type_line || card.card?.type_line,
+          set: card.set || card.card?.set,
+          collector_number: card.collector_number || card.card?.collector_number,
+          scryfall_id: card.scryfall_id || card.card?.scryfall_id
+        }
+      }));
       
       // Create clean deck object for server update - remove potentially problematic properties
       const cleanDeckForServer = {
@@ -2858,7 +2883,7 @@ export default function DeckViewEdit({ isPublic = false }) {
         name: deck.name,
         format: deck.format,
         commander: deck.commander,
-        cards: [...(deck.cards || []), newCard],
+        cards: [...cleanedExistingCards, newCard],
         // Only include essential properties to avoid server validation issues
         ...(deck.description && { description: deck.description }),
         ...(deck.colors && { colors: deck.colors })
@@ -2866,14 +2891,24 @@ export default function DeckViewEdit({ isPublic = false }) {
       
       const updatedDeck = cleanDeckForServer;
 
-      // Debug request payload
+      // Debug request payload with detailed structure analysis
+      const serializedDeck = JSON.stringify(updatedDeck);
       console.log('🚀 Sending PUT request to:', finalUrl);
       console.log('📦 Request body deck structure:', {
         deckId: updatedDeck._id,
         cardsCount: updatedDeck.cards?.length,
         newCardName: newCard.name,
-        requestSize: JSON.stringify(updatedDeck).length
+        requestSize: serializedDeck.length,
+        hasNestedScryfall: newCard.scryfall_json ? 'YES' : 'NO',
+        cardObjectKeys: Object.keys(newCard),
+        sampleCardSize: JSON.stringify(newCard).length
       });
+      
+      // Check for potential circular references or overly nested data
+      if (serializedDeck.length > 50000) {
+        console.warn('⚠️ Large request detected:', serializedDeck.length, 'bytes');
+        console.log('📊 Card data sample:', JSON.stringify(newCard).substring(0, 500) + '...');
+      }
 
       const response = await fetch(finalUrl, {
         method: "PUT",
