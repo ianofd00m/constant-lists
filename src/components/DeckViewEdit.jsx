@@ -4401,6 +4401,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       if (response.ok) {
         const savedDeck = await response.json();
         console.log(`[SAVE DECK] ✅ Server supports sideboard/techIdeas - full persistence enabled!`);
+        console.log(`[SAVE DECK] Server response sideboard/techIdeas:`, {
+          serverReturnedSideboard: savedDeck.sideboard?.length || 0,
+          serverReturnedTechIdeas: savedDeck.techIdeas?.length || 0,
+          localSideboardCount: (deckToSave.sideboard || []).length,
+          localTechIdeasCount: (deckToSave.techIdeas || []).length,
+          willPreserveFromLocal: !savedDeck.sideboard || !savedDeck.techIdeas
+        });
         
         // CRITICAL FIX: Merge server response with local card data to preserve detailed information
         // Server returns cleaned data but we need to preserve type_line, scryfall data, etc.
@@ -4435,13 +4442,21 @@ export default function DeckViewEdit({ isPublic = false }) {
           return serverCard;
         });
         
-        // Update local state with merged data to preserve card details
+        // Update local state with merged data to preserve card details AND sideboard/techIdeas
         const deckWithCommander = {
           ...savedDeck,
-          cards: ensureCommanderInCards({ ...savedDeck, cards: mergedCards })
+          cards: ensureCommanderInCards({ ...savedDeck, cards: mergedCards }),
+          // CRITICAL FIX: Preserve sideboard and techIdeas even if server doesn't return them
+          sideboard: savedDeck.sideboard || deckToSave.sideboard || [],
+          techIdeas: savedDeck.techIdeas || deckToSave.techIdeas || []
         };
         setDeck(deckWithCommander);
         setCards(deckWithCommander.cards || []);
+        
+        // Save sideboard/techIdeas to localStorage for additional persistence
+        if (deckWithCommander.sideboard?.length > 0 || deckWithCommander.techIdeas?.length > 0) {
+          saveSideboardToStorage(deckToSave._id, deckWithCommander.sideboard, deckWithCommander.techIdeas);
+        }
       } else {
         // Server doesn't support sideboard/techIdeas - use fallback with localStorage
         console.log(`[SAVE DECK] Server doesn't support zones, using localStorage fallback`);
