@@ -1491,11 +1491,13 @@ export default function DeckViewEdit({ isPublic = false }) {
           };
         }
         
-        console.log('[DEBUG] setDeck function update called from:', {
-          hasCommander: result?.commander !== undefined,
-          commander: result?.commander,
-          stackTrace: stack?.split('\n')[2]?.trim() || 'Unknown'
-        });
+        // DEBUG: Reduced logging for performance
+        if (renderCounter.current % 100 === 0) {
+          console.log('[DEBUG] setDeck function update called from:', {
+            hasCommander: result?.commander !== undefined,
+            stackTrace: stack?.split('\n')[2]?.trim() || 'Unknown'
+          });
+        }
         
         return result;
       });
@@ -1518,11 +1520,13 @@ export default function DeckViewEdit({ isPublic = false }) {
         };
       }
       
-      console.log('[DEBUG] setDeck direct value called from:', {
-        hasCommander: finalDeck?.commander !== undefined,
-        commander: finalDeck?.commander,
-        stackTrace: stack?.split('\n')[2]?.trim() || 'Unknown'
-      });
+      // DEBUG: Reduced logging for performance
+      if (renderCounter.current % 100 === 0) {
+        console.log('[DEBUG] setDeck direct value called from:', {
+          hasCommander: finalDeck?.commander !== undefined,
+          stackTrace: stack?.split('\n')[2]?.trim() || 'Unknown'
+        });
+      }
       return setDeckOriginal(finalDeck);
     }
   }, [setDeckOriginal, deck]);
@@ -1586,16 +1590,15 @@ export default function DeckViewEdit({ isPublic = false }) {
     console.log('[PRICE CACHE] Cleared cache due to deck change');
   }, [deck?._id]); // Only clear when deck ID changes, not on every card count change
   
-  // DEBUG: Monitor deck state changes
+  // DEBUG: Monitor deck state changes (reduced logging for performance)
   useEffect(() => {
-    console.log('[DEBUG] Deck state changed:', {
-      deckExists: !!deck,
-      deckId: deck?._id,
-      deckCommander: deck?.commander,
-      deckCommanderNames: deck?.commanderNames,
-      hasCommander: 'commander' in (deck || {}),
-      hasCommanderNames: 'commanderNames' in (deck || {})
-    });
+    if (renderCounter.current % 20 === 0) {
+      console.log('[DEBUG] Deck state changed:', {
+        deckExists: !!deck,
+        deckId: deck?._id,
+        hasCommander: !!deck?.commander
+      });
+    }
   }, [deck]);
   
   // Wrapper function to preserve emergency cards across all state updates
@@ -10061,7 +10064,10 @@ export default function DeckViewEdit({ isPublic = false }) {
         }
       };
       
-      console.log('[GLOBAL FUNCTIONS] Exposed deck editing functions to window.deckEditApp');
+      // DEBUG: Reduced logging for performance
+      if (renderCounter.current % 50 === 0) {
+        console.log('[GLOBAL FUNCTIONS] Exposed deck editing functions to window.deckEditApp');
+      }
     }
     
     // Cleanup on unmount
@@ -10070,7 +10076,7 @@ export default function DeckViewEdit({ isPublic = false }) {
         delete window.deckEditApp;
       }
     };
-  }, [handleAddToSideboard, handleAddToTechIdeas, handleMoveToSideboard, handleMoveToTechIdeas, handleRemoveFromSideboard, handleRemoveFromTechIdeas, setModalState]);
+  }, [deck?._id]); // Only re-run when deck changes, not on every function change
 
   // Early returns MUST come after all hooks to avoid "fewer hooks than expected" error
   // Minimal logging for production
