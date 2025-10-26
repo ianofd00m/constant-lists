@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 // REMOVED: Strong animation fix for testing
 // import './strong-animation-fix.css'

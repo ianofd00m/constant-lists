@@ -20,6 +20,8 @@ export default defineConfig({
     },
     // Increase chunk size limit to avoid warnings
     chunkSizeWarningLimit: 1000,
+    // Copy public assets
+    copyPublicDir: true,
   },
   
   // Development server configuration
