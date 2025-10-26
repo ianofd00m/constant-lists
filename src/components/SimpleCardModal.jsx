@@ -79,9 +79,10 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
         const data = await response.json();
         allPrintings = data.data || [];
         
-        // Fetch additional pages if available
+        // PERFORMANCE: Limit initial printings to improve modal load time
+        // Fetch additional pages but limit to first 20 for faster loading
         let nextUrl = data.next_page;
-        while (nextUrl && allPrintings.length < 50) { // Reasonable limit
+        while (nextUrl && allPrintings.length < 20) { // Reduced limit for faster loading
           const nextResponse = await fetch(nextUrl);
           if (nextResponse.ok) {
             const nextData = await nextResponse.json();
@@ -319,13 +320,15 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
                             {isSelected && <div className="current-label">CURRENT</div>}
                             
                             {(() => {
-                              // Handle double-faced cards
+                              // Handle double-faced cards - PERFORMANCE: Use smaller, faster images
                               let imageUrl = null;
-                              if (printing.image_uris?.normal || printing.image_uris?.small) {
-                                imageUrl = printing.image_uris.normal || printing.image_uris.small;
+                              if (printing.image_uris?.border_crop || printing.image_uris?.small || printing.image_uris?.normal) {
+                                // Priority: border_crop (faster) -> small -> normal (slowest)
+                                imageUrl = printing.image_uris.border_crop || printing.image_uris.small || printing.image_uris.normal;
                               } else if (printing.card_faces?.[0]?.image_uris) {
                                 // For double-faced cards, use the front face image
-                                imageUrl = printing.card_faces[0].image_uris.normal || printing.card_faces[0].image_uris.small;
+                                const faceImages = printing.card_faces[0].image_uris;
+                                imageUrl = faceImages.border_crop || faceImages.small || faceImages.normal;
                               }
                               
                               return imageUrl && (
@@ -334,6 +337,17 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
                                     src={imageUrl} 
                                     alt={printing.name}
                                     className="printing-preview-img"
+                                    loading="lazy"
+                                    style={{
+                                      backgroundColor: '#f5f5f5',
+                                      minHeight: '88px'
+                                    }}
+                                    onError={(e) => {
+                                      // Fallback to normal image if border_crop fails
+                                      if (e.target.src !== (printing.image_uris?.normal || printing.card_faces?.[0]?.image_uris?.normal)) {
+                                        e.target.src = printing.image_uris?.normal || printing.card_faces?.[0]?.image_uris?.normal;
+                                      }
+                                    }}
                                   />
                                 </div>
                               );
@@ -347,6 +361,7 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
                                       src={setIconUrl} 
                                       alt={printing.set?.toUpperCase()} 
                                       className="set-symbol"
+                                      loading="lazy"
                                       onError={(e) => e.target.style.display = 'none'}
                                     />
                                   )}
