@@ -436,18 +436,44 @@ app.get('/api/otag-data', async (req, res) => {
     const fs = require('fs').promises;
     const path = require('path');
     
-    // Try multiple file paths
+    // Log current working directory and __dirname for debugging
+    console.log(`🔍 Server __dirname: ${__dirname}`);
+    console.log(`🔍 Process cwd: ${process.cwd()}`);
+    
+    // Try multiple file paths with better path resolution
     const possiblePaths = [
+      // Full path variations
       path.join(__dirname, '..', 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      path.join(process.cwd(), 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      path.join(__dirname, 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      // Alternative file names
       path.join(__dirname, '..', 'public', 'FULL OTAGS.csv'),
-      path.join(__dirname, '..', 'public', 'test-otag-data.csv')
+      path.join(process.cwd(), 'public', 'FULL OTAGS.csv'),
+      // Test data as last resort
+      path.join(__dirname, '..', 'public', 'test-otag-data.csv'),
+      path.join(process.cwd(), 'public', 'test-otag-data.csv')
     ];
+    
+    // Also list what files actually exist in the public directory
+    try {
+      const publicDir = path.join(__dirname, '..', 'public');
+      const files = await fs.readdir(publicDir);
+      console.log(`📁 Files in public directory (${publicDir}):`, files.filter(f => f.endsWith('.csv')));
+    } catch (dirErr) {
+      console.log('⚠️ Could not list public directory:', dirErr.message);
+    }
     
     for (const filePath of possiblePaths) {
       try {
         console.log(`🔍 Trying OTAG file: ${filePath}`);
         const csvData = await fs.readFile(filePath, 'utf8');
-        console.log(`✅ Loaded OTAG file: ${filePath} (${csvData.length} characters)`);
+        console.log(`✅ Loaded OTAG file: ${filePath} (${csvData.length} characters, ${Math.round(csvData.length/1024/1024*100)/100}MB)`);
+        
+        // Only accept files with substantial data (> 100KB for full dataset)
+        if (csvData.length < 100000) {
+          console.log(`⚠️ File too small (${csvData.length} chars), continuing to next source...`);
+          continue;
+        }
         
         // Set appropriate headers
         res.set({
