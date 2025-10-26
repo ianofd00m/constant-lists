@@ -1275,9 +1275,12 @@ app.post('/api/auth/register', async (req, res) => {
     
     console.log('📝 Registration attempt:', { username, email });
     
-    // Check if user already exists in MongoDB
+    // Check if user already exists in MongoDB (case-insensitive)
     const existingUser = await User.findOne({
-      $or: [{ email: email }, { username: username }]
+      $or: [
+        { email: { $regex: new RegExp(`^${email}$`, 'i') } },
+        { username: { $regex: new RegExp(`^${username}$`, 'i') } }
+      ]
     });
     
     if (existingUser) {
@@ -1329,11 +1332,12 @@ app.post('/api/auth/login', async (req, res) => {
     
     console.log('🔐 Login attempt:', { username, email });
     
-    // Find user by username or email in MongoDB
+    // Find user by username or email in MongoDB (case-insensitive)
+    const searchTerm = username || email;
     const user = await User.findOne({
       $or: [
-        { username: username || email },
-        { email: email || username }
+        { username: { $regex: new RegExp(`^${searchTerm}$`, 'i') } },
+        { email: { $regex: new RegExp(`^${searchTerm}$`, 'i') } }
       ]
     });
     
