@@ -573,7 +573,6 @@ button:focus, input:focus {
 
 /* Clickable header styling for bulk edit mode */
 .card-type-header.clickable-header {
-  padding: 6px 8px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
   user-select: none;

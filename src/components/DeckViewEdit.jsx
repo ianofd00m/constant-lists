@@ -2960,8 +2960,14 @@ export default function DeckViewEdit({ isPublic = false }) {
           cards: ensureCommanderInCards({ ...serverResponse, cards: mergedAddCards })
         };
 
-        // PERFORMANCE FIX: Batch state updates to prevent render loops
-        setDeck(finalDeck);
+        // ZONE PRESERVATION FIX: Preserve current sideboard/techIdeas when updating with server response
+        // Server doesn't return zones, so we need to keep the current ones from deck state
+        setDeck(prevDeck => ({
+          ...finalDeck,
+          // Preserve current sideboard/techIdeas from previous state
+          sideboard: prevDeck?.sideboard || [],
+          techIdeas: prevDeck?.techIdeas || []
+        }));
         setCardsWithEmergencyPreservation(finalDeck.cards || []);
         
         // Update success message
@@ -3104,7 +3110,13 @@ export default function DeckViewEdit({ isPublic = false }) {
           cards: mergedCards
         };
         
-        setDeck(mergedDeck);
+        // ZONE PRESERVATION FIX: Preserve current sideboard/techIdeas when updating merged deck
+        setDeck(prevDeck => ({
+          ...mergedDeck,
+          // Preserve current sideboard/techIdeas from previous state
+          sideboard: prevDeck?.sideboard || [],
+          techIdeas: prevDeck?.techIdeas || []
+        }));
         setCards(mergedCards);
 
         toast.success(`Added ${cardToAdd.name} to deck`);
@@ -3581,10 +3593,19 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Prepare data for server update
 
       // Make the API call to save changes to the server
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please log in again.");
+      }
+      
       const apiUrl = import.meta.env.VITE_API_URL;
       const res = await fetch(`${apiUrl}/api/decks/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        credentials: "include",
         body: JSON.stringify({
           cards: cleanCards,
           name: name || deck.name,
@@ -3639,6 +3660,9 @@ export default function DeckViewEdit({ isPublic = false }) {
         ...prev,
         ...updatedCardData,
         cards: updatedCards, // Keep our local card state with all the UI-needed fields
+        // ZONE PRESERVATION FIX: Preserve current sideboard/techIdeas from printing updates
+        sideboard: prev?.sideboard || [],
+        techIdeas: prev?.techIdeas || []
       }));
 
       toast.success(`Updated ${originalName} to ${newPrintingCard.set_name}.`);
@@ -6994,10 +7018,13 @@ export default function DeckViewEdit({ isPublic = false }) {
             });
           }
           
-          // Update deck state with merged data
+          // Update deck state with merged data while preserving zones
           setDeck(prevDeck => ({
             ...prevDeck,
-            ...mergedResponseData
+            ...mergedResponseData,
+            // ZONE PRESERVATION FIX: Preserve current sideboard/techIdeas
+            sideboard: prevDeck?.sideboard || [],
+            techIdeas: prevDeck?.techIdeas || []
           }));
 
           // Show success message only after successful server update

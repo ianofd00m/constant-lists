@@ -5,6 +5,7 @@ const getTypeIconSrc = (type) => {
   const lowerType = type.toLowerCase();
   
   // Map card types to SVG filenames
+  if (lowerType.includes('commander')) return '/svgs/cmd.svg';
   if (lowerType.includes('creature')) return '/svgs/creature.svg';
   if (lowerType.includes('planeswalker')) return '/svgs/planeswalker.svg';
   if (lowerType.includes('instant')) return '/svgs/instant.svg';
@@ -66,6 +67,8 @@ function CardTypeHeader({ type, count, onClick, isClickable = false }) {
       {isClickable && (
         <span style={{ 
           marginLeft: 'auto', 
+          marginRight: '4px',
+          marginTop: '2px',
           fontSize: '11px', 
           color: '#666',
           fontWeight: 'normal' 
