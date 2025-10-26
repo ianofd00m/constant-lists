@@ -1247,6 +1247,13 @@ export default function ResearchPage() {
         isOpen={showModal}
         onClose={handleCloseModal}
         userDecks={userDecks}
+        onOracleTagSearch={(oracleTag) => {
+          console.log(`[ResearchPage] Oracle tag search triggered: ${oracleTag}`);
+          // Close the modal and perform the search
+          handleCloseModal();
+          setSearchQuery(oracleTag);
+          handleSearch(oracleTag);
+        }}
       />
     </div>
   );

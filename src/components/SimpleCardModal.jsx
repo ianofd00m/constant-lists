@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './CardActionsModal.css';
 import OracleTagsIntegration from './OracleTagsIntegration';
 
-const SimpleCardModal = ({ card, isOpen, onClose, userDecks }) => {
+const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }) => {
   const [selectedDeckId, setSelectedDeckId] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
@@ -420,9 +420,12 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks }) => {
                   card={selectedPrinting}
                   onOracleTagSearch={(oracleTag) => {
                     console.log(`[SimpleCardModal] Oracle tag search requested: ${oracleTag}`);
-                    // For research page, we'll just show an alert for now
-                    // This could be enhanced to trigger actual search functionality
-                    alert(`Search for oracle tag: "${oracleTag}"\n\nThis feature can be enhanced to integrate with your search system.`);
+                    // Use the passed handler if available, otherwise show alert
+                    if (onOracleTagSearch) {
+                      onOracleTagSearch(oracleTag);
+                    } else {
+                      alert(`Search for oracle tag: "${oracleTag}"\n\nThis feature can be enhanced to integrate with your search system.`);
+                    }
                   }}
                 />
               </div>
