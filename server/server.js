@@ -589,7 +589,7 @@ async function enrichDeckWithScryfallData(deck) {
 // User's decks endpoint - requires authentication
 app.get('/api/decks/mine', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.user.id;
     const userDecks = await Deck.find({ owner: new mongoose.Types.ObjectId(userId) }).sort({ updatedAt: -1 });
     
     console.log(`📚 Fetching user decks for ${userId} - returning ${userDecks.length} decks`);
@@ -610,7 +610,7 @@ app.get('/api/decks/mine', authenticateToken, async (req, res) => {
 app.get('/api/decks/:deckId', authenticateToken, async (req, res) => {
   try {
     const deckId = req.params.deckId;
-    const userId = req.user.id;
+    const userId = req.user.user.id;
     
     console.log(`🔍 Fetching deck: ${deckId} for user: ${userId}`);
     
@@ -662,7 +662,7 @@ app.get('/api/decks/:deckId/cards', (req, res) => {
 app.post('/api/decks', authenticateToken, async (req, res) => {
   try {
     const { name, format, colors, cards, commander } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.user.id;
     
     console.log(`📝 Creating new deck: ${name} for user: ${userId}`, { 
       format, 
@@ -800,7 +800,7 @@ app.post('/api/decks', authenticateToken, async (req, res) => {
 app.put('/api/decks/:deckId', authenticateToken, async (req, res) => {
   try {
     const deckId = req.params.deckId;
-    const userId = req.user.id;
+    const userId = req.user.user.id;
     const updates = req.body;
     
     console.log(`📝 Updating deck: ${deckId} for user: ${userId}`, Object.keys(updates));
@@ -860,7 +860,7 @@ app.put('/api/decks/:deckId', authenticateToken, async (req, res) => {
 app.delete('/api/decks/:deckId', authenticateToken, async (req, res) => {
   try {
     const deckId = req.params.deckId;
-    const userId = req.user.id;
+    const userId = req.user.user.id;
     
     console.log(`🗑️ Deleting deck: ${deckId} for user: ${userId}`);
     

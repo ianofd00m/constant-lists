@@ -11,15 +11,27 @@
   ],
   "routes": [
     {
-      "src": "/(.+\\.js)$",
-      "headers": { "Content-Type": "application/javascript; charset=utf-8" }
+      "handle": "filesystem"
     },
     {
-      "handle": "filesystem"
+      "src": "/(.*\\.js)$",
+      "headers": { "Content-Type": "application/javascript; charset=utf-8" },
+      "continue": true
     },
     {
       "src": "/(.*)",
       "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*\\.js)$",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
     }
   ]
 }
