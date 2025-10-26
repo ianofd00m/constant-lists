@@ -9592,6 +9592,37 @@ export default function DeckViewEdit({ isPublic = false }) {
             {deck.name || "Untitled Deck"}
           </h2>
           
+          {/* Share button for deck owners */}
+          {!isReadOnly && (
+            <button
+              onClick={() => {
+                const publicUrl = `${window.location.origin}/public/decks/${id}`;
+                navigator.clipboard.writeText(publicUrl);
+                toast.success("Public share link copied to clipboard!");
+              }}
+              style={{
+                backgroundColor: "#2196f3",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                fontWeight: "500",
+                cursor: "pointer",
+                marginTop: "4px",
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                width: "fit-content"
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1976d2"}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#2196f3"}
+            >
+              🔗 Copy Public Share Link
+            </button>
+          )}
+          
           {/* Read-only indicator */}
           {isReadOnly && (
             <div style={{
