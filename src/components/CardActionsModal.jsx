@@ -1227,7 +1227,16 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
 
   const handleQuantityChange = (e) => {
     let newQuantity = parseInt(e.target.value, 10);
-    if (isNaN(newQuantity)) newQuantity = 1;
+    
+    // Handle invalid input - reset to 1
+    if (isNaN(newQuantity) || newQuantity === 0) {
+      newQuantity = 1;
+    }
+    
+    // Enforce reasonable maximum (999)
+    if (newQuantity > 999) {
+      newQuantity = 999;
+    }
     
     // If quantity is less than 1, remove the card
     if (newQuantity < 1) {
@@ -1240,9 +1249,11 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
   };
 
   const incrementQuantity = () => {
-    const newQuantity = quantity + 1;
-    setQuantity(newQuantity);
-    onUpdateCard(card, { quantity: newQuantity });
+    const newQuantity = Math.min(quantity + 1, 999); // Enforce max limit
+    if (newQuantity !== quantity) {
+      setQuantity(newQuantity);
+      onUpdateCard(card, { quantity: newQuantity });
+    }
   };
 
   const decrementQuantity = () => {
@@ -1419,15 +1430,15 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
                   onClick={decrementQuantity}
                   disabled={quantity <= 1}
                 >−</button>
-                <select 
+                <input 
+                  type="number" 
                   value={quantity} 
                   onChange={handleQuantityChange}
-                  className="quantity-select"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
+                  className="quantity-input"
+                  min="1"
+                  max="999"
+                  step="1"
+                />
                 <button 
                   className="quantity-btn" 
                   onClick={incrementQuantity}

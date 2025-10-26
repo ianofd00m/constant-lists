@@ -2223,6 +2223,27 @@ export default function DeckViewEdit({ isPublic = false }) {
   const [modalSearchTerm, setModalSearchTerm] = useState(""); // Track what search term opened the modal
   const [modalSearch, setModalSearch] = useState(""); // Internal modal search input
 
+  // Lock body scroll when search modal is open
+  useEffect(() => {
+    if (showSearchModal) {
+      // Save current scroll position and lock body
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scroll position and unlock body
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showSearchModal]);
+
   // Close export/import dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -5477,7 +5498,7 @@ export default function DeckViewEdit({ isPublic = false }) {
       // console.log('🔄 Setting allSearchResults state with', results.length, 'results');
       setAllSearchResults(Array.isArray(results) ? results : []);
       setModalSearchTerm(query.trim()); // Store the original search term that opened the modal
-      setModalSearch(query.trim()); // Initialize modal search with the same term
+      setModalSearch(""); // Clear modal search input so users can search freely
       // console.log('🔄 Opening search modal and closing dropdown');
       setShowSearchModal(true);
       setShowDropdown(false); // Close the dropdown only after successful fetch
@@ -5615,9 +5636,9 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Format the search query for oracle tags
       const searchQuery = `oracletag:${oracleTag}`;
       
-      // Set the modal search input with the oracle tag search so users can add more criteria
-      setModalSearch(searchQuery);
-      setModalSearchTerm(searchQuery);
+      // Clear the modal search input so users can search freely
+      setModalSearch("");
+      setModalSearchTerm(searchQuery); // Keep the original search term for reference
       
       // Set the search term so the modal title shows correctly
       setSearch(`Oracle Tag: ${oracleTag.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`);
@@ -7286,9 +7307,80 @@ export default function DeckViewEdit({ isPublic = false }) {
     }
   };
 
-  const handleBulkAddToWishlist = () => {
-    // TODO: Implement wishlist functionality
-    toast.info(`Wishlist feature coming soon! Would add ${selectedCards.size} cards to wishlist.`);
+  const handleBulkAddToWishlist = async () => {
+    try {
+      const cardsToAdd = Array.from(selectedCards).map(cardName => {
+        return cards.find(card => (card.card?.name || card.name) === cardName);
+      }).filter(Boolean);
+      
+      if (cardsToAdd.length === 0) {
+        toast.error("No valid cards selected for wishlist");
+        return;
+      }
+      
+      // Load existing wishlist from localStorage
+      const existingWishlist = JSON.parse(localStorage.getItem('global-wishlist') || '[]');
+      let addedCount = 0;
+      let updatedCount = 0;
+      
+      cardsToAdd.forEach(card => {
+        const cardData = card.scryfall_json || card.cardObj || card;
+        
+        const newWishlistCard = {
+          name: card.name || card.card?.name,
+          printing: card.printing || cardData.scryfall_id || cardData.id,
+          foil: false,
+          count: card.count || 1,
+          dateAdded: Date.now(),
+          cardObj: {
+            scryfall_id: cardData.scryfall_id || cardData.id,
+            name: cardData.name,
+            set: cardData.set,
+            set_name: cardData.set_name,
+            collector_number: cardData.collector_number,
+            image_uris: cardData.image_uris,
+            type_line: cardData.type_line,
+            mana_cost: cardData.mana_cost,
+            cmc: cardData.cmc,
+            colors: cardData.colors,
+            color_identity: cardData.color_identity,
+            prices: cardData.prices
+          },
+          scryfall_json: cardData
+        };
+        
+        // Check if card already exists in wishlist
+        const existingCardIndex = existingWishlist.findIndex(item => 
+          item.name === newWishlistCard.name && item.printing === newWishlistCard.printing
+        );
+        
+        if (existingCardIndex !== -1) {
+          // Card exists, increment quantity
+          existingWishlist[existingCardIndex].count += (card.count || 1);
+          updatedCount++;
+        } else {
+          // New card, add to wishlist
+          existingWishlist.push(newWishlistCard);
+          addedCount++;
+        }
+      });
+      
+      // Save updated wishlist to localStorage
+      localStorage.setItem('global-wishlist', JSON.stringify(existingWishlist));
+      
+      // Dispatch custom event to update navbar or other components
+      window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: existingWishlist }));
+      
+      // Clear selection and exit bulk mode
+      setSelectedCards(new Set());
+      setBulkEditMode(false);
+      
+      toast.success(`Added ${addedCount} new cards and updated ${updatedCount} existing cards in wishlist`);
+      
+    } catch (error) {
+      console.error("Error bulk adding cards to wishlist:", error);
+      toast.error("Error adding cards to wishlist");
+    }
   };
 
   // Function to handle section header clicks - select/deselect all cards in a section
@@ -9701,6 +9793,64 @@ export default function DeckViewEdit({ isPublic = false }) {
     }
   };
 
+  // Function to add card to global wishlist
+  const handleAddToWishlist = async (card) => {
+    try {
+      console.log('Add to Wishlist:', card.name);
+      
+      // Create the card object with proper structure
+      const newWishlistCard = {
+        name: card.name,
+        printing: card.scryfall_id || card.id,
+        foil: false,
+        count: 1,
+        dateAdded: Date.now(),
+        cardObj: {
+          scryfall_id: card.scryfall_id || card.id,
+          name: card.name,
+          set: card.set,
+          set_name: card.set_name,
+          collector_number: card.collector_number,
+          image_uris: card.image_uris,
+          type_line: card.type_line,
+          mana_cost: card.mana_cost,
+          cmc: card.cmc,
+          colors: card.colors,
+          color_identity: card.color_identity,
+          prices: card.prices
+        },
+        scryfall_json: card
+      };
+
+      // Load existing wishlist from localStorage
+      const existingWishlist = JSON.parse(localStorage.getItem('global-wishlist') || '[]');
+      
+      // Check if card already exists in wishlist
+      const existingCardIndex = existingWishlist.findIndex(item => 
+        item.name === card.name && item.printing === (card.scryfall_id || card.id)
+      );
+      
+      if (existingCardIndex !== -1) {
+        // Card exists, increment quantity
+        existingWishlist[existingCardIndex].count += 1;
+        toast.success(`Updated ${card.name} quantity in wishlist (now ${existingWishlist[existingCardIndex].count})`);
+      } else {
+        // New card, add to wishlist
+        existingWishlist.push(newWishlistCard);
+        toast.success(`Added ${card.name} to wishlist`);
+      }
+      
+      // Save updated wishlist to localStorage
+      localStorage.setItem('global-wishlist', JSON.stringify(existingWishlist));
+      
+      // Dispatch custom event to update navbar or other components
+      window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: existingWishlist }));
+      
+    } catch (error) {
+      console.error("Error adding card to wishlist:", error);
+      toast.error("Error adding card to wishlist");
+    }
+  };
 
   // Function to move card from main deck to sideboard
   const handleMoveToSideboard = async (cardObj) => {
@@ -12396,9 +12546,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // TODO: Implement wishlist functionality
-                                console.log('Add to Wishlist:', card.name);
-                                toast.info(`Added ${card.name} to Wishlist (feature coming soon!)`);
+                                handleAddToWishlist(card);
                               }}
                               style={{
                                 backgroundColor: "#ff9800",
