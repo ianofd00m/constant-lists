@@ -4,7 +4,7 @@ import './CardActionsModal.css';
 import './CardActionsModalOverlay.css'; // Import direct overlay CSS
 import PrintingPreferences from '../utils/PrintingPreferences';
 import PrintingCache from '../utils/PrintingCache';
-// import OracleTagsIntegration from './OracleTagsIntegration'; // Disabled: Using Production OTAG System
+import OracleTagsIntegration from './OracleTagsIntegration';
 import { getUnifiedCardPrice, formatPrice } from '../utils/UnifiedPricing';
 // import OtagIntegration from './OtagIntegration'; // Temporarily commented out to debug
 
@@ -1654,11 +1654,11 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
                     </div>
                   )}
                   
-                  {/* Oracle Tags Integration - Disabled: Using Production OTAG System instead */}
-                  {/* <OracleTagsIntegration 
+                  {/* Oracle Tags Integration - Using Production OTAG System data */}
+                  <OracleTagsIntegration 
                     card={card}
                     onOracleTagSearch={handleOracleTagSearch}
-                  /> */}
+                  />
                 </div>
               </div>
             )}

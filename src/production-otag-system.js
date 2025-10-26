@@ -788,6 +788,23 @@ class ProductionOtagSystem {
     isDataLoaded() {
         return this.isLoaded;
     }
+
+    getTagsForCard(cardName) {
+        if (!this.isReady || !cardName) {
+            return [];
+        }
+        
+        const cardKey = cardName.toLowerCase();
+        const cardData = this.otagDatabase.get(cardKey);
+        
+        if (cardData && cardData.otags) {
+            console.log(`[ProductionOtagSystem] Found ${cardData.otags.length} tags for "${cardName}":`, cardData.otags);
+            return cardData.otags;
+        }
+        
+        console.log(`[ProductionOtagSystem] No tags found for "${cardName}"`);
+        return [];
+    }
 }
 
 // Auto-initialize when DOM is ready

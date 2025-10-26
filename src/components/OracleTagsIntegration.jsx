@@ -12,21 +12,27 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
   const [error, setError] = useState(null);
   const [oracleTagsData, setOracleTagsData] = useState(new Map());
 
-  // Load oracle tags data once when component mounts
+  // Use Production OTAG System data instead of loading our own
   useEffect(() => {
-    loadOracleTagsData();
+    // Skip loading our own data - Production OTAG System handles this
+    console.log('[OracleTagsIntegration] Using Production OTAG System data');
+    setLoading(false);
   }, []);
 
-  // Update tags when card changes
+  // Update tags when card changes - use Production OTAG System
   useEffect(() => {
-    if (card && oracleTagsData.size > 0) {
+    if (card) {
       const cardName = getCardName(card);
-      if (cardName) {
-        const tags = oracleTagsData.get(cardName.toLowerCase());
+      if (cardName && window.productionOtagSystem) {
+        console.log(`[OracleTagsIntegration] Getting tags for: ${cardName}`);
+        const tags = window.productionOtagSystem.getTagsForCard(cardName);
         setOracleTags(tags || []);
+        console.log(`[OracleTagsIntegration] Found ${(tags || []).length} tags for ${cardName}`);
+      } else {
+        setOracleTags([]);
       }
     }
-  }, [card, oracleTagsData]);
+  }, [card]);
 
   const getCardName = (cardObj) => {
     // Extract card name from various possible structures
@@ -39,6 +45,8 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     return null;
   };
 
+  // DISABLED: Using Production OTAG System instead
+  /*
   const loadOracleTagsData = async () => {
     try {
       setLoading(true);
@@ -94,6 +102,7 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
       setLoading(false);
     }
   };
+  */
 
   const handleTagClick = useCallback((tag) => {
     console.log(`[OracleTagsIntegration] 🔍 Oracle tag clicked: ${tag}`);
