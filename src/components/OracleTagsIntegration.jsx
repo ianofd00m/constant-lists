@@ -145,6 +145,16 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     }
   }, [onOracleTagSearch]);
 
+  // AGGRESSIVE FIX: Handle tag click on mousedown to prevent layout issues
+  const handleTagMouseDown = useCallback((e, tag) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Use setTimeout to ensure any layout changes complete before handling click
+    setTimeout(() => {
+      handleTagClick(tag);
+    }, 0);
+  }, [handleTagClick]);
+
   const groupTags = (tags) => {
     const groups = {
       'Mechanics & Effects': [],
@@ -342,14 +352,11 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                               '--tag-text': colors.text
                             }}
                             onClick={(e) => {
+                              // Backup click handler - disabled to prevent double triggers
                               e.preventDefault();
                               e.stopPropagation();
-                              handleTagClick(tag);
                             }}
-                            onMouseDown={(e) => {
-                              // LAYOUT FIX: Prevent default to avoid layout issues
-                              e.preventDefault();
-                            }}
+                            onMouseDown={(e) => handleTagMouseDown(e, tag)}
                             title={`Search for cards with "${tag}" functionality`}
                           >
                             {formatTagName(tag)}
@@ -382,14 +389,11 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                               '--tag-text': colors.text
                             }}
                             onClick={(e) => {
+                              // Backup click handler - disabled to prevent double triggers
                               e.preventDefault();
                               e.stopPropagation();
-                              handleTagClick(tag);
                             }}
-                            onMouseDown={(e) => {
-                              // LAYOUT FIX: Prevent default to avoid layout issues
-                              e.preventDefault();
-                            }}
+                            onMouseDown={(e) => handleTagMouseDown(e, tag)}
                             title={`Search for cards with "${tag}" functionality`}
                           >
                             {formatTagName(tag)}
