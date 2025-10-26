@@ -5158,7 +5158,10 @@ export default function DeckViewEdit() {
         currentColorId,
         deckFormat: deck?.format,
         commander: deck?.commander,
-        commanderNames: deck?.commanderNames
+        commanderNames: deck?.commanderNames,
+        commanderCard: deck?.commander?.[0],
+        commanderColorIdentity: deck?.commander?.[0]?.card?.color_identity || deck?.commander?.[0]?.color_identity,
+        commanderName: deck?.commander?.[0]?.card?.name || deck?.commander?.[0]?.name
       });
       
       // Use the same backend API that respects color identity constraints
