@@ -101,6 +101,7 @@ class ProductionOtagSystem {
             
             // Try multiple data sources
             const dataSources = [
+                './test-otag-data.csv',
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './FULL OTAGS.csv',
                 './data/scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
