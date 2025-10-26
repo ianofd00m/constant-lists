@@ -344,19 +344,32 @@ app.get('/api/cards/typesense-search', async (req, res) => {
     let searchQuery = query.trim() || '*';
     
     // Add commander color identity filtering if provided
-    if (colorIdentity && colorIdentity.trim() && deckFormat === 'Commander / EDH') {
+    const isCommanderFormat = deckFormat && (
+      deckFormat === 'Commander / EDH' || 
+      deckFormat.toLowerCase().includes('commander') || 
+      deckFormat.toLowerCase().includes('edh')
+    );
+    
+    if (colorIdentity && colorIdentity.trim() && isCommanderFormat) {
       const commanderColors = colorIdentity.toUpperCase().split('').filter(c => ['W','U','B','R','G'].includes(c));
       
       if (commanderColors.length === 0) {
         // Colorless commander - only colorless cards
         searchQuery += ' ci:c';
-        console.log(`🎯 Commander color identity filter applied: colorless`);
+        console.log(`🎯 Commander color identity filter applied: colorless (format: "${deckFormat}")`);
       } else {
         // For Commander format, restrict to cards within commander's color identity
         const colorString = commanderColors.join('');
         searchQuery += ` ci<=${colorString}`;
-        console.log(`🎯 Commander color identity filter applied: ${colorString}`);
+        console.log(`🎯 Commander color identity filter applied: ${colorString} (format: "${deckFormat}")`);
       }
+    } else {
+      console.log(`❌ Color identity filtering NOT applied:`, {
+        hasColorIdentity: !!colorIdentity,
+        colorIdentity,
+        deckFormat,
+        isCommanderFormat
+      });
     }
     
     // Add format legality if specified
