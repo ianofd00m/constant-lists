@@ -1,0 +1,108 @@
+/* Ultra-visible foil shimmer animation for testing */
+@keyframes foilShimmerSmooth {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes foil-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Ultra-visible foil overlay for testing */
+.foil-overlay-direct {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 10px !important;
+  
+  /* Ultra-visible rotating conic gradient for testing */
+  background: conic-gradient(
+    from 0deg,
+    #ff0000 0deg,
+    #ff8000 60deg,
+    #ffff00 120deg,
+    #00ff00 180deg,
+    #0080ff 240deg,
+    #8000ff 300deg,
+    #ff0000 360deg
+  ) !important;
+  
+  animation: foilShimmerSmooth 2s linear infinite !important;
+  mix-blend-mode: screen !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+  will-change: transform !important;
+  transform: translateZ(0) !important;
+  border: 5px solid #00ff00 !important;
+  box-sizing: content-box !important; /* Override global border-box to fix modal layout */
+  opacity: 0.7 !important;
+}
+
+.foil-overlay-direct.active {
+  opacity: 1 !important;
+  animation-play-state: running !important;
+  background-color: rgba(255, 0, 0, 0.5) !important; /* Fallback red background */
+}
+
+.foil-overlay-direct.inactive {
+  opacity: 0 !important;
+  animation-play-state: paused !important;
+}
+
+.foil-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 10px;
+  pointer-events: none;
+  box-sizing: content-box; /* Override global border-box to prevent layout issues */
+
+  /* Super visible gradient for testing */
+  background: linear-gradient(
+    110deg,
+    rgba(255, 0, 0, 0.8) 0%,
+    rgba(255, 255, 0, 0.8) 25%,
+    rgba(0, 255, 255, 0.8) 50%,
+    rgba(255, 0, 255, 0.8) 75%,
+    rgba(0, 255, 0, 0.8) 100%
+  );
+  
+  background-size: 400% 100%;
+  mix-blend-mode: multiply;
+  z-index: 10;
+
+  /* Animation */
+  animation: foil-sweep 2s ease-in-out infinite;
+  
+  /* Make it visible by default for testing */
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.foil-overlay.foil-active {
+  opacity: 0.9;
+  animation-play-state: running;
+}
+
+.foil-overlay.foil-inactive {
+  opacity: 0;
+  animation-play-state: paused;
+}

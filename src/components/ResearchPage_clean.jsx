@@ -1,0 +1,1021 @@
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import CardActionsModal from './CardActionsModal';
+import './CardActionsModal.css';
+
+// Transform icon component for double-faced cards
+const TransformIcon = ({ size = 12, color = '#1976d2' }) => (
+  <svg 
+    version="1.1" 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size * (32/23)} 
+    viewBox="0 0 23 32"
+    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+  >
+    <path 
+      fill={color} 
+      d="M18.486 28.106c0 1.581-1.282 2.863-2.863 2.863h-12.762c-1.581 0-2.863-1.282-2.863-2.863v-20.157c0-1.581 1.282-2.863 2.863-2.863h2.028v-1.193c0-1.581 1.282-2.863 2.863-2.863h12.762c1.581 0 2.863 1.282 2.863 2.863v20.157c0 1.581-1.282 2.863-2.863 2.863h-2.028v1.193zM15.623 6.995h-12.762c-0.527 0-0.954 0.427-0.954 0.954v20.157c0 0.527 0.427 0.954 0.954 0.954h12.762c0.527 0 0.954-0.427 0.954-0.954v-20.157c0-0.527-0.427-0.954-0.954-0.954zM18.486 25.005h2.028c0.527 0 0.954-0.427 0.954-0.954v-20.157c0-0.527-0.427-0.954-0.954-0.954h-12.762c-0.527 0-0.954 0.427-0.954 0.954v1.193h8.826c1.581 0 2.863 1.282 2.863 2.863v17.056z"
+    />
+  </svg>
+);
+
+// Helper function to extract price from card data (reused from DeckViewEdit)
+const extractPrice = (c) => {
+  if (!c || typeof c !== "object") {
+    return { price: null, source: "invalid_card_object", cardType: "unknown" };
+  }
+
+  // For research page, we use simpler price extraction since cards come directly from Scryfall
+  const prices = c.prices || {};
+  
+  // Default to non-foil price, but could be enhanced later to support foil toggle
+  let price = prices.usd || null;
+  let source = "regular_usd";
+  let cardType = "normal";
+  
+  return {
+    price,
+    source,
+    isFoil: false,
+    cardType,
+  };
+};
+
+// Move CardPreview to top-level so useState works
+function CardPreview({ card, nameStyle, isDoubleFacedCard }) {
+  const [show, setShow] = useState(false);
+  
+  // Check if this is a double-faced card
+  const isDoubleFaced = isDoubleFacedCard ? isDoubleFacedCard(card) : false;
+  
+  // Get image URLs for both sides if double-faced
+  const getFrontImageUrl = () => {
+    if (isDoubleFaced && card.card_faces?.[0]?.image_uris?.normal) {
+      return card.card_faces[0].image_uris.normal;
+    }
+    return card.image_uris?.normal;
+  };
+  
+  const getBackImageUrl = () => {
+    if (isDoubleFaced && card.card_faces?.[1]?.image_uris?.normal) {
+      return card.card_faces[1].image_uris.normal;
+    }
+    return null;
+  };
+  
+  const frontImageUrl = getFrontImageUrl();
+  const backImageUrl = getBackImageUrl();
+  
+  return (
+    <span style={{ position: 'relative' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <span style={nameStyle ? nameStyle : { textDecoration: 'underline', cursor: 'pointer' }}>
+        {card.name}
+      </span>
+      {show && frontImageUrl && (
+        <div style={{
+          position: 'absolute',
+          top: 24,
+          left: 0,
+          zIndex: 10,
+          display: 'flex',
+          gap: '8px',
+          background: '#fff',
+          padding: '8px',
+          borderRadius: 8,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+        }}>
+          <img
+            src={frontImageUrl}
+            alt={`${card.name} - Front`}
+            style={{
+              width: 200,
+              height: 'auto',
+              borderRadius: 4,
+            }}
+          />
+          {isDoubleFaced && backImageUrl && (
+            <img
+              src={backImageUrl}
+              alt={`${card.name} - Back`}
+              style={{
+                width: 200,
+                height: 'auto',
+                borderRadius: 4,
+              }}
+            />
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
+// Add to Shopping Cart function
+function addToShoppingCart(card) {
+  try {
+    const existingCart = localStorage.getItem('shoppingCart');
+    let cartItems = existingCart ? JSON.parse(existingCart) : [];
+    
+    // Check if card is already in cart
+    const existingItemIndex = cartItems.findIndex(item => item.id === card.id);
+    
+    if (existingItemIndex !== -1) {
+      // Increment quantity if card already exists
+      cartItems[existingItemIndex].quantity = (cartItems[existingItemIndex].quantity || 1) + 1;
+      toast.success(`Increased ${card.name} quantity to ${cartItems[existingItemIndex].quantity} in shopping cart`);
+    } else {
+      // Add new item to cart
+      const cartItem = {
+        id: card.id,
+        name: card.name,
+        set_name: card.set_name,
+        type_line: card.type_line,
+        image_url: card.image_uris?.normal,
+        price: card.prices?.usd || '0.00',
+        quantity: 1,
+        scryfall_id: card.id
+      };
+      cartItems.push(cartItem);
+      toast.success(`Added ${card.name} to shopping cart`);
+    }
+    
+    localStorage.setItem('shoppingCart', JSON.stringify(cartItems));
+    // Dispatch event to update navbar cart counter
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+  } catch (error) {
+    console.error('Error adding to shopping cart:', error);
+    toast.error('Failed to add card to shopping cart');
+  }
+}
+
+function SearchBar({ onSearch, loading, query, setQuery }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim()) onSearch(query);
+  };
+  return (
+    <form onSubmit={handleSubmit} style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <input
+        type="text"
+        placeholder="Search cards (Scryfall syntax supported)"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        style={{ flex: 1, minWidth: 180, padding: 8, fontSize: 16, backgroundColor: 'white', border: '1px solid #ccc', borderRadius: 4 }}
+        aria-label="Card search query"
+        data-research-page-search="true"
+      />
+      <button type="submit" disabled={loading} style={{ minWidth: 100 }}>
+        {loading ? 'Searching...' : 'Search'}
+      </button>
+    </form>
+  );
+}
+
+function ManaCostSVG({ manaCost }) {
+  if (!manaCost) return null;
+  // Scryfall mana cost: e.g. "{1}{U}{U}", hybrids: "{W/U}", phyrexian: "{U/P}", etc.
+  const symbols = manaCost.match(/\{.*?\}/g) || [];
+  return (
+    <span style={{ display: 'inline-flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+      {symbols.map((sym, i) => {
+        // Remove braces, slashes, and capitalize all letters, join for hybrids
+        let code = sym.replace(/[{}]/g, '');
+        code = code.replace(/\//g, '');
+        code = code.toUpperCase();
+        // Scryfall expects e.g. "WU" for {W/U}, "2U" for {2/U}, "UP" for {U/P}
+        const url = `https://svgs.scryfall.io/card-symbols/${code}.svg`;
+        return (
+          <img
+            key={i}
+            src={url}
+            alt={sym}
+            style={{ width: 15, height: 15, verticalAlign: 'middle', marginRight: 1 }}
+          />
+        );
+      })}
+    </span>
+  );
+}
+
+// Function to replace mana symbols in text with SVG images
+function renderOracleTextWithSymbols(text) {
+  if (!text) return null;
+  
+  const parts = text.split(/(\{[^}]+\})/);
+  
+  return (
+    <span>
+      {parts.map((part, index) => {
+        if (part.match(/\{[^}]+\}/)) {
+          // This is a mana symbol
+          let code = part.replace(/[{}]/g, '');
+          code = code.replace(/\//g, '');
+          code = code.toUpperCase();
+          
+          const url = `https://svgs.scryfall.io/card-symbols/${code}.svg`;
+          return (
+            <img
+              key={index}
+              src={url}
+              alt={part}
+              style={{ 
+                width: 12, 
+                height: 12, 
+                verticalAlign: 'middle', 
+                margin: '0 1px',
+                display: 'inline'
+              }}
+            />
+          );
+        } else {
+          // Regular text
+          return <span key={index}>{part}</span>;
+        }
+      })}
+    </span>
+  );
+}
+
+function SortAndViewControls({ sort, setSort, sortDir, setSortDir, view, setView }) {
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+      <label>
+        Sort by:
+        <select value={sort} onChange={e => setSort(e.target.value)} style={{ marginLeft: 8, backgroundColor: 'white', border: '1px solid #ccc', borderRadius: 4, padding: '4px 8px' }}>
+          <option value="name">Name</option>
+          <option value="type">Type</option>
+          <option value="mana">Mana Value</option>
+          <option value="price">Price</option>
+        </select>
+      </label>
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button
+          type="button"
+          onClick={() => setSortDir('asc')}
+          style={{
+            background: sortDir === 'asc' ? '#1976d2' : '#eee',
+            color: sortDir === 'asc' ? '#fff' : '#222',
+            border: '1px solid #ccc',
+            borderRadius: 4,
+            padding: '4px 16px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          A-Z
+        </button>
+        <button
+          type="button"
+          onClick={() => setSortDir('desc')}
+          style={{
+            background: sortDir === 'desc' ? '#1976d2' : '#eee',
+            color: sortDir === 'desc' ? '#fff' : '#222',
+            border: '1px solid #ccc',
+            borderRadius: 4,
+            padding: '4px 16px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Z-A
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => setView('grid')}
+          style={{ background: view === 'grid' ? '#1976d2' : '#eee', color: view === 'grid' ? '#fff' : '#222', border: '1px solid #ccc', borderRadius: 4, padding: '4px 12px' }}
+        >
+          Grid
+        </button>
+        <button
+          type="button"
+          onClick={() => setView('hybrid')}
+          style={{ background: view === 'hybrid' ? '#1976d2' : '#eee', color: view === 'hybrid' ? '#fff' : '#222', border: '1px solid #ccc', borderRadius: 4, padding: '4px 12px' }}
+        >
+          Hybrid
+        </button>
+        <button
+          type="button"
+          onClick={() => setView('text')}
+          style={{ background: view === 'text' ? '#1976d2' : '#eee', color: view === 'text' ? '#fff' : '#222', border: '1px solid #ccc', borderRadius: 4, padding: '4px 12px' }}
+        >
+          Text
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir, handleSearch, onCardClick, flipStates, isDoubleFacedCard, getCardName, handleFlipCard, getCardImageUrl }) {
+  if (error) return <div style={{ color: 'red', marginTop: 16 }}>{error}</div>;
+  if (!results) return null;
+  if (results.length === 0) return <div style={{ color: '#888', marginTop: 16 }}>No results found.</div>;
+  
+  if (view === 'text') {
+    // Fix: handle sort toggling for columns
+    const handleHeaderClick = (col) => {
+      if (sort === col) {
+        setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+      } else {
+        setSort(col);
+        setSortDir('asc');
+      }
+    };
+    return (
+      <div style={{ marginTop: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ marginBottom: 16 }}>Results</h3>
+        <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', padding: '0 16px' }}>
+          <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 16, borderSpacing: 0 }}>
+          <thead>
+            <tr style={{ background: '#f2f2f2', height: 20, maxHeight: 20, lineHeight: 1, overflow: 'hidden' }}>
+              <th
+                style={{ textAlign: 'left', padding: '0 0 0 10px', borderBottom: '1px solid #ccc', borderRight: '1px solid #ccc', minWidth: 120, cursor: 'pointer', userSelect: 'none', height: 20, maxHeight: 20, verticalAlign: 'middle', fontWeight: 700, fontSize: 16, letterSpacing: 0.2, lineHeight: 1, overflow: 'hidden' }}
+                onClick={() => handleHeaderClick('name')}
+              >
+                Name {sort === 'name' && (sortDir === 'asc' ? '▲' : '▼')}
+              </th>
+              <th
+                style={{ textAlign: 'left', padding: '0 0 0 10px', borderBottom: '1px solid #ccc', borderRight: '1px solid #ccc', minWidth: 100, cursor: 'pointer', userSelect: 'none', height: 20, maxHeight: 20, verticalAlign: 'middle', fontWeight: 700, fontSize: 16, letterSpacing: 0.2, lineHeight: 1, overflow: 'hidden' }}
+                onClick={() => handleHeaderClick('type')}
+              >
+                Type {sort === 'type' && (sortDir === 'asc' ? '▲' : '▼')}
+              </th>
+              <th
+                style={{ textAlign: 'left', padding: '0 0 0 10px', borderBottom: '1px solid #ccc', borderRight: '1px solid #ccc', minWidth: 80, cursor: 'pointer', userSelect: 'none', height: 20, maxHeight: 20, verticalAlign: 'middle', fontWeight: 700, fontSize: 16, letterSpacing: 0.2, lineHeight: 1, overflow: 'hidden' }}
+                onClick={() => handleHeaderClick('mana')}
+              >
+                Mana Value {sort === 'mana' && (sortDir === 'asc' ? '▲' : '▼')}
+              </th>
+              <th
+                style={{ textAlign: 'left', padding: '0 0 0 10px', borderBottom: '1px solid #ccc', borderRight: '1px solid #ccc', minWidth: 70, cursor: 'pointer', userSelect: 'none', height: 20, maxHeight: 20, verticalAlign: 'middle', fontWeight: 700, fontSize: 16, letterSpacing: 0.2, lineHeight: 1, overflow: 'hidden' }}
+                onClick={() => handleHeaderClick('price')}
+              >
+                Price {sort === 'price' && (sortDir === 'asc' ? '▲' : '▼')}
+              </th>
+              <th style={{ textAlign: 'center', padding: 0, borderBottom: '1px solid #ccc', minWidth: 32, height: 20, maxHeight: 20, verticalAlign: 'middle', fontWeight: 700, fontSize: 16, letterSpacing: 0.2, lineHeight: 1, overflow: 'hidden' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(results || []).map(card => {
+              // Handle double-faced cards for mana cost display
+              const isDoubleFaced = isDoubleFacedCard(card);
+              let frontManaCost, backManaCost, allSymbols = [];
+              
+              if (isDoubleFaced && card.card_faces) {
+                // For double-faced cards, get both sides
+                frontManaCost = card.card_faces[0]?.mana_cost || '';
+                backManaCost = card.card_faces[1]?.mana_cost || '';
+                
+                // Collect symbols from both sides for display
+                const frontSymbols = frontManaCost.match(/\{.*?\}/g) || [];
+                const backSymbols = backManaCost.match(/\{.*?\}/g) || [];
+                allSymbols = [...frontSymbols, ...backSymbols];
+              } else {
+                frontManaCost = card.mana_cost || '';
+                allSymbols = frontManaCost.match(/\{.*?\}/g) || [];
+              }
+              
+              // Use front face mana cost for sorting (primary side)
+              const symbols = frontManaCost.match(/\{.*?\}/g) || [];
+              
+              // Calculate mana value for sorting
+              let manaValue = 0;
+              symbols.forEach(sym => {
+                const val = sym.replace(/[{}]/g, '');
+                if (!isNaN(Number(val))) manaValue += Number(val);
+                else if (val.match(/^[WUBRGCSXYZQ]$/i)) manaValue += 1;
+                else if (val.match(/^2[WUBRG]$/i)) manaValue += 2; // e.g. {2R}
+                else if (val.match(/\//)) manaValue += 1; // hybrid, phyrexian, etc.
+              });
+              
+              // Use cmc/mana_value as fallback, preferring card face for double-faced cards
+              if (!manaValue) {
+                if (isDoubleFaced && card.card_faces?.[0]) {
+                  manaValue = card.card_faces[0].cmc || card.card_faces[0].mana_value || card.cmc || card.mana_value || 0;
+                } else {
+                  manaValue = card.cmc || card.mana_value || 0;
+                }
+              }
+              
+              // Count each symbol for display
+              const symbolCounts = {};
+              symbols.forEach(sym => {
+                let code = sym.replace(/[{}]/g, '');
+                code = code.replace(/\//g, '');
+                code = code.toUpperCase();
+                symbolCounts[code] = (symbolCounts[code] || 0) + 1;
+              });
+              // Type: handle double-faced cards
+              let typeDisplay = '';
+              let typeLineToUse;
+              
+              if (isDoubleFaced && card.card_faces?.[0]) {
+                // For double-faced cards, use the front face type line
+                typeLineToUse = card.card_faces[0].type_line || card.type_line;
+              } else {
+                typeLineToUse = card.type_line;
+              }
+              
+              if (typeLineToUse) {
+                const parts = typeLineToUse.split('—').map(s => s.trim());
+                if (parts.length === 2) typeDisplay = `${parts[0]} - ${parts[1]}`;
+                else typeDisplay = parts[0];
+              }
+              // Extract price for display
+              const { price } = extractPrice(card);
+              const priceDisplay = price ? `$${Number(price).toFixed(2)}` : 'N/A';
+              
+              return (
+                <tr key={card.id} style={{ height: 20, maxHeight: 20, lineHeight: 1, minHeight: 0, overflow: 'hidden' }}>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 16, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1 }}>
+                    <CardPreview card={card} nameStyle={{ fontWeight: 700, color: '#4e8c6c', fontSize: 16, textDecoration: 'none', lineHeight: 1, margin: 0, padding: 0, cursor: 'pointer' }} isDoubleFacedCard={isDoubleFacedCard} />
+                  </td>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 15, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1, overflow: 'hidden' }}>{typeDisplay}</td>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1, overflow: 'hidden' }}>
+                    <span style={{ display: 'inline-flex', gap: 0, lineHeight: 1, alignItems: 'center', margin: 0, padding: 0, height: 20, maxHeight: 20, overflow: 'hidden' }}>
+                      {isDoubleFaced && card.card_faces ? (
+                        <>
+                          {/* Front face mana symbols */}
+                          {(frontManaCost.match(/\{.*?\}/g) || []).map((sym, i) => {
+                            let code = sym.replace(/[{}]/g, '');
+                            code = code.replace(/\//g, '');
+                            code = code.toUpperCase();
+                            return (
+                              <img
+                                key={`front-${i}`}
+                                src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
+                                alt={code}
+                                style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
+                              />
+                            );
+                          })}
+                          {/* Separator for dual-faced cards */}
+                          {frontManaCost && backManaCost && (
+                            <span style={{ margin: '0 2px', fontSize: '12px', color: '#666', lineHeight: 1 }}>//</span>
+                          )}
+                          {/* Back face mana symbols */}
+                          {(backManaCost.match(/\{.*?\}/g) || []).map((sym, i) => {
+                            let code = sym.replace(/[{}]/g, '');
+                            code = code.replace(/\//g, '');
+                            code = code.toUpperCase();
+                            return (
+                              <img
+                                key={`back-${i}`}
+                                src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
+                                alt={code}
+                                style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
+                              />
+                            );
+                          })}
+                        </>
+                      ) : (
+                        // Single-faced card
+                        symbols.map((sym, i) => {
+                          let code = sym.replace(/[{}]/g, '');
+                          code = code.replace(/\//g, '');
+                          code = code.toUpperCase();
+                          return (
+                            <img
+                              key={i}
+                              src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
+                              alt={code}
+                              style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
+                            />
+                          );
+                        })
+                      )}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 16, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1 }}>{priceDisplay}</td>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', fontSize: 16, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'center', lineHeight: 1 }}>
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center', height: 20, maxHeight: 20, overflow: 'hidden' }}>
+                      <button
+                        onClick={() => addToShoppingCart(card)}
+                        style={{
+                          backgroundColor: '#059669',
+                          color: 'white',
+                          border: 'none',
+                          padding: '2px 6px',
+                          borderRadius: '3px',
+                          fontSize: '10px',
+                          cursor: 'pointer',
+                          height: 16,
+                          lineHeight: 1
+                        }}
+                        title="Add to Shopping Cart"
+                      >
+                        🛒
+                      </button>
+                      <button
+                        onClick={() => onCardClick(card)}
+                        style={{
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          padding: '2px 6px',
+                          borderRadius: '3px',
+                          fontSize: '10px',
+                          cursor: 'pointer',
+                          height: 16,
+                          lineHeight: 1
+                        }}
+                        title="Add to Deck"
+                      >
+                        📚
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+  
+  if (view === 'grid') {
+    return (
+      <div style={{ marginTop: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ marginBottom: 16 }}>Results</h3>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+            {(results || []).map(card => {
+              const { price } = extractPrice(card);
+              const priceDisplay = price ? `$${Number(price).toFixed(2)}` : 'N/A';
+              const cardId = card.scryfall_id || card.id;
+              const isFlipped = flipStates.get(cardId) || false;
+              const isDoubleFaced = isDoubleFacedCard(card);
+              const imageUrl = getCardImageUrl(card, cardId, isFlipped);
+              const displayName = getCardName(card, cardId, isFlipped);
+              
+              return (
+                <div key={card.id} style={{ padding: 8, width: 200, borderRadius: 6, background: '#fafbfc', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    {imageUrl && (
+                      <img 
+                        src={imageUrl} 
+                        alt={displayName} 
+                        style={{ 
+                          width: '100%', 
+                          maxWidth: 184, 
+                          height: 'auto', 
+                          aspectRatio: '63/88', 
+                          objectFit: 'cover', 
+                          borderRadius: 4,
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => onCardClick(card)}
+                      />
+                    )}
+                    
+                    {/* Price and transform button overlay at bottom center */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '4px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      color: 'white',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        {priceDisplay}
+                      </span>
+                      {isDoubleFaced && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFlipCard(cardId);
+                          }}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'white',
+                            border: 'none',
+                            padding: '1px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '2px'
+                          }}
+                          title={`Flip to ${isFlipped ? 'front' : 'back'} face`}
+                        >
+                          <TransformIcon size={10} color="white" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 8, display: 'flex', gap: 4, width: '100%' }}>
+                    <button
+                      onClick={() => addToShoppingCart(card)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      title="Add to Shopping Cart"
+                    >
+                      🛒
+                    </button>
+                    <button
+                      onClick={() => onCardClick(card)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      title="Add to Deck"
+                    >
+                      📚
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (view === 'hybrid') {
+    return (
+      <div style={{ marginTop: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ marginBottom: 16 }}>Results</h3>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+            {(results || []).map(card => {
+              const { price } = extractPrice(card);
+              const priceDisplay = price ? `$${Number(price).toFixed(2)}` : 'N/A';
+              const cardId = card.scryfall_id || card.id;
+              const isFlipped = flipStates.get(cardId) || false;
+              const isDoubleFaced = isDoubleFacedCard(card);
+              const imageUrl = getCardImageUrl(card, cardId, isFlipped);
+              const displayName = getCardName(card, cardId, isFlipped);
+              
+              return (
+                <div key={card.id} style={{ padding: 8, width: 200, borderRadius: 6, background: '#fafbfc', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    {imageUrl && (
+                      <img 
+                        src={imageUrl} 
+                        alt={displayName} 
+                        style={{ 
+                          width: '100%', 
+                          maxWidth: 184, 
+                          height: 'auto', 
+                          aspectRatio: '63/88', 
+                          objectFit: 'cover', 
+                          borderRadius: 4,
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => onCardClick(card)}
+                      />
+                    )}
+                    
+                    {/* Price and transform button overlay at bottom center */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '4px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      color: 'white',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        {priceDisplay}
+                      </span>
+                      {isDoubleFaced && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFlipCard(cardId);
+                          }}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'white',
+                            border: 'none',
+                            padding: '1px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '2px'
+                          }}
+                          title={`Flip to ${isFlipped ? 'front' : 'back'} face`}
+                        >
+                          <TransformIcon size={10} color="white" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 8, display: 'flex', gap: 4, width: '100%' }}>
+                    <button
+                      onClick={() => addToShoppingCart(card)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      title="Add to Shopping Cart"
+                    >
+                      🛒
+                    </button>
+                    <button
+                      onClick={() => onCardClick(card)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                      title="Add to Deck"
+                    >
+                      📚
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default function ResearchPage() {
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [sort, setSort] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
+  const [view, setView] = useState('hybrid');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal state and user decks
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [userDecks, setUserDecks] = useState(null);
+  
+  // Flip states for double-faced cards in grid/hybrid views
+  const [flipStates, setFlipStates] = useState(new Map());
+
+  // Helper function to check if a card is double-faced
+  const isDoubleFacedCard = (card) => {
+    const cardFaces = card.card_faces;
+    const layout = card.layout;
+    
+    const isTransformCard = layout === 'transform' || 
+                           layout === 'modal_dfc' || 
+                           layout === 'reversible_card';
+                           
+    return (cardFaces && Array.isArray(cardFaces) && cardFaces.length >= 2) || isTransformCard;
+  };
+
+  // Helper function to get the correct image URL for a card (accounting for flip state)
+  const getCardImageUrl = (card, cardId, isFlipped = false) => {
+    if (isDoubleFacedCard(card)) {
+      const faceIndex = isFlipped ? 1 : 0;
+      const face = card.card_faces?.[faceIndex];
+      
+      // Try to get image from the specific face
+      let imageUrl = face?.image_uris?.normal || face?.image_uris?.small;
+      
+      // If face doesn't have image_uris (like Room cards), use main card image
+      if (!imageUrl) {
+        imageUrl = card.image_uris?.normal || card.image_uris?.small;
+      }
+      
+      return imageUrl;
+    } else {
+      // Single-faced card
+      return card.image_uris?.normal || card.image_uris?.small;
+    }
+  };
+
+  // Helper function to get the correct card name (accounting for flip state)
+  const getCardName = (card, cardId, isFlipped = false) => {
+    if (isDoubleFacedCard(card)) {
+      const faceIndex = isFlipped ? 1 : 0;
+      const face = card.card_faces?.[faceIndex];
+      return face?.name || card.name;
+    } else {
+      return card.name;
+    }
+  };
+
+  // Helper function to handle card flipping
+  const handleFlipCard = (cardId) => {
+    setFlipStates(prev => {
+      const newMap = new Map(prev);
+      newMap.set(cardId, !prev.get(cardId));
+      return newMap;
+    });
+  };
+
+  // Load user decks on component mount
+  useEffect(() => {
+    const loadUserDecks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setUserDecks(null);
+          return;
+        }
+
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const response = await fetch(`${apiUrl || ''}/api/decks/mine`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const decks = await response.json();
+          setUserDecks(decks);
+        } else {
+          setUserDecks(null);
+        }
+      } catch (error) {
+        console.error('Error loading user decks:', error);
+        setUserDecks(null);
+      }
+    };
+
+    loadUserDecks();
+  }, []);
+
+  const handleCardClick = (card) => {
+    setSelectedCard(card);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedCard(null);
+  };
+
+  const handleSearch = async (query) => {
+    setLoading(true);
+    setError('');
+    setResults(null);
+    setSearchQuery(query);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const isDev = import.meta.env.DEV;
+      
+      // Use the same endpoint as DeckViewEdit for consistency
+      const url = `/api/cards/search?q=${encodeURIComponent(query)}`;
+      const finalUrl = isDev ? url : `${apiUrl}${url}`;
+      
+      const res = await fetch(finalUrl);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      
+      if (data.data) {
+        setResults(data.data);
+      } else if (Array.isArray(data)) {
+        setResults(data);
+      } else {
+        setResults([]);
+      }
+      
+      if (data.data && data.data.length === 0) {
+        setError('No cards found matching your search criteria.');
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      setError('Error fetching cards. Please try again.');
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
+  // Improved client-side sort with direction
+  const sortedResults = results ? [...results].sort((a, b) => {
+    let cmp = 0;
+    if (sort === 'name') cmp = a.name.localeCompare(b.name);
+    else if (sort === 'type') cmp = (a.type_line || '').localeCompare(b.type_line || '');
+    else if (sort === 'mana') {
+      // Use the same mana value logic as above
+      const getManaValue = card => {
+        const manaCost = card.mana_cost || '';
+        const symbols = manaCost.match(/\{.*?\}/g) || [];
+        let manaValue = 0;
+        symbols.forEach(sym => {
+          const val = sym.replace(/[{}]/g, '');
+          if (!isNaN(Number(val))) manaValue += Number(val);
+          else if (val.match(/^[WUBRGCSXYZQ]$/i)) manaValue += 1;
+          else if (val.match(/^2[WUBRG]$/i)) manaValue += 2;
+          else if (val.match(/\//)) manaValue += 1;
+        });
+        if (!manaValue && (card.cmc || card.mana_value)) manaValue = card.cmc || card.mana_value;
+        return manaValue;
+      };
+      cmp = getManaValue(a) - getManaValue(b);
+    }
+    else if (sort === 'price') {
+      // Sort by price, handling null values
+      const getPriceValue = card => {
+        const { price } = extractPrice(card);
+        return price ? Number(price) : 0;
+      };
+      const priceA = getPriceValue(a);
+      const priceB = getPriceValue(b);
+      cmp = priceA - priceB;
+    }
+    if (sortDir === 'desc') cmp *= -1;
+    return cmp;
+  }) : null;
+
+  return (
+    <div className="container" style={{ 
+      maxWidth: '100%', 
+      width: '100%', 
+      padding: '1rem', 
+      boxSizing: 'border-box',
+      minHeight: 'calc(100vh - 120px)',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <h1 style={{ marginBottom: '1rem', flexShrink: 0 }}>Research</h1>
+      <div style={{ flexShrink: 0, marginBottom: '1rem' }}>
+        <SearchBar onSearch={handleSearch} loading={loading} query={searchQuery} setQuery={setSearchQuery} />
+        <SortAndViewControls sort={sort} setSort={setSort} sortDir={sortDir} setSortDir={setSortDir} view={view} setView={setView} />
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <ResultsList
+          results={sortedResults}
+          error={error}
+          view={view}
+          handleSearch={q => { setSearchQuery(q); handleSearch(q); }}
+          sort={sort}
+          sortDir={sortDir}
+          setSort={setSort}
+          setSortDir={setSortDir}
+          onCardClick={handleCardClick}
+          flipStates={flipStates}
+          isDoubleFacedCard={isDoubleFacedCard}
+          getCardName={getCardName}
+          handleFlipCard={handleFlipCard}
+          getCardImageUrl={getCardImageUrl}
+        />
+      </div>
+      
+      {/* Card Actions Modal */}
+      <CardActionsModal
+        card={selectedCard}
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        userDecks={userDecks}
+      />
+    </div>
+  );
+}

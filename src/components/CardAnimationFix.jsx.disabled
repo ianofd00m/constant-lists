@@ -1,0 +1,123 @@
+/**
+ * CardPreview Animation Fix
+ * 
+ * This patch prevents foil animations from restarting when hovering between cards.
+ * It uses CSS variables to store animation state and prevents class-based resets.
+ */
+
+import React, { useEffect, useRef } from 'react';
+
+/**
+ * Hook to stabilize animations that might reset on re-render
+ */
+export const useStableAnimation = (shouldApplyAnimation, animationClass) => {
+  const elementRef = useRef(null);
+  const animationApplied = useRef(false);
+  
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+    
+    // Only add/remove the class if the animation state actually changed
+    if (shouldApplyAnimation && !animationApplied.current) {
+      // Store original animation properties before adding class
+      const originalAnimation = window.getComputedStyle(element).animation;
+      const originalPlayState = window.getComputedStyle(element).animationPlayState;
+      
+      // Add animation class
+      element.classList.add(animationClass);
+      animationApplied.current = true;
+      
+      // If animation was already running, preserve its state
+      if (originalAnimation && originalAnimation !== 'none' && originalPlayState === 'running') {
+        // Force the animation to continue from its current state instead of restarting
+        const currentTime = element.getAnimations?.()?.[0]?.currentTime || 0;
+        element.style.animationDelay = `-${currentTime}ms`;
+      }
+    } 
+    else if (!shouldApplyAnimation && animationApplied.current) {
+      // Remove animation class
+      element.classList.remove(animationClass);
+      animationApplied.current = false;
+    }
+  }, [shouldApplyAnimation, animationClass]);
+  
+  return elementRef;
+};
+
+/**
+ * Enhanced CardPreview component that prevents animation resets
+ * (Example implementation - adapt to your actual component)
+ */
+export const StableCardPreview = ({ card, isFoil, ...props }) => {
+  // Use the stable animation hook instead of direct class application
+  const previewRef = useStableAnimation(isFoil, 'foil-active-border');
+  
+  // Apply the ref to your container
+  return (
+    <div 
+      ref={previewRef}
+      className={`card-preview-container ${props.isFixed ? 'fixed-preview' : ''}`}
+      {...props}
+    >
+      {/* Card preview content */}
+    </div>
+  );
+};
+
+/**
+ * Alternative CSS-only fix - add this to your CSS file
+ */
+const cssOnlyFix = `
+/* Add this to your CSS file to prevent animation resets */
+
+/* Create an animation container that never changes */
+.animation-container {
+  position: relative;
+}
+
+/* Move the animation to a pseudo-element that won't reset */
+.animation-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Foil effect in its own layer that doesn't reset */
+.animation-container.foil-active::before {
+  opacity: 1;
+  background: linear-gradient(110deg, 
+    rgba(255, 190, 220, 0.6), 
+    rgba(200, 190, 255, 0.6), 
+    rgba(190, 220, 255, 0.6), 
+    rgba(190, 255, 220, 0.6), 
+    rgba(220, 255, 190, 0.6), 
+    rgba(255, 220, 190, 0.6), 
+    rgba(255, 190, 220, 0.6));
+  background-size: 700% 700%;
+  animation: holographic-shimmer 15s ease-in-out infinite;
+  animation-play-state: running;
+  animation-fill-mode: forwards;
+  will-change: background-position;
+  transform: translateZ(0);
+  filter: blur(1.5px);
+  mix-blend-mode: overlay;
+}
+
+/* Separate the animation declaration from class changes */
+@media (animation-enabled: true) {
+  .animation-container::before {
+    /* Animation properties are defined here and never change */
+    animation: holographic-shimmer 15s ease-in-out infinite paused;
+    animation-fill-mode: forwards;
+  }
+}
+`;

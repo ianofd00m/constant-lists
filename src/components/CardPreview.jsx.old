@@ -1,0 +1,89 @@
+import React from "react";
+// REMOVED: import "./CardPreview.css"; // Contains foil styles
+
+function CardPreview({ preview, isFixed, showPreview }) {
+  if (!showPreview || !preview) return null;
+
+  const card = preview.card || preview;
+  const cardName = card?.name || card?.scryfall_json?.name || card?.card?.name || card?.card?.scryfall_json?.name || "Unknown Card";
+  
+  const isFoil = preview.foil === true || 
+                 preview.isFoil === true || 
+                 preview.cardObj?.foil === true || 
+                 preview.cardObj?.isFoil === true || 
+                 preview.cardObj?.card?.foil === true || 
+                 preview.cardObj?.card?.isFoil === true || 
+                 card.foil === true || 
+                 card.isFoil === true ||
+                 card.scryfall_json?.foil === true ||
+                 card.card?.foil === true ||
+                 card.card?.isFoil === true ||
+                 card.card?.scryfall_json?.foil === true;
+
+  let imageUrl;
+  
+  // Check all possible locations for image_uris
+  if (card.image_uris) {
+    imageUrl = card.image_uris.normal || card.image_uris.large || card.image_uris.png;
+  } else if (card.scryfall_json && card.scryfall_json.image_uris) {
+    imageUrl = card.scryfall_json.image_uris.normal || card.scryfall_json.image_uris.large || card.scryfall_json.image_uris.png;
+  } else if (card.card && card.card.image_uris) {
+    imageUrl = card.card.image_uris.normal || card.card.image_uris.large || card.card.image_uris.png;
+  } else if (card.card && card.card.scryfall_json && card.card.scryfall_json.image_uris) {
+    imageUrl = card.card.scryfall_json.image_uris.normal || card.card.scryfall_json.image_uris.large || card.card.scryfall_json.image_uris.png;
+  } else if (card.card_faces && card.card_faces[0]?.image_uris) {
+    imageUrl = card.card_faces[0].image_uris.normal || card.card_faces[0].image_uris.large;
+  } else if (preview.scryfall_json?.image_uris) {
+    imageUrl = preview.scryfall_json.image_uris.normal || preview.scryfall_json.image_uris.large;
+  } else if (preview.cardObj?.card?.scryfall_json?.image_uris) {
+    imageUrl = preview.cardObj.card.scryfall_json.image_uris.normal || preview.cardObj.card.scryfall_json.image_uris.large;
+  }
+
+  // If no direct image_uris found, try fallback URLs
+  if (!imageUrl) {
+    const set = card.set || card.scryfall_json?.set || card.card?.set || card.card?.scryfall_json?.set;
+    const collector_number = card.collector_number || card.scryfall_json?.collector_number || card.card?.collector_number || card.card?.scryfall_json?.collector_number;
+    const cardId = card.id || card.scryfall_json?.id || card.card?.id || card.card?.scryfall_json?.id;
+    
+    if (set && collector_number) {
+      imageUrl = `https://api.scryfall.com/cards/${set.toLowerCase()}/${collector_number}?format=image&version=normal`;
+    } else if (cardId) {
+      imageUrl = `https://api.scryfall.com/cards/${cardId}?format=image&version=normal`;
+    } else {
+      imageUrl = `https://api.scryfall.com/cards/named?format=image&version=normal&exact=${encodeURIComponent(cardName)}`;
+    }
+  }
+
+  const { top, left } = preview.position || { top: 100, left: 100 };
+
+  const containerStyle = isFixed
+    ? { width: "100%", height: "auto" }
+    : {
+        position: "fixed",
+        top: `${top}px`,
+        left: `${left}px`,
+        zIndex: 1000,
+      };
+
+  const imageStyle = {
+    width: isFixed ? "100%" : "250px",
+    borderRadius: "10px",
+  };
+
+  const containerClassName = `card-preview-container ${isFixed ? "fixed-preview" : ""} ${isFoil ? "foil-active-border" : ""}`;
+
+  return (
+    <div
+      className={containerClassName}
+      style={{...containerStyle, position: "relative", overflow: "hidden"}}
+    >
+      <img
+        src={imageUrl}
+        alt={cardName}
+        style={{...imageStyle, position: "relative", zIndex: 1, display: "block"}}
+      />
+    </div>
+  );
+}
+
+export default CardPreview;

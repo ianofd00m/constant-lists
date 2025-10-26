@@ -1,0 +1,60 @@
+.card-preview-container {
+  position: relative;
+  display: inline-block;
+  max-width: 250px; /* Limit maximum width */
+  width: auto;
+  z-index: 1; /* Normal layering within sidebar context */
+}
+
+.card-preview-image {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  max-height: 350px; /* Limit maximum height */
+  object-fit: contain;
+}
+
+.fresh-foil-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 0, 0, 0.2),
+    rgba(255, 165, 0, 0.2),
+    rgba(255, 255, 0, 0.2),
+    rgba(0, 255, 0, 0.2),
+    rgba(0, 0, 255, 0.2),
+    rgba(238, 130, 238, 0.2)
+  );
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  z-index: 2; /* Keep above card image but below main content */
+  animation: rainbow-shift 3s linear infinite;
+}
+
+@keyframes rainbow-shift {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(180deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(360deg);
+  }
+}
+
+.fixed-preview {
+  /* position: fixed; */
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Debug styles removed - FOIL text overlay no longer needed */

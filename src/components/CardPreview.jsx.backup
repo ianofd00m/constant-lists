@@ -1,0 +1,167 @@
+import React, { useRef, useEffect } from 'react';
+import './CardPreview.css'; // Import the direct CSS
+
+/**
+ * Card preview component displays a card image with direct DOM-based foil animation
+ */
+function CardPreview({ preview, showPreview = true, isFixed = false }) {
+  const foilOverlayRef = useRef(null);
+  
+  // Always declare useEffect, even if we'll return early
+  useEffect(() => {
+    // Only apply the effect if we're showing a preview and have a valid ref
+    if (showPreview && preview && preview.card && foilOverlayRef.current) {
+      const isFoil = preview.card?.foil === true || 
+                    preview.card?.isFoil === true ||
+                    preview.card?.card?.foil === true || 
+                    preview.card?.card?.isFoil === true ||
+                    preview.card?.cardObj?.foil === true ||
+                    preview.card?.cardObj?.isFoil === true ||
+                    preview.card?.cardObj?.card?.foil === true ||
+                    preview.card?.cardObj?.card?.isFoil === true;
+                    
+      if (isFoil) {
+        foilOverlayRef.current.style.opacity = '0.4';
+        foilOverlayRef.current.style.animationPlayState = 'running';
+      } else {
+        foilOverlayRef.current.style.opacity = '0';
+        foilOverlayRef.current.style.animationPlayState = 'paused';
+      }
+    }
+  }, [preview, showPreview]); // Dependencies include the props that affect this effect
+  
+  if (!showPreview || !preview || !preview.card) {
+    return null;
+  }
+
+  const { card, top, left } = preview;
+  
+  // Handle different card structures to extract the image URL
+  let imageUrl = '/card-back.jpg';
+  let cardName = '';
+  
+  if (card) {
+    // Get the card name first for fallback and alt text
+    cardName = card.name || card.card?.name || 'Card';
+    
+    // To fix flickering issues, we need to prioritize the exact printing being shown
+    // Especially when users select a new printing in the modal
+    
+    // First try to get the specific printing image if we have printing information
+    if (card.printing) {
+      // If we have a printing ID and matching image URIs, use those
+      const hasSpecificPrinting = card.printing && 
+        ((card.image_uris && Object.keys(card.image_uris).length > 0) ||
+         (card.scryfall_json?.image_uris && Object.keys(card.scryfall_json.image_uris).length > 0));
+      
+      if (hasSpecificPrinting) {
+        // Direct image_uris at the top level should be from the selected printing
+        if (card.image_uris?.large) {
+          imageUrl = card.image_uris.large;
+        } else if (card.image_uris?.normal) {
+          imageUrl = card.image_uris.normal;
+        }
+        // If not found at top level, try scryfall_json
+        else if (card.scryfall_json?.image_uris?.large) {
+          imageUrl = card.scryfall_json.image_uris.large;
+        } else if (card.scryfall_json?.image_uris?.normal) {
+          imageUrl = card.scryfall_json.image_uris.normal;
+        }
+        // Try for double-faced cards
+        else if (card.scryfall_json?.card_faces?.[0]?.image_uris?.large) {
+          imageUrl = card.scryfall_json.card_faces[0].image_uris.large;
+        } else if (card.scryfall_json?.card_faces?.[0]?.image_uris?.normal) {
+          imageUrl = card.scryfall_json.card_faces[0].image_uris.normal;
+        }
+        
+        // If we found a specific printing image, use it directly
+        if (imageUrl !== '/card-back.jpg') {
+          // Image found, no further action needed
+        }
+        // As a last resort for the specific printing, use direct Scryfall API with set+collector
+        else if (card.scryfall_json?.set && card.scryfall_json?.collector_number) {
+          imageUrl = `https://api.scryfall.com/cards/${card.scryfall_json.set}/${card.scryfall_json.collector_number}?format=image&version=large`;
+        } else if (card.card?.set && card.card?.collector_number) {
+          imageUrl = `https://api.scryfall.com/cards/${card.card.set}/${card.card.collector_number}?format=image&version=large`;
+        }
+      }
+    }
+    
+    // If we still don't have an image URL, fall back to using the card name
+    // This ensures we at least show something, even if it's not the exact printing
+    if (imageUrl === '/card-back.jpg') {
+      // Use Scryfall's API to get a high resolution, English image by name
+      if (card.name) {
+        // Use Scryfall's API to get a high resolution, English image by name
+        imageUrl = `https://api.scryfall.com/cards/named?format=image&version=large&exact=${encodeURIComponent(card.name)}&lang=en`;
+      } else if (card.card?.name) {
+        imageUrl = `https://api.scryfall.com/cards/named?format=image&version=large&exact=${encodeURIComponent(card.card.name)}&lang=en`;
+      }
+      
+      // Only as a last resort, try any image URL we can find
+      if (imageUrl === '/card-back.jpg') {
+        // Try any available image as last resort
+        if (card.card?.image_uris?.large) {
+          imageUrl = card.card.image_uris.large;
+        } else if (card.card?.image_uris?.normal) {
+          imageUrl = card.card.image_uris.normal;
+        } else if (card.card?.scryfall_json?.image_uris?.large) {
+          imageUrl = card.card.scryfall_json.image_uris.large;
+        } else if (card.card?.scryfall_json?.image_uris?.normal) {
+          imageUrl = card.card.scryfall_json.image_uris.normal;
+        }
+      }
+    }
+  }
+
+  // Determine if the card is foil for styling - check all possible locations where foil status might be stored
+  const isFoil = card?.foil === true || 
+                card?.isFoil === true ||
+                card?.card?.foil === true || 
+                card?.card?.isFoil === true ||
+                card?.cardObj?.foil === true ||
+                card?.cardObj?.isFoil === true ||
+                card?.cardObj?.card?.foil === true ||
+                card?.cardObj?.card?.isFoil === true;
+  
+  const containerStyle = isFixed
+    ? {
+        position: 'relative',
+        width: '100%',
+      }
+    : {
+        position: 'fixed',
+        top: `${top}px`,
+        left: `${left}px`,
+        zIndex: 1000,
+      };
+
+  const imageStyle = {
+    width: isFixed ? '100%' : '250px',
+    borderRadius: '10px',
+  };
+
+  // Add foil class name for rainbow effect
+  const containerClassName = `card-preview-container ${isFixed ? 'fixed-preview' : ''}`;
+
+  return (
+    <div
+      className={containerClassName}
+      style={containerStyle}
+    >
+      {/* Direct foil overlay element instead of using ::before pseudo-element */}
+      <div
+        ref={foilOverlayRef}
+        className={`foil-overlay-direct ${isFoil ? 'active' : 'inactive'}`}
+        data-foil={isFoil ? 'true' : 'false'}
+      />
+      <img
+        src={imageUrl}
+        alt={cardName}
+        style={{...imageStyle, position: 'relative', zIndex: 0}}
+      />
+    </div>
+  );
+}
+
+export default CardPreview;

@@ -1,0 +1,154 @@
+/* AuthForm component styles */
+.auth-form {
+  max-width: 300px;
+  margin: 2rem auto;
+  padding: 1rem;
+  box-shadow: none !important;
+}
+
+.auth-form input {
+  width: 100% !important;
+  margin-bottom: 8px !important;
+  padding: 8px !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+  font-size: 16px !important;
+}
+
+.auth-form input::placeholder {
+  color: #666 !important;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.auth-form input:focus {
+  outline: none !important;
+  border-color: #1976d2 !important;
+  box-shadow: none !important;
+}
+
+/* Removed label styles since we're using placeholders only */
+
+.auth-form button {
+  width: 100%;
+  padding: 12px;
+  background-color: #1976d2;
+  color: white !important;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  box-shadow: none !important;
+}
+
+.auth-form button:hover {
+  background-color: #1565c0;
+}
+
+.auth-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.auth-form .error-msg {
+  color: #d32f2f !important;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.auth-form .success-msg {
+  color: #388e3c !important;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.auth-form .link {
+  color: #1976d2 !important;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.auth-form .link:hover {
+  color: #1565c0 !important;
+}
+
+.auth-form h2 {
+  color: #333 !important;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Password requirements styling */
+.password-requirements {
+  font-size: 12px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  box-shadow: none !important;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.requirement:last-child {
+  margin-bottom: 0;
+}
+
+.requirement.met {
+  color: #388e3c !important;
+}
+
+.requirement.unmet {
+  color: #666 !important;
+}
+
+.checkmark {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  margin-right: 6px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.requirement.met .checkmark {
+  color: #388e3c !important;
+}
+
+.requirement.unmet .checkmark {
+  color: #ccc !important;
+}
+
+/* Password match confirmation styling */
+.password-match {
+  font-size: 12px;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.password-match .requirement {
+  margin-bottom: 0;
+}
+
+.password-match .requirement.met {
+  color: #388e3c !important;
+}
+
+.password-match .requirement.unmet {
+  color: #d32f2f !important;
+}
+
+.password-match .requirement.unmet .checkmark {
+  color: #d32f2f !important;
+}

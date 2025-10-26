@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Database data
+mongo-data/
+redis-data/
+typesense-data/
+
+# Large files
+backup/
+scryfall-default-cards.json
+bfg.jar
+
+# Build outputs
+dist/
+
+# Environment files
+.env.local
+.env.test
+.env.production
+
+# Logs
+*.log
+server/*.log
+
+# OS files
+.DS_Store
+
+# Cleanup directories
+cleanup-*/

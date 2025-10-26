@@ -1,0 +1,319 @@
+/* Oracle Tags Integration Styles */
+
+.oracle-tags-integration {
+  margin: 10px 0 20px 0; /* Set top margin to 10px, keep bottom margin */
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  max-height: calc(90vh - 300px); /* Responsive to viewport height, with 300px buffer for other content */
+  min-height: 200px; /* Smaller minimum height for responsiveness */
+  overflow-y: auto; /* Allow vertical scrolling when content exceeds max height */
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Take remaining space in the current-printing-info container */
+  /* Hide scrollbar for WebKit browsers */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for WebKit browsers */
+.oracle-tags-integration::-webkit-scrollbar {
+  display: none;
+}
+
+.oracle-tags-integration.loading,
+.oracle-tags-integration.error,
+.oracle-tags-integration.no-tags {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.oracle-tags-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0; /* Removed bottom margin */
+  flex-shrink: 0; /* Prevent header from shrinking */
+  position: sticky;
+  top: 0;
+  background: transparent; /* Remove background to match main content */
+  z-index: 1;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.oracle-tags-header .oracle-tags-title {
+  color: #ffffff !important; /* White color for better visibility against gradient */
+}
+
+.oracle-tags-header .oracle-tags-icon {
+  color: #ffffff !important; /* White color for better visibility against gradient */
+}
+
+.oracle-tags-icon {
+  font-size: 18px;
+  color: #ffffff; /* Changed to white to match title */
+}
+
+.oracle-tags-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff; /* Changed to white for better visibility against gradient */
+}
+
+.oracle-tags-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  align-items: start;
+  flex: 1; /* Take up remaining space */
+  overflow-y: auto; /* Allow scrolling within content area */
+  min-height: 0; /* Allow content to shrink below its natural size */
+  /* Hide scrollbar for WebKit browsers */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for WebKit browsers */
+.oracle-tags-content::-webkit-scrollbar {
+  display: none;
+}
+
+.oracle-tags-integration::-webkit-scrollbar-track,
+.oracle-tags-content::-webkit-scrollbar-track {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 3px;
+}
+
+.oracle-tags-integration::-webkit-scrollbar-thumb,
+.oracle-tags-content::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 3px;
+}
+
+.oracle-tags-integration::-webkit-scrollbar-thumb:hover,
+.oracle-tags-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+.oracle-tags-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0; /* Prevent column overflow */
+}
+
+.oracle-tags-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  break-inside: avoid; /* Prevent category breaks across columns */
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.category-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.category-count {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.oracle-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.oracle-tag {
+  background: var(--tag-bg, #f1f5f9);
+  border: 1px solid var(--tag-border, #64748b);
+  color: var(--tag-text, #334155);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  min-height: 24px;
+}
+
+.oracle-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  filter: brightness(0.95);
+}
+
+.oracle-tag:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.oracle-tags-footer {
+  margin-top: 0; /* Removed top margin */
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+  flex-shrink: 0; /* Prevent footer from shrinking */
+  background: transparent; /* Remove background to match main content */
+  position: sticky;
+  bottom: 0;
+}
+
+.search-hint {
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Loading states */
+.loading-spinner {
+  margin: 16px auto;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.no-tags-message {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .oracle-tags-integration {
+    margin: 16px 0;
+    padding: 12px;
+    max-height: 250px; /* Smaller max height on mobile */
+  }
+  
+  .oracle-tags-content {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .oracle-tags-list {
+    gap: 4px;
+  }
+  
+  .oracle-tag {
+    font-size: 10px;
+    padding: 3px 6px;
+    min-height: 20px;
+  }
+  
+  .oracle-tags-title {
+    font-size: 14px;
+  }
+}
+
+/* Dark mode support (if your app uses it) */
+@media (prefers-color-scheme: dark) {
+  .oracle-tags-integration {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #475569;
+  }
+  
+  .oracle-tags-title {
+    color: #f1f5f9;
+  }
+  
+  .category-name {
+    color: #94a3b8;
+  }
+  
+  .category-count {
+    color: #64748b;
+  }
+  
+  .search-hint {
+    color: #94a3b8;
+  }
+  
+  .oracle-tags-footer {
+    border-top-color: #475569;
+  }
+}
+
+/* Animation for tag appearance */
+.oracle-tag {
+  animation: tagFadeIn 0.3s ease-out;
+}
+
+@keyframes tagFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Hover effects for categories */
+.oracle-tags-category:hover .category-name {
+  color: #475569;
+  transition: color 0.2s ease;
+}
+
+/* Focus states for accessibility */
+.oracle-tag:focus {
+  outline: 2px solid var(--tag-border, #64748b);
+  outline-offset: 2px;
+}
+
+/* Loading state variations */
+.oracle-tags-integration.loading .oracle-tags-header {
+  opacity: 0.7;
+}
+
+.oracle-tags-integration.error .oracle-tags-header {
+  color: #dc2626;
+}
+
+.oracle-tags-integration.no-tags .oracle-tags-header {
+  opacity: 0.8;
+}

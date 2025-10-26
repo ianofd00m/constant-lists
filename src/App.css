@@ -1,0 +1,1295 @@
+/* Global overflow prevention - only prevent horizontal scroll */
+html, body {
+  max-width: 100%;
+}
+
+#root {
+  max-width: 100%;
+}
+
+/* Deck card row styles */
+.deck-card-row {
+  display: flex;
+  align-items: flex-start; /* Changed from center to flex-start for better text wrapping */
+  padding: 3px 0; /* Slightly increased padding for better spacing */
+  font-size: 10pt; /* Changed from 1rem to 10pt */
+  border-bottom: none;
+  min-height: 22px; /* Keep minimum height but allow expansion */
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Bulk edit hover state */
+.deck-card-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Bulk edit selected state */
+.deck-card-row.bulk-selected {
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
+.deck-card-row.bulk-edit-mode {
+  cursor: pointer;
+  padding: 3px 0; /* Match the regular row padding */
+  border-radius: 3px;
+  min-height: 22px; /* Remove fixed height, allow expansion */
+  align-items: flex-start; /* Align to top for better text wrapping */
+  outline: none !important;
+}
+
+.deck-card-row.bulk-edit-mode:hover {
+  background-color: rgba(25, 118, 210, 0.05);
+}
+.deck-card-row .card-count {
+  font-size: inherit;
+  font-weight: 500;
+  margin-right: 2px;
+  padding-right: 2px;
+  color: #444;
+  line-height: 1.2; /* Add consistent line height */
+  align-self: flex-start; /* Ensure it aligns to the top */
+}
+.deck-card-row .card-name {
+  font-size: inherit;
+  font-weight: 500;
+  margin-right: 8px; /* Increase margin to create more space between name and price */
+  line-height: 1.2; /* Add consistent line height for better text wrapping */
+  flex: 1; /* Allow the card name to take up available space */
+  min-width: 0; /* Allow flex item to shrink below its content size */
+  max-width: calc(100% - 180px); /* Increased to accommodate larger right group */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto; /* Enable automatic hyphenation */
+  white-space: normal; /* Ensure text can wrap to multiple lines */
+}
+.deck-card-row .card-mana {
+  margin-right: 8px;
+}
+
+/* Group for right-aligned price and mana column */
+  .card-right-group {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 4px;
+    max-width: 160px; /* Increased to accommodate right-aligned content */
+    flex-shrink: 0;
+    overflow: visible; /* Changed from hidden to allow content to display */
+    box-sizing: border-box; /* Include padding and border in width calculations */
+    margin-left: auto; /* Push entire group to the right */
+  }
+
+/* Smooth wave animation */
+@keyframes smooth-rainbow-wave {
+  0% {
+    background-position: -100% -100%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: -100% -100%;
+  }
+}
+
+/* Ensure mana column aligns properly with text wrapping */
+.deck-card-row .card-mana-column {
+  min-width: 60px; /* Reduced from 70px to save space */
+  max-width: 60px; /* Fixed width to prevent shrinking */
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start; /* Changed from center to flex-start for text wrapping alignment */
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.deck-card-row .card-price {
+    min-width: 60px; /* Set minimum width for consistent alignment */
+    max-width: 60px; /* Increased from 45px */
+    font-size: 0.7rem;
+    color: #666;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+
+/* Responsive and accessible base styles */
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #ffffff;
+  color: #222;
+}
+
+#root {
+  /* No maximum width to allow full browser width */
+  margin: 0;
+  padding: 0 1rem;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Lock content to the left */
+.content-container {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+h1, h2 {
+  text-align: left; /* Changed from center for deck name */
+}
+
+form, .container {
+  max-width: 500px;
+  margin: 2rem 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  width: 100%;
+}
+
+.deck-container {
+  max-width: none;
+  margin: 1rem 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* Ensure no overflow constraints that could interfere with sticky positioning */
+}
+
+.deck-layout {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  max-width: 100vw;
+  width: 100%;
+  min-height: 0; /* Prevent flex items from growing beyond viewport */
+  /* Remove overflow-x: hidden to prevent interference with sticky positioning */
+}
+
+.deck-sidebar {
+  flex: 0 0 280px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden; /* CRITICAL: Contain all child elements within sidebar boundaries */
+  padding: 1rem;
+  position: sticky;
+  top: 0; /* Stick to the top of the scrolling container */
+  align-self: flex-start; /* Ensure it aligns to the top of its container */
+  /* No max-height constraint - let it size naturally to its content */
+  /* No internal scrolling - the sidebar should be sticky as a whole unit */
+  z-index: 10; /* Ensure sidebar stays above other content */
+  max-width: 280px; /* Prevent expansion beyond intended width */
+  min-width: 250px; /* Ensure minimum usable width */
+}
+
+.deck-sidebar > div:first-child {
+  margin-bottom: 8px !important;
+}
+
+/* Remove bottom margin from Display Options and dropdowns */
+.deck-sidebar label,
+.deck-sidebar .display-options,
+.deck-sidebar select,
+.deck-sidebar .card-group-sort-options {
+  margin-bottom: 0 !important;
+}
+
+/* Reduce vertical space between Display Options and card preview */
+.display-options {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Style dropdowns for compactness */
+.deck-sidebar select {
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  margin-bottom: 0 !important;
+}
+
+.deck-main-content {
+  flex: 1 1 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem; /* Increased from 1rem for more breathing room */
+  min-height: 600px;
+  min-width: 0; /* Allow shrinking below content width */
+  max-width: 100%; /* Prevent overflow */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  /* Remove overflow properties to allow natural scrolling for sticky positioning */
+}
+
+@media (max-width: 1024px) {
+  .deck-sidebar {
+    display: none; /* Hide sidebar on tablets too */
+  }
+  
+  .deck-stats-bar {
+    display: none; /* Hide stats bar on tablets and mobile */
+  }
+  
+  .mobile-view-controls {
+    display: block !important; /* Show mobile controls when sidebar is hidden */
+  }
+  
+  .deck-main-content {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .deck-layout {
+    flex-direction: column;
+  }
+  
+  .deck-sidebar {
+    display: none; /* Hide sidebar completely on mobile */
+  }
+  
+  .deck-stats-bar {
+    display: none; /* Hide stats bar on mobile */
+  }
+  
+  .mobile-view-controls {
+    display: block !important; /* Show mobile controls on mobile */
+  }
+  
+  .deck-main-content {
+    padding: 1rem; /* Reduce padding on mobile */
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Add responsive grid adjustments */
+@media (max-width: 480px) {
+  .deck-main-content {
+    padding: 0.5rem;
+  }
+  
+  /* Mobile grid optimization */
+  .deck-main-content [style*="gridTemplateColumns"] {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
+/* Additional responsive breakpoints for better grid scaling */
+@media (max-width: 900px) and (min-width: 769px) {
+  .deck-main-content [style*="gridTemplateColumns"] {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  }
+}
+
+/* Ensure consistent alignment on very wide screens */
+@media (min-width: 1630px) {
+  .deck-card-row .card-right-group {
+    max-width: 110px; /* Keep compact even on wide screens */
+  }
+  
+  .deck-card-row .card-mana-column {
+    min-width: 60px; /* Match our reduced width */
+    max-width: 60px;
+  }
+  
+  .deck-card-row .card-price {
+    max-width: 45px;
+  }
+}
+
+input:not([type="checkbox"]), button, select, textarea {
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 0;
+  padding: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  color: #000;
+}
+
+button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 18px;
+}
+button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+button:focus, input:focus {
+  outline: 2px solid #1976d2;
+}
+
+/* Quantity control buttons for deck cards */
+.quantity-btn {
+  min-height: 22px !important;
+  height: 22px !important;
+  width: 22px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #000 !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #ccc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  transition: background-color 0.2s, border-color 0.2s !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.quantity-btn:hover {
+  background: #e0e0e0 !important;
+  border-color: #aaa !important;
+}
+
+.quantity-btn:active {
+  background: #d0d0d0 !important;
+  border-color: #999 !important;
+}
+
+/* Card grouping and sorting options styles */
+.card-group-sort-options {
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+.card-group-sort-options h3 {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  padding: 0 0 4px 0;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  color: #333;
+}
+
+.card-group-sort-options select {
+  margin-bottom: 8px;
+  font-size: 12px;
+  padding: 6px 8px;
+  color: #000 !important; /* Force black text color */
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+}
+
+.card-group-sort-options label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+  display: block;
+}
+
+/* Hide large standalone buttons in the Display Options section */
+.card-group-sort-options > button:not(.toggle-button),
+.card-group-sort-options > .btn-primary {
+  display: none !important;
+}
+
+/* Card grid layout - vertical columns like Moxfield */
+.card-type-grid {
+  column-count: 2; /* Default 2 columns instead of 3 */
+  column-gap: 16px;
+  width: 100%;
+  column-fill: balance; /* Try to balance content across columns */
+}
+
+/* For grid view, disable column layout and stack card type containers vertically */
+.card-type-grid.grid-view-mode {
+  column-count: unset;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Responsive column counts based on screen width */
+@media (max-width: 768px) {
+  .card-type-grid {
+    column-count: 1; /* 1 column on small screens */
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  .card-type-grid {
+    column-count: 2; /* 2 columns on medium screens */
+  }
+}
+
+@media (min-width: 1201px) {
+  .card-type-grid {
+    column-count: 3; /* 3 columns only on very large screens */
+  }
+}
+
+/* Card sections container for groupings with proper column layout */
+.card-sections-container {
+  column-count: 2; /* Default 2 columns instead of 3 */
+  column-gap: 16px;
+  width: 100%;
+  column-fill: balance; /* Try to balance content across columns */
+}
+
+/* Responsive column counts for card sections */
+@media (max-width: 768px) {
+  .card-sections-container {
+    column-count: 1; /* 1 column on small screens */
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  .card-sections-container {
+    column-count: 2; /* 2 columns on medium screens */
+  }
+}
+
+@media (min-width: 1201px) {
+  .card-sections-container {
+    column-count: 3; /* 3 columns only on very large screens */
+  }
+}
+
+/* Card type section - no container, just logical grouping */
+.card-type-section {
+  width: 100%;
+  break-inside: avoid; /* Prevent column breaks inside sections */
+  page-break-inside: avoid; /* For older browsers */
+  margin-bottom: 16px; /* Space between sections */
+}
+
+/* Card type list - simple container for the cards in each type */
+.card-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Card list container for simple list layout */
+.card-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Card type containers - styled like Moxfield with proper column breaking */
+.card-type-container {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  display: block; /* Changed from flex to block for better column behavior */
+  width: 100%;
+  box-sizing: border-box;
+  height: fit-content;
+  break-inside: avoid; /* Prevent column breaks inside containers */
+  page-break-inside: avoid; /* For older browsers */
+  margin-bottom: 16px; /* Increased space between containers */
+  border: 1px solid #f0f0f0; /* Add subtle border for better separation */
+  transition: box-shadow 0.2s ease;
+  overflow: hidden; /* Prevent content from overflowing container */
+}
+
+/* Enhanced styling for grid view card type containers */
+.grid-view-mode .card-type-container {
+  margin-bottom: 20px; /* More space between groups in grid view */
+  border: 1px solid #e0e0e0; /* Slightly more visible border */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04); /* Subtle shadow for better separation */
+  -webkit-column-break-inside: avoid; /* Safari and Chrome */
+}
+
+/* Card type header styling (Moxfield style) */
+.card-type-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+}
+
+/* Clickable header styling for bulk edit mode */
+.card-type-header.clickable-header {
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.card-type-header.clickable-header:hover {
+  background-color: #f0f8ff !important;
+  border-bottom-color: #1976d2;
+}
+
+.card-type-header.clickable-header:active {
+  background-color: #e3f2fd;
+}
+
+.card-type-name {
+  color: #333;
+}
+
+.card-type-count {
+  color: #666;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+/* Card type color indicators */
+.card-type-header::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  margin-right: 8px;
+  background-color: #999; /* Default color */
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Type-specific colors */
+.card-type-header[data-type="Commander"]::before {
+  background-color: #8a5c97; /* Purple for commanders */
+}
+
+.card-type-header[data-type="Creature"]::before {
+  background-color: #5c8a97; /* Blue-teal for creatures */
+}
+
+.card-type-header[data-type="Sorcery"]::before {
+  background-color: #a34141; /* Red for sorceries */
+}
+
+.card-type-header[data-type="Instant"]::before {
+  background-color: #277b8c; /* Blue for instants */
+}
+
+.card-type-header[data-type="Artifact"]::before {
+  background-color: #7b7b7b; /* Gray for artifacts */
+}
+
+.card-type-header[data-type="Enchantment"]::before {
+  background-color: #917f28; /* Gold for enchantments */
+}
+
+.card-type-header[data-type="Land"]::before {
+  background-color: #487b3a; /* Green for lands */
+}
+
+/* Mana value and other grouping colors */
+.card-type-header[data-type^="0 MV"]::before {
+  background-color: #666666; /* Dark gray for 0 mana */
+}
+
+.card-type-header[data-type^="1 MV"]::before {
+  background-color: #4287f5; /* Blue for 1 mana */
+}
+
+.card-type-header[data-type^="2 MV"]::before {
+  background-color: #42b0f5; /* Light blue for 2 mana */
+}
+
+.card-type-header[data-type^="3 MV"]::before {
+  background-color: #42f5e3; /* Teal for 3 mana */
+}
+
+.card-type-header[data-type^="4 MV"]::before {
+  background-color: #42f59e; /* Green-blue for 4 mana */
+}
+
+.card-type-header[data-type^="5 MV"]::before {
+  background-color: #5df542; /* Light green for 5 mana */
+}
+
+.card-type-header[data-type^="6 MV"]::before {
+  background-color: #bff542; /* Yellow-green for 6 mana */
+}
+
+.card-type-header[data-type^="7 MV"]::before {
+  background-color: #f5da42; /* Yellow for 7 mana */
+}
+
+.card-type-header[data-type^="8 MV"]::before,
+.card-type-header[data-type^="9 MV"]::before {
+  background-color: #f59e42; /* Orange for 8-9 mana */
+}
+
+.card-type-header[data-type^="10 MV"]::before,
+.card-type-header[data-type^="11 MV"]::before,
+.card-type-header[data-type^="12 MV"]::before,
+.card-type-header[data-type^="13 MV"]::before,
+.card-type-header[data-type^="14 MV"]::before,
+.card-type-header[data-type^="15 MV"]::before {
+  background-color: #f54242; /* Red for 10+ mana */
+}
+
+.card-type-header[data-type="Unknown MV"]::before {
+  background-color: #666666; /* Gray for unknown mana value */
+}
+
+/* Card list item styling for better readability */
+.card-list-item {
+  display: flex;
+  align-items: flex-start; /* Align to top to allow vertical expansion */
+  gap: 6px;
+  padding: 2px;
+  border-radius: 2px;
+  transition: background-color 0.1s;
+  width: 100%;
+  margin-bottom: 2px;
+  min-height: 20px; /* Minimum height but allow expansion */
+  box-sizing: border-box;
+}
+
+.mana-cost {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mana-symbol {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  margin-right: 0;
+  margin-left: 0;
+  display: inline-block;
+}
+
+.card-list-item:hover {
+  background-color: #f5f7fa;
+}
+
+/* Card quantity styling */
+.card-quantity {
+  min-width: 20px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.card-name {
+  flex: 1;
+  cursor: pointer;
+  text-decoration: none;
+  color: #1976d2;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 0;
+  /* max-width: 200px; Removed to allow deck rows to control their own width */
+  padding: 0;
+  transition: color 0.2s;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.2; /* Tighter line height for better appearance */
+  hyphens: auto; /* Enable automatic hyphenation */
+}
+
+.card-name:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+
+.card-price {
+  margin-left: 8px;
+  margin-right: 0;
+  font-size: 12px;
+  color: #47a147;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-price.no-price {
+  color: #999;
+  font-style: italic;
+}
+
+.card-price.basic-land-price {
+  color: #6a8f6a;
+  font-style: normal;
+}
+
+.card-price.foil-price {
+  color: #222;
+  font-weight: 600;
+}
+
+/* Digital-only card price */
+.card-price.digital-price {
+  color: #9c27b0;
+  font-style: italic;
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.05), rgba(156, 39, 176, 0.05));
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Special treatments for promo cards */
+.card-price.promo-price {
+  color: #ff6d00;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(255, 109, 0, 0.05), rgba(255, 109, 0, 0.05));
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Etched finish cards */
+.card-price.etched-price {
+  color: #795548;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(121, 85, 72, 0.05), rgba(121, 85, 72, 0.05));
+  border-radius: 3px;
+  padding: 0 3px;
+  text-shadow: 0 0 1px rgba(121, 85, 72, 0.3);
+}
+
+/* Textured/Boosterfun cards */
+.card-price.special-finish-price {
+  color: #e91e63;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(233, 30, 99, 0.05));
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Special set types (duel decks, masters sets, etc.) */
+.card-price.special-set-price {
+  color: #009688;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(0, 150, 136, 0.05), rgba(0, 150, 136, 0.05));
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Card mana cost styles */
+.card-mana-cost {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+  padding: 1px 4px;
+  display: inline-block;
+  letter-spacing: 1px;
+}
+
+/* Card preview styles - floating preview removed */
+/* Only keeping styles for the sidebar preview */
+
+nav {
+  font-family: inherit;
+  flex-wrap: wrap;
+}
+nav a, nav button {
+  font-size: 1rem;
+  color: #fff;
+  text-decoration: none;
+  margin-right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+}
+nav a:hover, nav button:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem 1rem;
+  }
+  nav > div {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  nav a, nav button {
+    display: block;
+    margin: 0.25rem 0;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 0.5rem;
+    font-size: 1.1rem;
+  }
+  form, .container {
+    padding: 1rem;
+    max-width: 98vw;
+    min-width: 0;
+  }
+  h1, h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Toggle buttons for display options */
+.toggle-button {
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: 12px;
+  font-weight: 500;
+  width: auto;
+  display: inline-block;
+  border-radius: 4px;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-button.active {
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.toggle-button.inactive {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+/* Bulk edit button styles */
+.bulk-edit-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 32px;
+  width: 120px;
+  margin-bottom: 0;
+}
+
+.bulk-edit-button.active {
+  background-color: #1976d2;
+  color: #fff;
+  border-color: #1565c0;
+}
+
+.bulk-edit-button:hover {
+  background-color: #e0e0e0;
+}
+
+.bulk-edit-button.active:hover {
+  background-color: #1565c0;
+}
+
+/* Bulk edit action buttons container */
+.bulk-actions-container {
+  position: sticky;
+  top: 365px;
+  z-index: 24;
+  background: white;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Remove padding from bulk edit button container div */
+div[style*="background: white"][style*="padding: 8px 0px"][style*="display: flex"][style*="justify-content: center"] {
+  padding: 0 !important;
+}
+
+/* Bulk select all button styling */
+.bulk-select-all-text {
+  margin-bottom: 6px !important;
+}
+
+.bulk-actions-counter {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+  text-align: center;
+}
+
+.bulk-actions-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.bulk-action-button {
+  border: none;
+  border-radius: 3px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  margin: 0;
+}
+
+.bulk-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bulk-action-button.collection {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.bulk-action-button.collection:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+}
+
+.bulk-action-button.wishlist {
+  background-color: #ff9800;
+  color: #fff;
+}
+
+.bulk-action-button.wishlist:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+}
+
+.bulk-action-button.sideboard {
+  background-color: #9c27b0;
+  color: #fff;
+}
+
+.bulk-action-button.sideboard:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+}
+
+.bulk-action-button.tech-ideas {
+  background-color: #607d8b;
+  color: #fff;
+}
+
+.bulk-action-button.tech-ideas:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+}
+
+.bulk-action-button.utility {
+  background-color: #6b7280;
+  color: white;
+}
+
+.bulk-action-button.utility:hover {
+  background-color: #4b5563;
+}
+
+/* Tooltip styles for card special characteristics */
+.card-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.card-tooltip .tooltiptext {
+  visibility: hidden;
+  width: 160px;
+  background-color: rgba(51, 51, 51, 0.95);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -80px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.card-tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(51, 51, 51, 0.95) transparent transparent transparent;
+}
+
+.card-tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Background pattern for special finish cards */
+.card-list-item.special-finish {
+  background-image: linear-gradient(45deg, rgba(233, 30, 99, 0.03) 25%, transparent 25%, transparent 50%, rgba(233, 30, 99, 0.03) 50%, rgba(233, 30, 99, 0.03) 75%, transparent 75%, transparent);
+  background-size: 4px 4px;
+}
+
+.card-list-item.etched {
+  background-image: linear-gradient(45deg, rgba(121, 85, 72, 0.03) 25%, transparent 25%, transparent 50%, rgba(121, 85, 72, 0.03) 50%, rgba(121, 85, 72, 0.03) 75%, transparent 75%, transparent);
+  background-size: 4px 4px;
+}
+
+.card-list-item.promo {
+  background-image: linear-gradient(45deg, rgba(255, 109, 0, 0.03) 25%, transparent 25%, transparent 50%, rgba(255, 109, 0, 0.03) 50%, rgba(255, 109, 0, 0.03) 75%, transparent 75%, transparent);
+  background-size: 4px 4px;
+}
+
+/* Enhanced hover effects for special cards */
+.card-name.textured:hover, .card-name.boosterfun:hover, 
+.card-name.etched:hover, .card-name.promo:hover, 
+.card-name.special-set:hover, .card-name.masterpiece:hover {
+  text-shadow: 0 0 1px currentColor;
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content label {
+  margin-top: 1rem;
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.modal-content input[type="date"],
+.modal-content input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: #fff; /* Ensure background is white */
+  color: #000; /* Ensure text is black */
+  font-size: 1rem;
+}
+
+.modal-content input[disabled] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.button-group button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.button-group button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.modal-content .btn {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.modal-content .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+/* ALL FOIL EFFECTS REMOVED */
+
+/* SMOOTH RAINBOW FOIL EFFECT - Matching reference gif */
+
+/* Keep only the basic card preview structure */
+.card-preview-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 10px; /* Match the card image border radius */
+  overflow: hidden; /* Clip the foil overlay to the rounded corners */
+  z-index: 1; /* Normal layering within sidebar context */
+}
+
+.card-preview-container img {
+  border-radius: 10px;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+/* Fresh foil overlay for card previews */
+.fresh-foil-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px; /* Match the card image border radius */
+  pointer-events: none;
+  z-index: 2;
+  transform: none !important; /* Disable any scaling to prevent overlay extending beyond card boundaries */
+}
+
+/* End of foil effects section */
+
+/* All foil animations removed for testing */
+
+/* Bulk edit checkbox styling */
+.bulk-edit-checkbox {
+  margin: 0 6px 0 0 !important;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #f0f0f0 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.bulk-edit-checkbox:checked {
+  background-color: #1976d2 !important;
+  border-color: #1976d2 !important;
+}
+
+.bulk-edit-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.bulk-edit-checkbox:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove input margins that might affect checkboxes */
+input[type="checkbox"] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Select All container styling */
+.bulk-select-all-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.bulk-select-all-container input[type="checkbox"] {
+  margin-right: 6px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ensure all child containers in sidebar don't create scrollbars */
+/* .deck-sidebar * {
+  overflow: visible !important; DISABLED - causes foil overlays to extend beyond card boundaries
+} */

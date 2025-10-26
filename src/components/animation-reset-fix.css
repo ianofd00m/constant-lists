@@ -1,0 +1,76 @@
+/* Animation Reset Fix for Foil Cards
+ * 
+ * This CSS addresses the issue where animations reset when hovering between cards
+ * by using a combination of:
+ * 1. CSS custom properties to store animation state
+ * 2. Pseudo-elements to isolate animations
+ * 3. More specific animation properties to prevent resets
+ */
+
+/* Use this class instead of directly adding foil-active-border */
+.animation-stable-container {
+  position: relative;
+}
+
+/* Create an isolated animation layer that won't be affected by class changes */
+.animation-stable-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 10px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  
+  /* Pre-define animation that won't restart */
+  animation: holographic-shimmer 15s ease-in-out infinite;
+  animation-play-state: paused;
+  animation-fill-mode: forwards;
+  will-change: background-position;
+  transform: translateZ(0);
+  
+  /* Gradient stays defined but initially transparent */
+  background: linear-gradient(110deg, 
+    rgba(255, 190, 220, 0.6), 
+    rgba(200, 190, 255, 0.6), 
+    rgba(190, 220, 255, 0.6), 
+    rgba(190, 255, 220, 0.6), 
+    rgba(220, 255, 190, 0.6), 
+    rgba(255, 220, 190, 0.6), 
+    rgba(255, 190, 220, 0.6));
+  background-size: 700% 700%;
+  filter: blur(1.5px);
+  mix-blend-mode: overlay;
+}
+
+/* Only change opacity and play state, not the animation itself */
+.animation-stable-container.foil-active::after {
+  opacity: 0.3;
+  animation-play-state: running;
+}
+
+/* Move image in proper layer */
+.animation-stable-container img {
+  position: relative;
+  z-index: 0;
+  border-radius: 10px;
+}
+
+/* Special handling for fixed preview */
+.animation-stable-container.fixed-preview::after {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Replace the current classes with these stable versions */
+.card-preview-container.animation-stable.foil-active::before {
+  display: none; /* Disable the original animation */
+}
+
+/* Animation keyframes remain unchanged */

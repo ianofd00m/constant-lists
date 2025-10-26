@@ -1,0 +1,49 @@
+/* Direct foil animation for modal - positioned exactly over the card image */
+.modal-foil-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important; /* Use width/height instead of right/bottom for precise sizing */
+  height: 100% !important;
+  border-radius: 8px !important; /* Match the modal card image border radius */
+  background: linear-gradient(110deg,
+    rgba(255, 190, 220, 0.7),
+    rgba(200, 190, 255, 0.7),
+    rgba(190, 220, 255, 0.7),
+    rgba(190, 255, 220, 0.7),
+    rgba(220, 255, 190, 0.7),
+    rgba(255, 220, 190, 0.7),
+    rgba(255, 190, 220, 0.7)) !important;
+  background-size: 700% 700% !important;
+  animation: foilShimmerDirect 15s ease-in-out infinite alternate !important;
+  mix-blend-mode: overlay !important;
+  filter: blur(1px) !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  will-change: background-position !important;
+  box-sizing: border-box !important; /* Ensure proper sizing calculation */
+  transform: none !important; /* Disable any scaling to prevent overlay extending beyond card boundaries */
+}
+
+.modal-foil-overlay.active {
+  opacity: 0.4 !important;
+  animation-play-state: running !important;
+}
+
+.modal-foil-overlay.inactive {
+  opacity: 0 !important;
+  animation-play-state: paused !important;
+}
+
+/* Make sure the current printing container has position relative */
+.current-printing-container {
+  position: relative !important;
+  overflow: hidden !important; /* Clip foil overlay to container bounds */
+  border-radius: 8px !important; /* Match modal card styling */
+}
+
+/* Make the card container position relative for foil overlay positioning */
+.current-printing-card {
+  position: relative !important;
+  overflow: hidden !important; /* Clip foil overlay to card bounds */
+}

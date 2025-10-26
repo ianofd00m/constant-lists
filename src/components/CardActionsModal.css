@@ -1,0 +1,1685 @@
+.card-actions-modal .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    overflow: visible;
+}
+
+.card-actions-modal .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 95%;
+    max-width: 1000px; /* Increased from 800px to 1000px to prevent cutoff */
+    max-height: calc(90vh + 100px); /* Added 100px total (50px top + 50px bottom) */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+}
+
+.card-actions-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Prevent card name from wrapping but don't truncate with ellipsis */
+.card-actions-modal .card-name-title {
+    white-space: nowrap;
+    margin: 0;
+    max-width: calc(100% - 40px); /* Leave room for close button */
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.card-actions-modal .close-button {
+    position: absolute;
+    top: -18px;
+    right: -18px;
+    background: #fff;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #666;
+    z-index: 1100;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: bold;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    vertical-align: baseline;
+}
+
+.card-actions-modal .close-button:hover {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* Navigation arrow buttons */
+.card-actions-modal .nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #ddd;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #666;
+    z-index: 1100;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    max-width: 48px;
+    max-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    vertical-align: baseline;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-actions-modal .nav-arrow-left {
+    left: -60px; /* Position outside the modal */
+}
+
+.card-actions-modal .nav-arrow-right {
+    right: -60px; /* Position outside the modal */
+}
+
+.card-actions-modal .nav-arrow:hover {
+    background-color: #fff;
+    color: #333;
+    border-color: #007bff;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.card-actions-modal .nav-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Modal header for navigation arrows - positioned relative to modal content */
+.card-actions-modal .modal-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    pointer-events: none; /* Allow clicks to pass through to modal content */
+    z-index: 1000;
+}
+
+/* Allow navigation arrows to receive pointer events */
+.card-actions-modal .modal-header .nav-arrow {
+    pointer-events: auto;
+}
+
+.card-actions-modal .modal-body {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    overflow: hidden; /* Remove overflow to allow independent scrolling */
+    height: 100%; /* Take full height for proper flex behavior */
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for WebKit browsers */
+.card-actions-modal .modal-body::-webkit-scrollbar {
+    display: none;
+}
+
+.printings-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column layout to prevent cutoff */
+    gap: 12px;
+    padding-right: 10px;
+    align-content: flex-start;
+}
+
+.printings-grid img {
+    width: 100% !important;
+    cursor: pointer;
+    border: none !important; /* Remove border completely to prevent any sizing issues */
+    transition: outline-color 0.2s;
+    /* Removed border-radius to fix rounded blue corners */
+    /* Override global box-sizing to fix layout issues */
+    box-sizing: content-box !important;
+}
+
+/* Additional more specific selector to ensure override */
+.card-actions-modal .printings-grid img {
+    box-sizing: content-box !important;
+    border: none !important;
+    width: 100% !important;
+}
+
+.printing-item {
+    transition: transform 0.2s ease;
+}
+
+.printing-item:hover {
+    transform: scale(1.05);
+    z-index: 5;
+}
+
+.printings-grid .printing-item.selected img {
+    outline: 2px solid #000000; /* Black outline instead of blue */
+    outline-offset: -2px; /* Keep outline inside the element bounds */
+    /* Removed box-shadow to eliminate drop shadow */
+}
+
+/* Prevent the blue outline from affecting current printing info area */
+.card-actions-modal .current-printing-info.selected,
+.card-actions-modal .current-printing-container.selected,
+.card-actions-modal .current-printing-info img,
+.card-actions-modal .current-printing-container img,
+.card-actions-modal .current-printing-info img.selected,
+.card-actions-modal .current-printing-container img.selected {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.card-actions {
+    flex: 0 0 360px; /* Increased from 300px to 360px to accommodate larger printings */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 360px;
+    max-width: 360px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start; /* Align to the top of the flex container */
+    height: 100%; /* Take full height */
+    max-height: calc(90vh - 40px); /* Increased from 140px to account for taller modal */
+    overflow-y: auto; /* Allow independent scrolling for left section */
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    border-bottom: 1px solid #ddd; /* Added bottom border to left column */
+}
+
+/* Hide scrollbar for WebKit browsers */
+.card-actions::-webkit-scrollbar {
+    display: none;
+}
+
+/* New printings section styles */
+.printings-section {
+    margin-top: 16px;
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+}
+
+.printings-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.printings-list {
+    flex: 1; /* Take remaining space to align bottom with right-hand div */
+    min-height: 400px; /* Minimum height for usability */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+    padding: 8px 4px; /* Reduced horizontal padding from 16px to 4px to minimize side space */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center all items horizontally */
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for WebKit browsers */
+.printings-list::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ensure proper scrolling behavior for printings list */
+.printings-list {
+    overflow-y: scroll !important; /* Force scrolling */
+    scroll-behavior: smooth;
+}
+
+.card-actions h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 16px;
+    color: #333;
+}
+
+/* Remove margins from "Select Printing" h3 specifically */
+.card-actions-modal h3 {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.action-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.control-label {
+    min-width: 70px;
+    width: 70px;
+    font-weight: 500;
+    font-size: 14px;
+    display: inline-block;
+    text-align: right;
+    margin-right: 10px;
+}
+
+/* Toggle switch styling */
+.foil-selector {
+    align-items: center;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-left: 5px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    outline: none !important; /* Remove focus outline */
+    border: none !important; /* Remove any borders */
+    box-shadow: none !important; /* Remove any shadows */
+}
+
+/* Remove focus indicators completely */
+.toggle-switch input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: background-color 0.05s ease-out; /* ⚡ ULTRA-fast transition for instant feel */
+    border-radius: 34px;
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: transform 0.05s ease-out; /* ⚡ ULTRA-fast transition for instant feel */
+    border-radius: 50%;
+    will-change: transform; /* ⚡ GPU acceleration hint */
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+input:checked + .toggle-slider {
+    background-color: #1976d2;
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+/* Remove the focus styling that was causing blue square */
+input:focus + .toggle-slider {
+    outline: none !important; /* Remove focus outline */
+    border: none !important; /* Remove focus border */
+    box-shadow: none !important; /* Remove focus shadow */
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+/* Disabled toggle switch styling */
+.toggle-switch.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.toggle-switch.disabled input {
+    cursor: not-allowed;
+}
+
+.toggle-slider.disabled {
+    cursor: not-allowed;
+}
+
+.toggle-slider.disabled:before {
+    background-color: #f5f5f5;
+}
+
+/* ⚡ Optimized lightweight shimmer animation for better performance */
+@keyframes lightweight-shimmer {
+    0% {
+        opacity: 0.8;
+        transform: translateX(-100%);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(0%);
+    }
+    100% {
+        opacity: 0.8;
+        transform: translateX(100%);
+    }
+}
+
+/* ⚡ Performance optimized foil toggle - lighter animation */
+.toggle-slider.foil-active {
+    background: linear-gradient(45deg, #1976d2, #42a5f5, #1976d2);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ⚡ Lightweight shimmer overlay */
+.toggle-slider.foil-active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    animation: lightweight-shimmer 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+/* Override states with lighter approach */
+.toggle-switch input:checked + .toggle-slider.foil-active,
+.toggle-switch.disabled .toggle-slider.foil-active,
+input:checked + .toggle-slider.foil-active,
+input:focus + .toggle-slider.foil-active {
+    background: linear-gradient(45deg, #1976d2, #42a5f5, #1976d2);
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */ 
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+/* ⚡ MAXIMUM FORCE toggle visibility - nuclear option */
+.modal-content .toggle-switch,
+.modal-content .toggle-switch.disabled,
+.modal-content .toggle-slider,
+.modal-content .toggle-slider.disabled,
+.toggle-switch,
+.toggle-switch.disabled,
+.toggle-slider,
+.toggle-slider.disabled {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    width: 50px !important;
+    height: 24px !important;
+    background-color: #ccc !important;
+    border-radius: 34px !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+.modal-content .toggle-switch.disabled,
+.toggle-switch.disabled {
+    opacity: 0.6 !important; /* Maintain disabled appearance */
+}
+
+/* Force the slider to be visible */
+.toggle-slider,
+.modal-content .toggle-slider {
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    cursor: pointer !important;
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any shadow */
+}
+
+/* Force input to have no blue highlighting */
+.toggle-switch input,
+.modal-content .toggle-switch input {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
+}
+
+/* Animated text for foil card names with dynamic delays */
+.foil-active-text {
+    background: linear-gradient(110deg, #ff99cc, #cc99ff, #99ccff, #99ffcc, #ccff99, #ffcc99, #ff99cc);
+    background-size: 400% 400%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* Animation with dynamic delay set via inline styles */
+    animation: holographic-shimmer 8s linear infinite;
+    
+    /* Hardware acceleration */
+    will-change: background-position;
+    transform: translateZ(0);
+    
+    /* Smooth transition for hover effects */
+    transition: text-decoration 0.2s ease;
+    cursor: pointer;
+}
+
+/* Add underline on hover for foil cards */
+.deck-card-row:hover .foil-active-text {
+    text-decoration: underline;
+    text-decoration-color: #ff99cc; /* Use a solid foil gradient color */
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+/* Animated border for foil card preview - apply only to the card image container */
+.current-printing-card.foil-active-border {
+    position: relative;
+}
+
+/* Apply animation base to the card image container only */
+.current-printing-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 10px; /* card radius + border width */
+    background: linear-gradient(110deg, 
+      rgba(255, 190, 220, 0.7), 
+      rgba(200, 190, 255, 0.7), 
+      rgba(190, 220, 255, 0.7), 
+      rgba(190, 255, 220, 0.7), 
+      rgba(220, 255, 190, 0.7), 
+      rgba(255, 220, 190, 0.7), 
+      rgba(255, 190, 220, 0.7)) !important;
+    background-size: 700% 700% !important;
+    animation-name: holographic-shimmer !important;
+    animation-duration: 15s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+    animation-play-state: paused;
+    animation-fill-mode: forwards;
+    opacity: 0;
+    filter: blur(1px);
+    z-index: -1;
+    will-change: background-position;
+    transform: translateZ(0); /* Hardware acceleration */
+    transition: opacity 0.3s ease; /* Smooth transition for opacity changes */
+}
+
+/* Only change the opacity and animation play state, not the animation itself */
+.current-printing-card.foil-active-border::before {
+    opacity: 0.4;
+    animation-play-state: running;
+    transform: translateZ(0); /* Hardware acceleration */
+}
+
+/* Layout for the printings area */
+.card-actions-modal .printings-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Reduced gap to minimize spacing around "Select Printing" */
+    height: 100%; /* Take full height of container */
+    min-height: 600px; /* Minimum height to match printings-list max-height */
+}
+
+/* Current printing container - info only, no image */
+.card-actions-modal .current-printing-container {
+    display: flex;
+    gap: 0; /* Remove gap since we're removing the image */
+    align-items: flex-start;
+    padding: 0;
+    background-color: transparent;
+    border-radius: 0 !important; /* Force remove border-radius to prevent affecting child elements */
+    -webkit-border-radius: 0 !important; /* WebKit override */
+    -moz-border-radius: 0 !important; /* Mozilla override */
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border: none;
+    outline: none !important;
+    justify-content: center; /* Center the container content */
+    /* Take full height of parent printings-container */
+    height: 100%;
+    max-height: 100%;
+}
+
+/* Hide the card image entirely */
+.card-actions-modal .current-printing-card {
+    display: none !important; /* Hide the large card image display */
+}
+
+.card-actions-modal .current-card-image {
+    max-width: 320px; /* Increased from default to make card art larger */
+    max-height: 448px; /* Proportional height for Magic card aspect ratio */
+    width: auto;
+    height: auto;
+    border-radius: 12px; /* Slightly more rounded corners */
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25); /* Restored shadow for depth */
+    display: block; /* Ensure no inline spacing */
+    margin: 0 auto; /* Center the image */
+    padding: 0; /* Remove any padding */
+    border: none !important; /* Ensure no border */
+    outline: none !important; /* Prevent focus outlines */
+    position: relative; /* For proper stacking with overlay */
+    cursor: pointer; /* Indicate it's interactive */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smooth hover effects */
+}
+
+.card-actions-modal .current-card-image:hover {
+    transform: scale(1.02); /* Slight zoom on hover */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3); /* Enhanced shadow on hover */
+}
+
+/* Ensure the main card preview is never affected by selection styles */
+.card-actions-modal .current-card-image.selected,
+.card-actions-modal .current-printing-card .selected,
+.card-actions-modal .current-printing-container .selected,
+.card-actions-modal .current-printing-info,
+.card-actions-modal .current-printing-info.selected,
+.card-actions-modal .current-printing-container,
+.card-actions-modal .current-printing-container *,
+.card-actions-modal .current-printing-info * {
+    outline: none !important;
+    border: none !important;
+    /* Removed box-shadow to eliminate drop shadows */
+}
+
+/* Smooth shimmer overlay for foil card preview image */
+.current-printing-card.foil-active-border .current-card-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.current-printing-card.foil-active-border .current-card-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    /* Very smooth gradient with subtle color transitions */
+    background: linear-gradient(
+        125deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.1) 35%,
+        rgba(255, 220, 255, 0.15) 40%,
+        rgba(220, 255, 255, 0.15) 45%,
+        rgba(255, 255, 220, 0.15) 50%,
+        rgba(255, 220, 255, 0.15) 55%,
+        rgba(220, 255, 255, 0.15) 60%,
+        rgba(255, 255, 255, 0.1) 65%,
+        transparent 80%
+    );
+    
+    /* Large background size for smooth transitions */
+    background-size: 400% 400%;
+    
+    /* Smooth, continuous animation */
+    animation: card-shimmer 6s ease-in-out infinite;
+    
+    /* Blend mode for subtle effect */
+    mix-blend-mode: overlay;
+    
+    /* Hardware acceleration */
+    will-change: background-position;
+    transform: translateZ(0);
+    
+    /* Ensure it doesn't interfere with interactions */
+    pointer-events: none;
+}
+
+/* Smooth shimmer animation for card image */
+@keyframes card-shimmer {
+    0%, 100% {
+        background-position: -50% -50%;
+    }
+    25% {
+        background-position: 50% 20%;
+    }
+    50% {
+        background-position: 150% 150%;
+    }
+    75% {
+        background-position: 50% 20%;
+    }
+}
+
+.card-actions-modal .current-printing-info {
+    display: flex;
+    flex-direction: column;
+    padding: 12px; /* Reduced padding for tighter spacing */
+    margin-top: 0;
+    background-color: rgba(248, 250, 252, 0.95); /* Slightly different background */
+    border: 1px solid rgba(0, 123, 255, 0.2) !important; /* Lighter border */
+    border-radius: 8px !important; /* Restored subtle border radius */
+    width: 100%; /* Expand to full width */
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto; /* Allow scrolling when content exceeds height */
+    outline: none !important;
+    flex: 1; /* Take up all available space */
+    /* Use box-sizing to include padding and borders in height calculation */
+    box-sizing: border-box !important; /* Include padding and border in the element's total dimensions */
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Add subtle shadow */
+}
+
+/* Hide scrollbar for WebKit browsers for current-printing-info */
+.card-actions-modal .current-printing-info::-webkit-scrollbar {
+    display: none;
+}
+
+/* NUCLEAR OPTION: Force border and border-radius with maximum specificity */
+.card-actions-modal .modal-content .modal-body .printings-container .current-printing-container .current-printing-info,
+.card-actions-modal .current-printing-container .current-printing-info,
+.card-actions-modal .current-printing-info,
+div.card-actions-modal .current-printing-info {
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-bottom: 1px solid rgba(0, 123, 255, 0.5) !important;
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* ULTIMATE OVERRIDE: CSS with highest possible specificity */
+html body .card-actions-modal .modal-content .modal-body .printings-container .current-printing-container .current-printing-info,
+html body div.card-actions-modal div.modal-content div.modal-body div.printings-container div.current-printing-container div.current-printing-info,
+[class*="current-printing-info"],
+*[class*="current-printing-info"] {
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-bottom: 1px solid rgba(0, 123, 255, 0.5) !important;
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    /* Force border style */
+    border-style: solid !important;
+    border-width: 1px !important;
+    border-color: rgba(0, 123, 255, 0.3) !important;
+    border-bottom-color: rgba(0, 123, 255, 0.5) !important;
+}
+
+/* CONTAINER OVERRIDE: Force border-radius removal on container */
+html body .card-actions-modal .modal-content .modal-body .printings-container .current-printing-container,
+html body div.card-actions-modal div.modal-content div.modal-body div.printings-container div.current-printing-container,
+.card-actions-modal .current-printing-container,
+[class*="current-printing-container"],
+*[class*="current-printing-container"] {
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* CRITICAL: Force bottom border visibility */
+html body .card-actions-modal .modal-content .modal-body .printings-container .current-printing-container .current-printing-info,
+html body div.card-actions-modal div.modal-content div.modal-body div.printings-container div.current-printing-container div.current-printing-info,
+.card-actions-modal .current-printing-info,
+[class*="current-printing-info"] {
+    border-bottom: 1px solid rgba(0, 123, 255, 0.5) !important;
+    border-bottom-width: 1px !important;
+    border-bottom-style: solid !important;
+    border-bottom-color: rgba(0, 123, 255, 0.5) !important;
+}
+
+/* Comprehensive override to prevent any blue outline/border on current printing display */
+.card-actions-modal .current-printing-info,
+.card-actions-modal .current-printing-info:focus,
+.card-actions-modal .current-printing-info:active,
+.card-actions-modal .current-printing-container:focus,
+.card-actions-modal .current-printing-container:active,
+.card-actions-modal .current-printing-container .current-printing-info {
+    outline: none !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important; /* Keep the original light blue border */
+    border-bottom: 1px solid rgba(0, 123, 255, 0.5) !important; /* Maintain bottom border */
+    border-radius: 0 !important; /* Remove border-radius to fix curvature conflicts */
+    box-shadow: none !important;
+}
+
+/* Prevent any selection styling from affecting the current printing area */
+.card-actions-modal .current-printing-info.selected,
+.card-actions-modal .current-printing-container.selected,
+.card-actions-modal .printings-layout .selected .current-printing-info,
+.card-actions-modal .printings-layout .selected .current-printing-container,
+.card-actions-modal .current-printing-container .current-printing-info.selected,
+.card-actions-modal .current-printing-container .current-printing-info {
+    outline: none !important;
+    border: 1px solid rgba(0, 123, 255, 0.3) !important; /* Maintain original styling */
+    border-bottom: 1px solid rgba(0, 123, 255, 0.5) !important; /* Maintain bottom border */
+    border-radius: 0 !important; /* Remove border-radius to fix curvature conflicts */
+    box-shadow: none !important;
+}
+
+/* Current label styling moved to printing-item.selected above */
+
+.card-actions-modal .current-printing-name {
+    font-size: 16px;
+    margin-bottom: 6px;
+    padding: 0; /* Remove extra padding since container now has padding */
+}
+
+.card-actions-modal .printing-details {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+    padding: 0; /* Remove padding since container has it */
+}
+
+.card-actions-modal .frame-type {
+    margin-top: 4px;
+    font-style: italic;
+    color: #666;
+    padding: 0; /* Remove padding since container has it */
+}
+
+.card-actions-modal .printing-price {
+    margin-top: 0; /* Removed top margin */
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+    padding: 0; /* Remove padding since container has it */
+}
+
+.card-actions-modal .oracle-text {
+    margin-top: 0; /* Removed top margin */
+    border-top: 1px solid #eee;
+    padding-top: 12px; /* Add some top padding for spacing */
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    display: flex; /* Added flex display */
+    flex-direction: column; /* Stack paragraphs vertically */
+    /* Remove flex: 1 to prevent taking remaining space and causing scroll */
+    overflow-y: visible; /* Show all content without scrolling */
+}
+
+.card-actions-modal .oracle-text p {
+    margin: 6px 0;
+}
+
+/* Updated printing item styles for vertical list */
+.card-actions-modal .printing-item {
+    position: relative;
+    border-radius: 8px; /* Restore border-radius */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Changed to column layout for stacked arrangement */
+    background: white;
+    transition: all 0.2s ease-in-out;
+    margin: 0 auto 12px auto; /* Center horizontally with auto margins */
+    border: 1px solid #e0e0e0;
+    align-items: center;
+    width: fit-content; /* Adjust width to content size */
+    max-width: calc(100% - 8px); /* Account for reduced container padding */
+}
+
+/* Specific override for printings list items */
+.printings-list .printing-item .set-info {
+    display: flex;
+    flex-direction: column; /* Changed to column to center the set icon */
+    align-items: center; /* Center the set icon and text */
+    justify-content: center;
+    gap: 4px; /* Space between icon and text */
+    margin-top: 6px;
+    width: 100%;
+    font-size: 9px;
+}
+
+.printings-list .printing-item .set-info span {
+    text-align: center; /* Center the text */
+    white-space: nowrap;
+    color: #333;
+    font-weight: 600;
+    min-width: 0;
+    max-width: 100%; /* Allow full width since we're stacking vertically */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.printings-list .printing-item .collection-indicator {
+    text-align: center; /* Center align since we're now in vertical layout */
+    margin: 0;
+    font-size: 7px;
+    padding: 1px 2px;
+    border-radius: 2px;
+    min-width: fit-content;
+    max-width: 100%; /* Allow full width since we're stacking vertically */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%; /* Take full width of container */
+    box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+/* Update set info for two-row layout with set-details-row and price-row */
+.card-actions-modal .set-info {
+    display: flex;
+    flex-direction: column; /* Stack rows vertically */
+    align-items: center; /* Center everything */
+    justify-content: center;
+    gap: 2px; /* Reduced gap between rows */
+    width: 100%;
+    min-width: 0;
+    outline: none !important;
+    border: none !important;
+    margin-bottom: 4px; /* Space before next element */
+}
+
+.card-actions-modal .set-symbol {
+    width: 16px !important; /* Match JSX size */
+    height: 16px !important; /* Match JSX size */
+    max-width: 16px !important; /* Override any max-width */
+    max-height: 16px !important; /* Override any max-height */
+    min-width: 16px !important; /* Override any min-width */
+    min-height: 16px !important; /* Override any min-height */
+    flex-shrink: 0 !important; /* Don't shrink */
+    flex-basis: 16px !important;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important; /* Remove margins for centered layout */
+    object-fit: contain !important; /* Ensure proper scaling */
+    display: inline-block !important; /* Inline block for better alignment */
+}
+
+/* Image container for list items - flexible width with max height */
+.printings-list .printing-item img {
+    height: auto !important;
+    max-height: 300px !important;
+    object-fit: contain !important;
+    border-radius: 6px !important;
+    margin-right: 0 !important; /* Remove right margin */
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+}
+
+/* Current banner overlay for selected printing */
+.card-actions-modal .printing-item.selected .current-label {
+    position: absolute; /* Position absolutely over the card image */
+    top: 0; /* At the very top - no margin */
+    left: 0; /* Align to left edge */
+    right: 0; /* Span full width of card - no margin */
+    display: block; /* Show the "CURRENT" banner */
+    background-color: #28a745; /* Strong green background */
+    color: white; /* White text for contrast */
+    font-weight: bold;
+    font-size: 10px; /* Smaller font for printing cards */
+    text-align: center;
+    padding: 4px 6px; /* Smaller padding for printing cards */
+    margin: 0; /* Remove all margins */
+    /* border-radius: 8px 8px 0 0; */ /* Commented out for seamless flush */
+    z-index: 10; /* Ensure it appears above the image */
+}
+
+/* Removed hover animation for printing items */
+
+.card-actions-modal .printing-item.selected {
+    border: none; /* Remove border to prevent sizing issues */
+    outline: 2px solid #28a745; /* Use outline instead of border to avoid affecting layout */
+    outline-offset: -2px; /* Keep outline inside the element bounds */
+    /* Removed box-shadow to eliminate drop shadow on selected items */
+}
+
+.card-actions-modal .printing-label {
+    font-size: 11px;
+    padding: 8px;
+    text-align: center; /* Center align everything */
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; /* Center align items */
+    width: 100%; /* Full width */
+    min-height: auto;
+    gap: 4px; /* Slightly larger gap for better spacing */
+}
+
+/* Update set info for vertical layout with icon on top */
+.card-actions-modal .set-info {
+    display: flex;
+    flex-direction: column; /* Changed to column to stack icon above text */
+    align-items: center; /* Center everything */
+    justify-content: center;
+    gap: 4px; /* Space between icon and text */
+    width: 100%;
+    min-width: 0;
+    outline: none !important;
+    border: none !important;
+    margin-bottom: 4px; /* Space before collection status */
+}
+
+.card-actions-modal .set-symbol {
+    width: 21px !important; /* Force fixed width - 75% larger than 12px */
+    height: 21px !important; /* Force fixed height - 75% larger than 12px */
+    max-width: 21px !important; /* Override any max-width */
+    max-height: 21px !important; /* Override any max-height */
+    min-width: 21px !important; /* Override any min-width */
+    min-height: 21px !important; /* Override any min-height */
+    flex-shrink: 0;
+    flex-basis: 21px;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    object-fit: contain; /* Ensure proper scaling */
+    display: block; /* Ensure it displays properly */
+}
+
+.card-actions-modal .set-info span {
+    width: 100%; /* Take full width */
+    min-width: 0;
+    text-align: center; /* Center the text */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    font-size: 9px; /* Slightly smaller to fit better */
+    line-height: 1.2;
+}
+
+/* Collection indicator styling for neat placement under set info */
+.card-actions-modal .collection-indicator {
+    font-size: 9px;
+    text-align: center; /* Center the text */
+    padding: 2px 6px;
+    margin-top: 4px; /* Space from set info */
+    border-radius: 3px;
+    font-weight: 500;
+    line-height: 1.1;
+    display: block; /* Full width block */
+    width: 100%; /* Take full width of container */
+    box-sizing: border-box;
+}
+
+/* Current label for selected printing in list */
+.printings-list .printing-item.selected .current-label {
+    position: absolute;
+    /* top: 2px; */ /* Commented out - set to 0 for flush positioning */
+    /* right: 2px; */ /* Commented out - set to 0 for flush positioning */
+    top: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    font-size: 8px;
+    text-align: center;
+    padding: 2px 4px;
+    margin: 0;
+    /* border-radius: 3px; */ /* Commented out for seamless flush */
+    z-index: 10;
+}
+
+.printings-list .printing-item:hover {
+    background-color: #f5f5f5;
+    transform: none; /* Remove vertical transform for list items */
+}
+
+.printings-list .printing-item.selected {
+    border: 2px solid #28a745;
+    background-color: #f0fff4;
+}
+
+/* Set details row: horizontal layout for set icon + code + number */
+.card-actions-modal .set-details-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important; /* Reduced from 4px to 2px to bring icon even closer to text */
+    margin-bottom: 4px !important;
+    /* Removed width: 100% to allow natural width and bring elements closer */
+    flex-wrap: nowrap !important;
+}
+
+/* Price row: horizontal layout for price and collection status */
+.card-actions-modal .price-row {
+    display: flex !important;
+    justify-content: center !important; /* Center the price and dot together */
+    align-items: center !important;
+    /* Removed width: 100% to allow natural width and bring elements closer */
+    font-size: 12px !important;
+    color: #333 !important;
+    padding: 4px 8px !important;
+    background-color: transparent !important; /* Removed grey background */
+    border-radius: 4px !important;
+    gap: 4px !important; /* Reduced from 6px to 4px to bring price and dot even closer */
+    margin-top: 4px !important;
+}
+
+/* Ensure price text visibility with stronger styles */
+.card-actions-modal .price-row span {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #333 !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    font-weight: 500 !important;
+    text-shadow: none !important;
+    background-color: transparent !important;
+}
+
+/* Stronger override for any inherited styles that might be hiding text */
+.card-actions-modal .price-row span:first-child {
+    color: #333 !important;
+    font-weight: 600 !important;
+}
+
+/* Collection status dots */
+.card-actions-modal .collection-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+.card-actions-modal .collection-dot.not-owned {
+    background-color: #dc3545 !important; /* Red dot for not in collection */
+}
+
+.card-actions-modal .collection-dot.partial {
+    background-color: #ffc107 !important; /* Yellow dot for different version in collection */
+}
+
+.card-actions-modal .collection-dot.owned {
+    background-color: #28a745 !important; /* Green dot for selected version in collection */
+}
+
+/* Legacy collection status variations (kept for backwards compatibility) */
+.card-actions-modal .collection-indicator.owned {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.card-actions-modal .collection-indicator.partial {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.card-actions-modal .collection-indicator.not-owned {
+    background-color: #e2e3e5;
+    color: #6c757d;
+    border: 1px solid #d6d8db;
+}
+
+.card-actions-modal .collection-indicator.unknown {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.card-actions-modal .set-symbol {
+    width: 21px; /* Fixed reasonable size - 75% larger than 12px */
+    height: 21px; /* Fixed height - no auto */
+    flex-shrink: 0; /* Prevent shrinking */
+    flex-basis: 21px; /* Fixed size basis */
+    outline: none !important; /* Remove any outline */
+    border: none !important; /* Remove any border */
+    box-shadow: none !important; /* Remove any box shadow */
+}
+
+.card-actions-modal .set-symbol img {
+    outline: none !important; /* Remove outline from the img element */
+    border: none !important; /* Remove border from the img element */
+    box-shadow: none !important; /* Remove any box shadow from the img element */
+}
+
+/* Override any selection styles specifically for set symbols */
+.card-actions-modal .printing-item.selected .set-symbol,
+.card-actions-modal .printing-item.selected .set-symbol img,
+.card-actions-modal .printing-item.selected .set-info {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.card-actions-modal .set-info span {
+    flex: 1; /* Take remaining space */
+    min-width: 0; /* Allow text to shrink */
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Show ellipsis for long text */
+    font-weight: bold; /* Make set code and number bold */
+    font-size: 10px; /* Reduced to 10pt font */
+}
+
+.card-actions-modal .set-symbol svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.card-actions-modal .selected-indicator {
+    color: white; /* White text for contrast */
+    font-weight: bold;
+    font-size: 11px;
+    margin-top: 2px;
+    background-color: #28a745; /* Strong green background instead of light green */
+    padding: 4px 0; /* Vertical padding only - let it span full width */
+    border-radius: 0; /* Remove rounded corners to span full width */
+    display: block; /* Make it a block element to span full width */
+    width: 100%; /* Ensure it spans the full width */
+    margin-left: -6px; /* Offset the container's horizontal padding */
+    margin-right: -6px; /* Offset the container's horizontal padding */
+}
+
+.card-actions-modal .loading-printings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+}
+
+.card-actions-modal .spinner {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 3px solid #007bff;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin-top: 10px;
+}
+
+.card-actions-modal .spinner-small {
+    display: inline-block;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 2px solid #007bff;
+    width: 14px;
+    height: 14px;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.card-actions-modal .updating-indicator {
+    display: block;
+    font-size: 0.8em;
+    color: #007bff;
+    margin-top: 4px;
+    font-weight: normal;
+}
+
+/* Action buttons styling */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.card-actions .action-button {
+    padding: 8px 15px;
+    border-radius: 4px;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 36px;
+    text-align: center;
+    margin-bottom: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-actions .action-button:hover {
+    background-color: #1565c0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    outline: none;
+}
+
+/* Quantity controls styling */
+.quantity-row {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    height: 32px;
+}
+
+.quantity-btn {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    font-size: 16px;
+    border-radius: 4px;
+    background-color: #1976d2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.quantity-btn:hover {
+    background-color: #1565c0;
+}
+
+.quantity-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.quantity-select {
+    width: 60px;
+    height: 28px;
+    text-align: center;
+    font-size: 14px;
+    margin: 0 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #333;
+    background-color: #fff;
+    padding: 0 4px;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    appearance: menulist;
+}
+
+/* Foil availability indicators */
+.foil-only-indicator {
+    color: #1976d2;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.non-foil-only-indicator {
+    color: #757575;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* New styles for printings container (right side with current printing display) */
+.card-actions-modal .printings-container {
+    flex: 1; /* Take remaining space after card-actions */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 20px; /* Add some spacing from the left sidebar */
+    min-width: 400px; /* Minimum width to ensure content fits */
+    /* CRITICAL: Match exact height of card-actions */
+    height: calc(90vh - 40px); /* Exact match with card-actions */
+    max-height: calc(90vh - 40px); /* Exact match with card-actions */
+    min-height: calc(90vh - 40px); /* Force exact height matching */
+    overflow-y: auto; /* Allow independent scrolling for right section */
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    /* Removed border-bottom since it shows under entire container */
+}
+
+/* Hide scrollbar for WebKit browsers for printings container */
+.card-actions-modal .printings-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* ==============================================
+   SIMPLE CARD MODAL STYLES (Research Page)
+   ============================================== */
+
+/* Additional styles for deck selection controls */
+.card-actions-modal .deck-selection-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.card-actions-modal .deck-selection-controls .deck-select {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Enhanced printing item styles for better display */
+.card-actions-modal .printing-item .printing-number {
+    font-size: 10px;
+    color: #666;
+    margin: 2px 0;
+}
+
+.card-actions-modal .printing-item.selected .printing-number {
+    color: #ccc;
+}
+
+/* Current printing info styles to match original */
+.card-actions-modal .current-printing-info .card-details {
+    margin: 8px 0;
+}
+
+.card-actions-modal .current-printing-info .detail-row {
+    display: flex;
+    margin-bottom: 4px;
+    align-items: flex-start;
+}
+
+.card-actions-modal .current-printing-info .detail-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 80px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.card-actions-modal .current-printing-info .detail-value {
+    color: #555;
+    font-size: 13px;
+    flex: 1;
+    margin-left: 8px;
+}
+
+.card-actions-modal .current-printing-info .price-highlight {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.card-actions-modal .current-printing-info .oracle-text-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.card-actions-modal .current-printing-info .oracle-text-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 10px 0;
+}
+
+.card-actions-modal .current-printing-info .oracle-text-content {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* Card image sizing for SimpleCardModal */
+.card-actions-modal .card-image-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.card-actions-modal .current-card-image {
+    max-width: 240px;
+    max-height: 336px;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-actions-modal .current-card-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+/* Collection action buttons styling */
+.card-actions-modal .wishlist-button:hover {
+    background-color: #f57c00 !important;
+}
+
+.card-actions-modal .collection-button:hover {
+    background-color: #388e3c !important;
+}
+
+/* Enhanced printing item hover effects */
+.card-actions-modal .printing-item {
+    transition: all 0.15s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background: white;
+    margin-bottom: 8px;
+}
+
+.card-actions-modal .printing-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-color: #1976d2;
+}
+
+.card-actions-modal .printing-item.selected {
+    border-color: #4caf50;
+    background: #f8fff8;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Printing image preview styling - reduced by 20% from 210px */
+.card-actions-modal .printing-image-preview {
+    flex-shrink: 0;
+    width: 168px; /* Reduced by 20% from 210px to 168px */
+    height: 235px; /* Reduced by 20% from 294px to 235px (maintains 5:7 aspect ratio) */
+    overflow: visible;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.card-actions-modal .printing-preview-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 6px;
+    /* Removed hover zoom animation transitions */
+}
+
+/* Removed hover zoom animation */
+
+.card-actions-modal .printing-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+    width: 100%;
+}
+
+/* Card name title styling */
+.card-actions-modal .card-name-title {
+    color: #1a1a1a;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+}
+
+/* Columnized card details layout */
+.card-actions-modal .card-details-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.card-actions-modal .detail-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Compact oracle text without header */
+.card-actions-modal .oracle-text-content-compact {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+/* Oracle Tags Integration styling - ensure full visibility and proper rounding */
+.card-actions-modal .oracle-tags-integration {
+    border-radius: 8px !important; /* Full border radius, not just bottom */
+    overflow: visible !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important; /* Add bottom padding to prevent cutoff */
+}
+
+/* Ensure Oracle Tags container has proper styling and visibility */
+.card-actions-modal .current-printing-info > div:last-child {
+    margin-bottom: 8px !important; /* Add margin to prevent cutoff */
+    border-radius: 8px !important; /* Full border radius */
+    overflow: visible !important;
+    padding-bottom: 8px !important; /* Ensure content is fully visible */
+}
+
+/* Fix any container that might be cutting off Oracle Tags */
+.card-actions-modal .current-printing-info {
+    padding-bottom: 16px !important; /* Extra bottom padding */
+    overflow: visible !important; /* Ensure no clipping */
+}
+
+/* Mana symbol styling */
+.card-actions-modal .mana-symbol {
+    width: 10px !important;
+    height: 10px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 0 0.5px !important;
+}
+
+/* SimpleCardModal specific printings grid styling */
+.card-actions-modal .printings-grid {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr; /* Single column layout to prevent cutoff */
+    gap: 8px;
+    align-content: start;
+    /* Hide scrollbar for WebKit browsers */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for printings grid */
+.card-actions-modal .printings-grid::-webkit-scrollbar {
+    display: none;
+}
