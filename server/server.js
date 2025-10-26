@@ -511,7 +511,7 @@ app.get('/api/oracle-tags', async (req, res) => {
     console.log('🏷️ Fetching Oracle Tags from MongoDB...');
     
     // Get all Oracle Tags from database
-    const oracleTagsCollection = db.collection('oracleTags');
+    const oracleTagsCollection = mongoose.connection.db.collection('oracleTags');
     const allCards = await oracleTagsCollection.find({}).toArray();
     
     console.log(`📊 Retrieved ${allCards.length} cards from MongoDB`);
@@ -549,7 +549,7 @@ app.get('/api/oracle-tags/:cardName', async (req, res) => {
     const cardName = decodeURIComponent(req.params.cardName);
     console.log(`🔍 Looking up Oracle Tags for: ${cardName}`);
     
-    const oracleTagsCollection = db.collection('oracleTags');
+    const oracleTagsCollection = mongoose.connection.db.collection('oracleTags');
     const card = await oracleTagsCollection.findOne({ 
       cardNameLower: cardName.toLowerCase() 
     });
@@ -654,30 +654,28 @@ app.post('/api/setup/populate-oracle-tags', async (req, res) => {
     console.log(`📊 Parsed ${oracleTagsData.length} cards with Oracle Tags`);
     
     // Clear existing data and insert new data
-    const oracleTagsCollection = db.collection('oracleTags');
+    const oracleTagsCollection = mongoose.connection.db.collection('oracleTags');
     await oracleTagsCollection.deleteMany({});
-    
+
     // Insert new data in batches
     const BATCH_SIZE = 1000;
     let insertedCount = 0;
-    
+
     for (let i = 0; i < oracleTagsData.length; i += BATCH_SIZE) {
       const batch = oracleTagsData.slice(i, i + BATCH_SIZE);
       await oracleTagsCollection.insertMany(batch);
       insertedCount += batch.length;
       console.log(`📥 Inserted ${insertedCount}/${oracleTagsData.length} cards...`);
     }
-    
+
     // Create indexes
     console.log('🔍 Creating database indexes...');
     await oracleTagsCollection.createIndex({ cardNameLower: 1 });
     await oracleTagsCollection.createIndex({ cardName: 1 });
     await oracleTagsCollection.createIndex({ oracleTags: 1 });
-    
+
     // Test with Jason Bright
-    const jasonBright = await oracleTagsCollection.findOne({ cardNameLower: 'jason bright, glowing prophet' });
-    
-    console.log(`✅ Successfully populated Oracle Tags database!`);
+    const jasonBright = await oracleTagsCollection.findOne({ cardNameLower: 'jason bright, glowing prophet' });    console.log(`✅ Successfully populated Oracle Tags database!`);
     
     res.json({
       success: true,
