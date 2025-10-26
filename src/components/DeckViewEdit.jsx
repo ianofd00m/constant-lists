@@ -2924,12 +2924,40 @@ export default function DeckViewEdit({ isPublic = false }) {
       });
 
       if (response.ok) {
-        const updatedDeck = await response.json();
+        const serverResponse = await response.json();
+
+        // CRITICAL FIX: Merge server response with local data to preserve card details
+        const mergedAddCards = (serverResponse.cards || []).map(serverCard => {
+          // Find corresponding local card from the request payload
+          const localCard = updatedDeck.cards.find(localCard => {
+            const serverName = serverCard.name || serverCard.card?.name;
+            const localName = localCard.name || localCard.card?.name;
+            return serverName === localName;
+          });
+          
+          if (localCard) {
+            return {
+              ...localCard, // Keep detailed local data
+              ...serverCard, // Apply server updates
+              card: {
+                ...localCard.card,
+                ...(serverCard.card || {}),
+                // Preserve essential properties for type detection
+                type_line: localCard.card?.type_line || localCard.type_line || serverCard.type_line,
+                scryfall_json: localCard.card?.scryfall_json || localCard.scryfall_json,
+                mana_cost: localCard.card?.mana_cost || localCard.mana_cost,
+                color_identity: localCard.card?.color_identity || localCard.color_identity,
+                cmc: localCard.card?.cmc || localCard.cmc
+              }
+            };
+          }
+          return serverCard;
+        });
 
         // CRITICAL FIX: Ensure commander is always present in the deck after server update
         const finalDeck = {
-          ...updatedDeck,
-          cards: ensureCommanderInCards(updatedDeck)
+          ...serverResponse,
+          cards: ensureCommanderInCards({ ...serverResponse, cards: mergedAddCards })
         };
 
         // PERFORMANCE FIX: Batch state updates to prevent render loops
@@ -4374,10 +4402,43 @@ export default function DeckViewEdit({ isPublic = false }) {
         const savedDeck = await response.json();
         console.log(`[SAVE DECK] ✅ Server supports sideboard/techIdeas - full persistence enabled!`);
         
-        // Update local state with server response to ensure consistency
+        // CRITICAL FIX: Merge server response with local card data to preserve detailed information
+        // Server returns cleaned data but we need to preserve type_line, scryfall data, etc.
+        const mergedCards = (savedDeck.cards || []).map(serverCard => {
+          // Find the corresponding local card with full data
+          const localCard = (deckToSave.cards || []).find(localCard => {
+            const serverName = serverCard.name || serverCard.card?.name;
+            const localName = localCard.name || localCard.card?.name;
+            return serverName === localName;
+          });
+          
+          if (localCard) {
+            // Merge server data with local detailed data
+            return {
+              ...localCard, // Keep all local detailed data
+              ...serverCard, // Overlay server response (quantities, etc.)
+              // Ensure detailed card object is preserved
+              card: {
+                ...localCard.card, // Keep local detailed card data
+                ...(serverCard.card || {}), // Merge any server card updates
+                // Preserve essential type detection properties
+                type_line: localCard.card?.type_line || localCard.type_line || serverCard.type_line,
+                scryfall_json: localCard.card?.scryfall_json || localCard.scryfall_json,
+                mana_cost: localCard.card?.mana_cost || localCard.mana_cost,
+                color_identity: localCard.card?.color_identity || localCard.color_identity,
+                cmc: localCard.card?.cmc || localCard.cmc
+              }
+            };
+          }
+          
+          // If no local card found, use server data as-is
+          return serverCard;
+        });
+        
+        // Update local state with merged data to preserve card details
         const deckWithCommander = {
           ...savedDeck,
-          cards: ensureCommanderInCards(savedDeck)
+          cards: ensureCommanderInCards({ ...savedDeck, cards: mergedCards })
         };
         setDeck(deckWithCommander);
         setCards(deckWithCommander.cards || []);
@@ -4412,10 +4473,36 @@ export default function DeckViewEdit({ isPublic = false }) {
             const fallbackSavedDeck = await fallbackResponse.json();
             console.log(`[SAVE DECK] ✅ Main deck saved, zones persisted to localStorage`);
             
+            // Apply same card data merging for fallback response
+            const mergedFallbackCards = (fallbackSavedDeck.cards || []).map(serverCard => {
+              const localCard = (deckToSave.cards || []).find(localCard => {
+                const serverName = serverCard.name || serverCard.card?.name;
+                const localName = localCard.name || localCard.card?.name;
+                return serverName === localName;
+              });
+              
+              if (localCard) {
+                return {
+                  ...localCard,
+                  ...serverCard,
+                  card: {
+                    ...localCard.card,
+                    ...(serverCard.card || {}),
+                    type_line: localCard.card?.type_line || localCard.type_line || serverCard.type_line,
+                    scryfall_json: localCard.card?.scryfall_json || localCard.scryfall_json,
+                    mana_cost: localCard.card?.mana_cost || localCard.mana_cost,
+                    color_identity: localCard.card?.color_identity || localCard.color_identity,
+                    cmc: localCard.card?.cmc || localCard.cmc
+                  }
+                };
+              }
+              return serverCard;
+            });
+            
             // Preserve client-side sideboard and techIdeas
             const deckWithCommander = {
               ...fallbackSavedDeck,
-              cards: ensureCommanderInCards(fallbackSavedDeck),
+              cards: ensureCommanderInCards({ ...fallbackSavedDeck, cards: mergedFallbackCards }),
               sideboard: deckToSave.sideboard || [],
               techIdeas: deckToSave.techIdeas || []
             };
@@ -6823,10 +6910,45 @@ export default function DeckViewEdit({ isPublic = false }) {
           });
           console.log('[DEBUG] Full server response:', responseData);
 
+          // CRITICAL FIX: Merge server response with local data to preserve card details
+          const mergedRemovalCards = (responseData.cards || []).map(serverCard => {
+            // Find corresponding local card from the original deck
+            const localCard = (cleanDeckForServer.cards || []).find(localCard => {
+              const serverName = serverCard.name || serverCard.card?.name;
+              const localName = localCard.name || localCard.card?.name;
+              return serverName === localName;
+            });
+            
+            if (localCard) {
+              return {
+                ...localCard, // Keep detailed local data
+                ...serverCard, // Apply server updates
+                card: {
+                  ...localCard.card,
+                  ...(serverCard.card || {}),
+                  // Preserve essential properties for type detection
+                  type_line: localCard.card?.type_line || localCard.type_line || serverCard.type_line,
+                  scryfall_json: localCard.card?.scryfall_json || localCard.scryfall_json,
+                  mana_cost: localCard.card?.mana_cost || localCard.mana_cost,
+                  color_identity: localCard.card?.color_identity || localCard.color_identity,
+                  cmc: localCard.card?.cmc || localCard.cmc
+                }
+              };
+            }
+            return serverCard;
+          });
+
           // CRITICAL FIX: Preserve commander data after server operations
-          // Server is losing commander properties, so we need to preserve them client-side
           const preservedCommander = deck.commander;
           const preservedCommanderNames = deck.commanderNames;
+          
+          // Always merge server response with preserved data
+          const mergedResponseData = {
+            ...responseData,
+            cards: mergedRemovalCards,
+            commander: responseData.commander || preservedCommander,
+            commanderNames: responseData.commanderNames || preservedCommanderNames
+          };
           
           if ((preservedCommander && !responseData.commander) || (preservedCommanderNames && !responseData.commanderNames)) {
             console.log('[COMMANDER FIX] Server lost commander data, restoring from deck state:', {
@@ -6835,22 +6957,13 @@ export default function DeckViewEdit({ isPublic = false }) {
               serverReturnedCommander: responseData.commander,
               serverReturnedCommanderNames: responseData.commanderNames
             });
-            
-            // Restore the commander properties that the server lost
-            responseData.commander = preservedCommander;
-            responseData.commanderNames = preservedCommanderNames;
-            
-            // Update the deck state with corrected data
-            setDeck(prevDeck => ({
-              ...prevDeck,
-              ...responseData,
-              commander: preservedCommander,
-              commanderNames: preservedCommanderNames
-            }));
-          } else {
-            // Update deck state with server response if commander data is intact
-            setDeck(prevDeck => ({...prevDeck, ...responseData}));
           }
+          
+          // Update deck state with merged data
+          setDeck(prevDeck => ({
+            ...prevDeck,
+            ...mergedResponseData
+          }));
 
           // Show success message only after successful server update
           toast.success("Card removed from deck.");
