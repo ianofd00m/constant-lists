@@ -590,7 +590,7 @@ async function enrichDeckWithScryfallData(deck) {
 app.get('/api/decks/mine', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const userDecks = await Deck.find({ owner: userId }).sort({ updatedAt: -1 });
+    const userDecks = await Deck.find({ owner: new mongoose.Types.ObjectId(userId) }).sort({ updatedAt: -1 });
     
     console.log(`📚 Fetching user decks for ${userId} - returning ${userDecks.length} decks`);
     
@@ -614,7 +614,7 @@ app.get('/api/decks/:deckId', authenticateToken, async (req, res) => {
     
     console.log(`🔍 Fetching deck: ${deckId} for user: ${userId}`);
     
-    const deck = await Deck.findOne({ _id: deckId, owner: userId });
+    const deck = await Deck.findOne({ _id: deckId, owner: new mongoose.Types.ObjectId(userId) });
     
     if (!deck) {
       console.log(`❌ Deck ${deckId} not found or not owned by user ${userId}`);
@@ -756,7 +756,7 @@ app.post('/api/decks', authenticateToken, async (req, res) => {
       cardCount: initialCards.reduce((count, card) => count + (card.quantity || 1), 0),
       cards: initialCards,
       commander: commander || [],
-      owner: userId
+      owner: new mongoose.Types.ObjectId(userId)
     });
     
     await newDeck.save();
@@ -780,7 +780,7 @@ app.put('/api/decks/:deckId', authenticateToken, async (req, res) => {
     console.log(`📝 Updating deck: ${deckId} for user: ${userId}`, Object.keys(updates));
     
     // Find the deck and verify ownership
-    const deck = await Deck.findOne({ _id: deckId, owner: userId });
+    const deck = await Deck.findOne({ _id: deckId, owner: new mongoose.Types.ObjectId(userId) });
     
     if (!deck) {
       return res.status(404).json({ error: 'Deck not found or not owned by user' });
@@ -839,7 +839,7 @@ app.delete('/api/decks/:deckId', authenticateToken, async (req, res) => {
     console.log(`🗑️ Deleting deck: ${deckId} for user: ${userId}`);
     
     // Find and delete the deck, verifying ownership
-    const deletedDeck = await Deck.findOneAndDelete({ _id: deckId, owner: userId });
+    const deletedDeck = await Deck.findOneAndDelete({ _id: deckId, owner: new mongoose.Types.ObjectId(userId) });
     
     if (!deletedDeck) {
       console.log(`❌ Deck ${deckId} not found or not owned by user ${userId}`);
@@ -850,7 +850,7 @@ app.delete('/api/decks/:deckId', authenticateToken, async (req, res) => {
     }
     
     // Get remaining deck count for user
-    const remainingCount = await Deck.countDocuments({ owner: userId });
+    const remainingCount = await Deck.countDocuments({ owner: new mongoose.Types.ObjectId(userId) });
     
     console.log(`✅ Deck ${deckId} deleted. User has ${remainingCount} remaining decks`);
     
