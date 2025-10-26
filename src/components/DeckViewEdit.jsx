@@ -3548,12 +3548,24 @@ export default function DeckViewEdit({ isPublic = false }) {
         // CRITICAL FIX: Validate modalPrice to prevent undefined from being sent to server
         const validModalPrice = (card.modalPrice !== undefined && card.modalPrice !== null && card.modalPrice !== "undefined") ? card.modalPrice : null;
         
-        // Basic card info that's always needed
+        // Basic card info that's always needed - match structure from handleAddCard
         let cleanCard = {
           name: card.card?.name || card.name,
           count: card.count || 1,
+          quantity: card.count || 1, // Add quantity field for server compatibility
           printing: card.printing || null,
+          isCommander: card.isCommander || false, // Ensure isCommander field
           ...(card.foil !== undefined ? { foil: card.foil } : {}),
+          // Include all essential card properties for server validation
+          set: card.set || card.card?.set || card.scryfall_json?.set,
+          collector_number: card.collector_number || card.card?.collector_number || card.scryfall_json?.collector_number,
+          finishes: card.finishes || card.scryfall_json?.finishes || ["nonfoil"],
+          prices: card.prices || card.card?.prices || card.scryfall_json?.prices || {},
+          mana_cost: card.mana_cost || card.card?.mana_cost || card.scryfall_json?.mana_cost,
+          color_identity: card.color_identity || card.card?.color_identity || card.scryfall_json?.color_identity,
+          cmc: card.cmc || card.card?.cmc || card.scryfall_json?.cmc,
+          type_line: card.type_line || card.card?.type_line || card.scryfall_json?.type_line,
+          scryfall_id: card.scryfall_id || card.card?.scryfall_id || card.scryfall_json?.id,
           // CRITICAL FIX: Include modalPrice to persist synchronized pricing - only if not null
           ...(validModalPrice !== null ? { modalPrice: validModalPrice } : {}),
         };
@@ -3568,29 +3580,65 @@ export default function DeckViewEdit({ isPublic = false }) {
           cleanCard._id = card._id;
         }
 
-        // Handle the card reference based on what we have
+        // CRITICAL FIX: Properly structure the card field for server compatibility
+        // The server expects either a MongoDB ObjectId string OR a complete card object
         if (card.card) {
           if (typeof card.card === "object" && card.card !== null) {
             if (card.card._id && isValidObjectId(card.card._id)) {
+              // Use MongoDB ObjectId reference
               cleanCard.card = card.card._id;
-            } else if (card.card.name) {
-              cleanCard.cardName = card.card.name;
+            } else {
+              // Include essential card data structure for server
+              cleanCard.card = {
+                name: card.card.name || card.name,
+                set: card.card.set || card.set || card.scryfall_json?.set,
+                collector_number: card.card.collector_number || card.collector_number || card.scryfall_json?.collector_number,
+                mana_cost: card.card.mana_cost || card.mana_cost || card.scryfall_json?.mana_cost,
+                color_identity: card.card.color_identity || card.color_identity || card.scryfall_json?.color_identity,
+                cmc: card.card.cmc || card.cmc || card.scryfall_json?.cmc,
+                type_line: card.card.type_line || card.type_line || card.scryfall_json?.type_line,
+                ...(card.card._id && isValidObjectId(card.card._id) ? { _id: card.card._id } : {}),
+              };
             }
           } else if (typeof card.card === "string") {
             if (isValidObjectId(card.card)) {
               cleanCard.card = card.card;
             } else {
-              cleanCard.cardName = card.card;
+              // Create card object with available data
+              cleanCard.card = {
+                name: card.name,
+                set: card.set || card.scryfall_json?.set,
+                collector_number: card.collector_number || card.scryfall_json?.collector_number,
+                mana_cost: card.mana_cost || card.scryfall_json?.mana_cost,
+                color_identity: card.color_identity || card.scryfall_json?.color_identity,
+                cmc: card.cmc || card.scryfall_json?.cmc,
+                type_line: card.type_line || card.scryfall_json?.type_line,
+              };
             }
           }
+        } else {
+          // No card reference - create one from available data
+          cleanCard.card = {
+            name: card.name,
+            set: card.set || card.scryfall_json?.set,
+            collector_number: card.collector_number || card.scryfall_json?.collector_number,
+            mana_cost: card.mana_cost || card.scryfall_json?.mana_cost,
+            color_identity: card.color_identity || card.scryfall_json?.color_identity,
+            cmc: card.cmc || card.scryfall_json?.cmc,
+            type_line: card.type_line || card.scryfall_json?.type_line,
+          };
         }
 
         return cleanCard;
       });
 
-      // console.log('[DeckViewEdit] Sending updated cards to server:', cleanCards);
-
-      // Prepare data for server update
+      console.log('[PRINTING UPDATE] Sending updated cards to server:', cleanCards);
+      console.log('[PRINTING UPDATE] Full payload:', {
+        cards: cleanCards,
+        name: name || deck.name,
+        commander: deck.commander,
+        commanderNames: deck.commanderNames,
+      });
 
       // Make the API call to save changes to the server
       const token = localStorage.getItem("token");
@@ -3618,15 +3666,28 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Check if the response is ok
       if (!res.ok) {
         let errorText;
+        let errorData;
         try {
-          const errorData = await res.json();
+          errorData = await res.json();
           errorText = JSON.stringify(errorData);
-          console.error("Server error:", res.status, errorData);
+          console.error("[PRINTING UPDATE] Server error:", res.status, errorData);
+          console.error("[PRINTING UPDATE] Request payload that failed:", {
+            cards: cleanCards,
+            name: name || deck.name,
+            commander: deck.commander,
+            commanderNames: deck.commanderNames,
+          });
         } catch (e) {
           errorText = await res.text();
-          console.error("Server error:", res.status, errorText);
+          console.error("[PRINTING UPDATE] Server error:", res.status, errorText);
+          console.error("[PRINTING UPDATE] Request payload that failed:", {
+            cards: cleanCards,
+            name: name || deck.name,
+            commander: deck.commander,
+            commanderNames: deck.commanderNames,
+          });
         }
-        throw new Error(`Server responded with ${res.status}: ${errorText}`);
+        throw new Error(`Printing update server error ${res.status}: ${errorText}`);
       }
 
       const updatedCardData = await res.json();
