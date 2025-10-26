@@ -6700,27 +6700,33 @@ export default function DeckViewEdit({ isPublic = false }) {
         return;
       }
 
-      // Format the cards properly for the server
-      const formattedCards = updatedCards.map((card) => {
-        // Make sure each card has proper structure with necessary fields for the server
-        const formattedCard = {
-          name: card.name || card.card?.name || "",
-          printing: card.printing || null,
-          foil: card.foil === true, // Make sure it's boolean
-        };
-
-        // Add card ID if available (important for server-side lookup)
-        if (card.card && card.card._id) {
-          formattedCard.card = {
-            _id: card.card._id,
-            name: card.card.name,
-          };
-        } else if (card._id) {
-          formattedCard._id = card._id;
+      // Clean existing cards to remove excessive nested data (same as add card function)
+      const cleanedCards = updatedCards.map(card => ({
+        name: card.name || card.card?.name,
+        quantity: card.quantity || 1,
+        count: card.count || 1,
+        isCommander: card.isCommander || false,
+        set: card.set || card.card?.set,
+        collector_number: card.collector_number || card.card?.collector_number,
+        finishes: card.finishes || ["nonfoil"],
+        prices: card.prices || {},
+        mana_cost: card.mana_cost || card.card?.mana_cost,
+        color_identity: card.color_identity || card.card?.color_identity,
+        cmc: card.cmc || card.card?.cmc,
+        type_line: card.type_line || card.card?.type_line,
+        scryfall_id: card.scryfall_id || card.card?.scryfall_id,
+        // Minimal card object
+        card: {
+          name: card.name || card.card?.name,
+          mana_cost: card.mana_cost || card.card?.mana_cost,
+          color_identity: card.color_identity || card.card?.color_identity,
+          cmc: card.cmc || card.card?.cmc,
+          type_line: card.type_line || card.card?.type_line,
+          set: card.set || card.card?.set,
+          collector_number: card.collector_number || card.card?.collector_number,
+          scryfall_id: card.scryfall_id || card.card?.scryfall_id
         }
-
-        return formattedCard;
-      });
+      }));
 
       // Update the server - critical to ensure changes persist after refresh
       const apiUrl = import.meta.env.VITE_API_URL;
@@ -6731,28 +6737,36 @@ export default function DeckViewEdit({ isPublic = false }) {
           // console.log('[DeckViewEdit] Sending updated deck to server after card removal');
           // console.log('[DeckViewEdit] Formatted cards for server:', formattedCards);
 
+          // Create clean deck object for server update (same approach as add card)
+          const cleanDeckForServer = {
+            _id: deck._id,
+            name: deck.name,
+            format: deck.format,
+            commander: deck.commander,
+            cards: cleanedCards,
+            // Only include essential properties to avoid server validation issues
+            ...(deck.description && { description: deck.description }),
+            ...(deck.colors && { colors: deck.colors })
+          };
+
+          // Debug request payload (same as add card debugging)
+          const serializedDeck = JSON.stringify(cleanDeckForServer);
+          console.log('[DEBUG] Card removal request body sent to server:', {
+            deckId: cleanDeckForServer._id,
+            cardsCount: cleanedCards.length,
+            removedCardName: cardName,
+            requestSize: serializedDeck.length,
+            commander: deck.commander,
+            commanderNames: deck.commanderNames
+          });
+
           const response = await fetch(`${apiUrl}/api/decks/${id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`, // Add auth token (critical fix)
             },
-            body: JSON.stringify({
-              cards: formattedCards,
-              name: name || deck.name,
-              // Preserve commander data in server update
-              commander: deck.commander,
-              commanderNames: deck.commanderNames,
-            }),
-          });
-
-          console.log('[DEBUG] Card removal request body sent to server:', {
-            cards: formattedCards.length + ' cards',
-            name: name || deck.name,
-            commander: deck.commander,
-            commanderNames: deck.commanderNames,
-            hasCommander: 'commander' in deck,
-            hasCommanderNames: 'commanderNames' in deck
+            body: serializedDeck,
           });
 
           if (!response.ok) {
