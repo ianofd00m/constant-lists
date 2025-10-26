@@ -4538,6 +4538,10 @@ export default function DeckViewEdit() {
     }
 
     // 4. Fallback: Known commander color identities
+    console.log(`[COLOR ID DEBUG] Fallback check - colorIdentity so far:`, colorIdentity);
+    console.log(`[COLOR ID DEBUG] Commander names length:`, commanderNames.length);
+    console.log(`[COLOR ID DEBUG] Should use fallback:`, !colorIdentity && commanderNames.length > 0);
+    
     if (!colorIdentity && commanderNames.length > 0) {
       const knownCommanders = {
         'jason bright, glowing prophet': ['U'],
@@ -4556,8 +4560,14 @@ export default function DeckViewEdit() {
         'sliver overlord': ['W', 'U', 'B', 'R', 'G']
       };
 
+      console.log(`[COLOR ID DEBUG] Known commanders available:`, Object.keys(knownCommanders));
+
       for (const commanderName of commanderNames) {
-        if (!commanderName || typeof commanderName !== 'string') continue;
+        console.log(`[COLOR ID DEBUG] Processing commander: "${commanderName}"`);
+        if (!commanderName || typeof commanderName !== 'string') {
+          console.log(`[COLOR ID DEBUG] Skipping - not a string or empty`);
+          continue;
+        }
         
         const normalizedName = commanderName.toLowerCase().trim();
         console.log(`🔍 Checking commander name: "${normalizedName}"`);
@@ -4575,26 +4585,22 @@ export default function DeckViewEdit() {
           console.log(`🎯 Partial match - Jason Bright detected, using blue color identity:`, colorIdentity);
           break;
         }
+        
+        console.log(`[COLOR ID DEBUG] No match found for: "${normalizedName}"`);
       }
+    } else {
+      console.log(`[COLOR ID DEBUG] Skipping fallback - colorIdentity exists or no commander names`);
     }
 
-    console.log('[COLOR ID DEBUG] Final color identity calculation:', {
-      commanderNames,
-      normalizedCommanderNames: commanderNames.map(n => n?.toLowerCase?.() || n),
-      colorIdentity,
-      knownCommandersChecked: commanderNames.map(name => {
-        const normalized = (name || '').toLowerCase().trim();
-        return { 
-          original: name, 
-          normalized, 
-          isJasonBright: normalized === 'jason bright, glowing prophet',
-          matchesKnown: normalized in {
-            'jason bright, glowing prophet': ['U'],
-            'atraxa, praetors\' voice': ['W', 'U', 'B', 'G']
-          }
-        };
-      }),
-      result: colorIdentity ? colorIdentity.join("").toLowerCase() : ""
+    console.log('[COLOR ID DEBUG] Commander Names:', JSON.stringify(commanderNames));
+    console.log('[COLOR ID DEBUG] Color Identity Array:', JSON.stringify(colorIdentity));
+    console.log('[COLOR ID DEBUG] Final Result:', colorIdentity ? colorIdentity.join("").toLowerCase() : "EMPTY");
+    
+    // Test each commander name explicitly
+    commanderNames.forEach((name, index) => {
+      const normalized = (name || '').toLowerCase().trim();
+      console.log(`[COLOR ID DEBUG] Commander ${index}: "${name}" -> normalized: "${normalized}"`);
+      console.log(`[COLOR ID DEBUG] Contains Jason Bright: ${normalized.includes('jason bright')}`);
     });
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
   }, [deck, commanderColorCache]);
@@ -5220,16 +5226,11 @@ export default function DeckViewEdit() {
       const commanderCard = deck?.commander?.[0];
       const commanderName = commanderCard?.card?.name || commanderCard?.name || "";
       
-      console.log('🎯 Commander Color Identity Detection:', {
-        commanderName,
-        detectedColorId: currentColorId,
-        commanderCard: commanderCard,
-        colorIdentitySources: {
-          commander_card_color_identity: commanderCard?.card?.color_identity,
-          commander_color_identity: commanderCard?.color_identity,
-          scryfall_color_identity: commanderCard?.scryfallCard?.color_identity
-        }
-      });
+      console.log('🎯 Commander Color Identity Detection:');
+      console.log('  - Commander Name:', commanderName);
+      console.log('  - Detected Color ID:', currentColorId);
+      console.log('  - Is Empty?:', currentColorId === '');
+      console.log('  - Length:', currentColorId?.length || 0);
       const debugInfo = {
         oracleTag,
         currentColorId,
@@ -5251,14 +5252,14 @@ export default function DeckViewEdit() {
       const isDev = import.meta.env.DEV;
       const finalUrl = isDev ? url : `${apiUrl}${url}`;
       
-      console.log('🔗 Oracle Tag Search debug:', {
-        oracleTag,
-        searchQuery,
-        currentColorId,
-        deckFormat: deck?.format,
-        url,
-        finalUrl
-      });
+      console.log('🔗 Oracle Tag Search URL Analysis:');
+      console.log('  - Oracle Tag:', oracleTag);
+      console.log('  - Search Query:', searchQuery);
+      console.log('  - Color ID:', currentColorId);
+      console.log('  - Color ID Length:', currentColorId?.length || 0);
+      console.log('  - Deck Format:', deck?.format);
+      console.log('  - Final URL:', finalUrl);
+      console.log('  - URL includes colorIdentity param:', finalUrl.includes('colorIdentity='));
       
       // Oracle tag search with color identity filtering
       
