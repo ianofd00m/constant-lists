@@ -4541,6 +4541,7 @@ export default function DeckViewEdit() {
     if (!colorIdentity && commanderNames.length > 0) {
       const knownCommanders = {
         'jason bright, glowing prophet': ['U'],
+        'jason bright': ['U'], // Add short version
         'atraxa, praetors\' voice': ['W', 'U', 'B', 'G'],
         'edgar markov': ['W', 'U', 'B', 'R'],
         'kumena, tyrant of orazca': ['U', 'G'],
@@ -4556,10 +4557,22 @@ export default function DeckViewEdit() {
       };
 
       for (const commanderName of commanderNames) {
+        if (!commanderName || typeof commanderName !== 'string') continue;
+        
         const normalizedName = commanderName.toLowerCase().trim();
+        console.log(`🔍 Checking commander name: "${normalizedName}"`);
+        
+        // Direct match
         if (knownCommanders[normalizedName]) {
           colorIdentity = knownCommanders[normalizedName];
-          console.log(`🎯 Using known color identity for ${commanderName}:`, colorIdentity);
+          console.log(`🎯 Direct match - Using known color identity for ${commanderName}:`, colorIdentity);
+          break;
+        }
+        
+        // Partial match for Jason Bright (more aggressive)
+        if (normalizedName.includes('jason bright')) {
+          colorIdentity = ['U'];
+          console.log(`🎯 Partial match - Jason Bright detected, using blue color identity:`, colorIdentity);
           break;
         }
       }
