@@ -4567,7 +4567,20 @@ export default function DeckViewEdit() {
 
     console.log('[COLOR ID DEBUG] Final color identity calculation:', {
       commanderNames,
+      normalizedCommanderNames: commanderNames.map(n => n?.toLowerCase?.() || n),
       colorIdentity,
+      knownCommandersChecked: commanderNames.map(name => {
+        const normalized = (name || '').toLowerCase().trim();
+        return { 
+          original: name, 
+          normalized, 
+          isJasonBright: normalized === 'jason bright, glowing prophet',
+          matchesKnown: normalized in {
+            'jason bright, glowing prophet': ['U'],
+            'atraxa, praetors\' voice': ['W', 'U', 'B', 'G']
+          }
+        };
+      }),
       result: colorIdentity ? colorIdentity.join("").toLowerCase() : ""
     });
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
