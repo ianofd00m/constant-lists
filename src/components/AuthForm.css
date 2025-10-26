@@ -4,15 +4,16 @@
   max-width: 400px;
   margin: 2rem auto;
   padding: 2rem;
-  background: var(--page-secondary);
+  background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
 }
 
 .auth-form h2 {
   text-align: center;
   margin-bottom: 1.5rem;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .form-group {
@@ -23,23 +24,30 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 4px;
-  background: var(--page-primary);
-  color: var(--text-primary);
-  font-size: 14px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group input::placeholder {
+  color: #999;
+  opacity: 1;
 }
 
 .auth-button {
@@ -60,7 +68,7 @@
 }
 
 .auth-button:disabled {
-  background: var(--text-disabled);
+  background: #cccccc;
   cursor: not-allowed;
 }
 
@@ -95,4 +103,63 @@
 .loading-spinner {
   text-align: center;
   margin: 1rem 0;
+}
+
+.password-strength {
+  font-size: 12px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.password-strength.weak {
+  color: #dc3545;
+}
+
+.password-strength.medium {
+  color: #fd7e14;
+}
+
+.password-strength.strong {
+  color: #28a745;
+}
+
+.password-requirements {
+  font-size: 12px;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.requirement:last-child {
+  margin-bottom: 0;
+}
+
+.requirement.met {
+  color: #28a745;
+}
+
+.requirement.unmet {
+  color: #666666;
+}
+
+.checkmark {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.password-match {
+  font-size: 12px;
+  margin-bottom: 1rem;
 }

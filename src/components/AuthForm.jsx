@@ -6,8 +6,7 @@ import './AuthForm.css';
 import { useEffect } from 'react';
 
 export default function AuthForm({ mode = 'login' }) {
-   console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-  console.log('VITE_TEST_VAR:', import.meta.env.VITE_TEST_VAR);
+  // Removed excessive console logs to prevent spam
   
   const location = useLocation();
   
@@ -86,7 +85,6 @@ export default function AuthForm({ mode = 'login' }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('VITE_TEST_VAR:', import.meta.env.VITE_TEST_VAR);
     setErrorMsg('');
     setSuccessMsg('');
     if (mode === 'register') {
@@ -106,14 +104,12 @@ export default function AuthForm({ mode = 'login' }) {
     setLoading(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      console.log('VITE_API_URL:', apiUrl);
       const res = await fetch(`${apiUrl}/api/auth/${mode}` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mode === 'register' ? { username, email, password } : { username, password })
       });
       const data = await res.json();
-      console.log('Backend response:', data);
       if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
         setSuccessMsg('Logged in!');
@@ -164,21 +160,17 @@ export default function AuthForm({ mode = 'login' }) {
     setErrorMsg('');
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      console.log('VITE_API_URL (reset):', apiUrl); // Debug log
       const url = `${apiUrl}/api/auth/reset-password-request`;
-      console.log('Reset password request URL:', url); // Debug log
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail })
       });
       const data = await res.json();
-      console.log('Reset password response:', data); // Debug log
       if (res.ok) setResetSent(true);
       else setErrorMsg(data.error || 'Error');
     } catch (err) {
       setErrorMsg('Network error');
-      console.error('Reset password error:', err); // Debug log
     }
   };
 
@@ -187,19 +179,21 @@ export default function AuthForm({ mode = 'login' }) {
     return (
       <form onSubmit={handleReset} className="auth-form" aria-label="Reset password form">
         <h2>Reset Password</h2>
-        <input
-          id="resetEmail"
-          type="email"
-          value={resetEmail}
-          onChange={e => setResetEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        {resetSent && <div className="success-msg">If an account exists, a reset link has been sent.</div>}
-        {errorMsg && <div className="error-msg">{errorMsg}</div>}
-        <button type="submit">Send Reset Link</button>
-        <div style={{ textAlign: 'center', marginTop: 8 }}>
-          <a href="#" onClick={e => { e.preventDefault(); setShowReset(false); }} className="link">Back to login</a>
+        <div className="form-group">
+          <input
+            id="resetEmail"
+            type="email"
+            value={resetEmail}
+            onChange={e => setResetEmail(e.target.value)}
+            placeholder="Email"
+            required
+          />
+        </div>
+        {resetSent && <div className="success-message">If an account exists, a reset link has been sent.</div>}
+        {errorMsg && <div className="error-message">{errorMsg}</div>}
+        <button type="submit" className="auth-button">Send Reset Link</button>
+        <div className="auth-link">
+          <a href="#" onClick={e => { e.preventDefault(); setShowReset(false); }}>Back to login</a>
         </div>
       </form>
     );
@@ -210,18 +204,20 @@ export default function AuthForm({ mode = 'login' }) {
     return (
       <form onSubmit={handleResend} className="auth-form" aria-label="Resend verification form">
         <h2>Resend Verification Email</h2>
-        <input
-          type="email"
-          value={resendEmail}
-          onChange={e => setResendEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        <button type="submit">Resend</button>
-        {resendSent && <div className="success-msg">Verification email sent.</div>}
-        {errorMsg && <div className="error-msg">{errorMsg}</div>}
-        <div style={{ textAlign: 'center', marginTop: 8 }}>
-          <a href="#" onClick={e => { e.preventDefault(); setShowResend(false); }} className="link">Back to login</a>
+        <div className="form-group">
+          <input
+            type="email"
+            value={resendEmail}
+            onChange={e => setResendEmail(e.target.value)}
+            placeholder="Email"
+            required
+          />
+        </div>
+        <button type="submit" className="auth-button">Resend</button>
+        {resendSent && <div className="success-message">Verification email sent.</div>}
+        {errorMsg && <div className="error-message">{errorMsg}</div>}
+        <div className="auth-link">
+          <a href="#" onClick={e => { e.preventDefault(); setShowResend(false); }}>Back to login</a>
         </div>
       </form>
     );
@@ -230,37 +226,46 @@ export default function AuthForm({ mode = 'login' }) {
   return (
     <form onSubmit={handleSubmit} className="auth-form" aria-label={mode === 'login' ? 'Login form' : 'Register form'}>
       <h2>{mode === 'login' ? 'Login' : 'Register'}</h2>
-      <input
-        id="username"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-        placeholder="Username"
-        required
-        minLength={3}
-        aria-required="true"
-      />
-      {mode === 'register' && (
+      <div className="form-group">
         <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Email"
+          id="username"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          placeholder="Username"
           required
+          minLength={3}
           aria-required="true"
+          autoComplete="username"
         />
+      </div>
+      {mode === 'register' && (
+        <div className="form-group">
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+            aria-required="true"
+            autoComplete="email"
+          />
+        </div>
       )}
-      <input
-        id="password"
-        type="password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        placeholder="Password"
-        required
-        minLength={8}
-        aria-required="true"
-        aria-describedby={mode === 'register' ? 'password-req password-strength' : undefined}
-      />
+      <div className="form-group">
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+          minLength={8}
+          aria-required="true"
+          autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+          aria-describedby={mode === 'register' ? 'password-req password-strength' : undefined}
+        />
+      </div>
       {mode === 'register' && (
         <>
           <div id="password-req" className="password-requirements">
@@ -292,21 +297,24 @@ export default function AuthForm({ mode = 'login' }) {
               );
             })()}
           </div>
-          <div id="password-strength" style={{ fontSize: 12, color: passwordStrength === 'Strong' ? 'green' : passwordStrength === 'Medium' ? 'orange' : 'red', marginBottom: 8 }}>Strength: {passwordStrength}</div>
+          <div id="password-strength" className={`password-strength ${passwordStrength.toLowerCase()}`}>Strength: {passwordStrength}</div>
         </>
       )}
       {mode === 'register' && (
         <>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="Confirm Password"
-            required
-            minLength={8}
-            aria-required="true"
-          />
+          <div className="form-group">
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Confirm Password"
+              required
+              minLength={8}
+              aria-required="true"
+              autoComplete="new-password"
+            />
+          </div>
           {confirmPassword && (
             <div className="password-match">
               {(() => {
@@ -322,27 +330,27 @@ export default function AuthForm({ mode = 'login' }) {
           )}
         </>
       )}
-      {errorMsg && <div role="alert" style={{ color: 'red', marginBottom: 8 }}>{errorMsg}</div>}
-      {successMsg && <div role="status" style={{ color: 'green', marginBottom: 8 }}>{successMsg}</div>}
-      <button type="submit" disabled={loading} style={{ width: '100%', padding: 8 }}>
+      {errorMsg && <div role="alert" className="error-message">{errorMsg}</div>}
+      {successMsg && <div role="status" className="success-message">{successMsg}</div>}
+      <button type="submit" disabled={loading} className="auth-button">
         {loading ? 'Loading...' : mode === 'login' ? 'Login' : 'Register'}
       </button>
       {mode === 'login' && (
         <>
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
-            <a href="#" onClick={e => { e.preventDefault(); setShowReset(true); }} style={{ color: '#1976d2', textDecoration: 'underline', fontSize: 15, cursor: 'pointer' }}>Forgot password?</a>
+          <div className="auth-link">
+            <a href="#" onClick={e => { e.preventDefault(); setShowReset(true); }}>Forgot password?</a>
           </div>
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
-            <a href="/register" style={{ color: '#1976d2', textDecoration: 'underline', fontSize: 15, cursor: 'pointer' }}>make an account</a>
+          <div className="auth-link">
+            <a href="/register">make an account</a>
           </div>
-          <div style={{ textAlign: 'center', marginTop: 8 }}>
-            <a href="#" onClick={e => { e.preventDefault(); setShowResend(true); }} style={{ color: '#1976d2', textDecoration: 'underline', fontSize: 15, cursor: 'pointer' }}>Resend verification email</a>
+          <div className="auth-link">
+            <a href="#" onClick={e => { e.preventDefault(); setShowResend(true); }}>Resend verification email</a>
           </div>
         </>
       )}
       {mode === 'register' && (
-        <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13 }}>
-          By creating an account, you agree to our <a href="/privacy" style={{ color: '#1976d2' }}>Privacy Policy</a> and <a href="/terms" style={{ color: '#1976d2' }}>Terms of Service</a>.
+        <div className="auth-link" style={{ fontSize: '13px' }}>
+          By creating an account, you agree to our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.
         </div>
       )}
     </form>
