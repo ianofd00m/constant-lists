@@ -1,0 +1,1306 @@
+[
+  {
+    "_id": "68f83eba0f94a5d3cbc994ec",
+    "name": "jason4",
+    "format": "Commander / EDH",
+    "colors": [],
+    "cardCount": 29,
+    "cards": [
+      {
+        "name": "Jason Bright, Glowing Prophet",
+        "count": 1,
+        "printing": "48313997-fd94-486a-bf30-e9143a155814",
+        "prices": {
+          "usd": "0.31",
+          "usd_foil": "1.09",
+          "usd_etched": null,
+          "eur": "0.30",
+          "eur_foil": "0.43",
+          "tix": "0.29"
+        },
+        "mana_cost": "{2}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Legendary Creature — Zombie Mutant Advisor",
+        "scryfallCard": {
+          "id": "48313997-fd94-486a-bf30-e9143a155814",
+          "name": "Jason Bright, Glowing Prophet",
+          "type_line": "Legendary Creature — Zombie Mutant Advisor",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/4/8/48313997-fd94-486a-bf30-e9143a155814.jpg?1708741922",
+            "normal": "https://cards.scryfall.io/normal/front/4/8/48313997-fd94-486a-bf30-e9143a155814.jpg?1708741922",
+            "large": "https://cards.scryfall.io/large/front/4/8/48313997-fd94-486a-bf30-e9143a155814.jpg?1708741922",
+            "png": "https://cards.scryfall.io/png/front/4/8/48313997-fd94-486a-bf30-e9143a155814.png?1708741922",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/4/8/48313997-fd94-486a-bf30-e9143a155814.jpg?1708741922",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/4/8/48313997-fd94-486a-bf30-e9143a155814.jpg?1708741922"
+          },
+          "mana_cost": "{2}{U}",
+          "cmc": 3,
+          "prices": {
+            "usd": "0.31",
+            "usd_foil": "1.09",
+            "usd_etched": null,
+            "eur": "0.30",
+            "eur_foil": "0.43",
+            "tix": "0.29"
+          }
+        }
+      },
+      {
+        "name": "Helium Squirter",
+        "count": 1,
+        "printing": "54eb659a-f087-41b3-8e66-a895b70a9060",
+        "prices": {
+          "usd": "0.09",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "0.10",
+          "eur_foil": null,
+          "tix": "0.01"
+        },
+        "mana_cost": "{4}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Beast Mutant",
+        "scryfallCard": {
+          "id": "54eb659a-f087-41b3-8e66-a895b70a9060",
+          "name": "Helium Squirter",
+          "type_line": "Creature — Beast Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.jpg?1706239807",
+            "normal": "https://cards.scryfall.io/normal/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.jpg?1706239807",
+            "large": "https://cards.scryfall.io/large/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.jpg?1706239807",
+            "png": "https://cards.scryfall.io/png/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.png?1706239807",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.jpg?1706239807",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/5/4/54eb659a-f087-41b3-8e66-a895b70a9060.jpg?1706239807"
+          },
+          "mana_cost": "{4}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "0.09",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "0.10",
+            "eur_foil": null,
+            "tix": "0.01"
+          }
+        }
+      },
+      {
+        "name": "Novijen Sages",
+        "count": 1,
+        "printing": "3f75658e-43de-4091-acf6-5d6d571f9e99",
+        "prices": {
+          "usd": "0.14",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "0.17",
+          "eur_foil": "0.22",
+          "tix": "0.04"
+        },
+        "mana_cost": "{4}{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 6,
+        "type_line": "Creature — Human Advisor Mutant",
+        "scryfallCard": {
+          "id": "3f75658e-43de-4091-acf6-5d6d571f9e99",
+          "name": "Novijen Sages",
+          "type_line": "Creature — Human Advisor Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.jpg?1562261167",
+            "normal": "https://cards.scryfall.io/normal/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.jpg?1562261167",
+            "large": "https://cards.scryfall.io/large/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.jpg?1562261167",
+            "png": "https://cards.scryfall.io/png/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.png?1562261167",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.jpg?1562261167",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/3/f/3f75658e-43de-4091-acf6-5d6d571f9e99.jpg?1562261167"
+          },
+          "mana_cost": "{4}{U}{U}",
+          "cmc": 6,
+          "prices": {
+            "usd": "0.14",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "0.17",
+            "eur_foil": "0.22",
+            "tix": "0.04"
+          }
+        }
+      },
+      {
+        "name": "Mirelurk Queen",
+        "count": 1,
+        "printing": "6e6d1843-9e05-4cdd-ad4e-15d7913d87f7",
+        "prices": {
+          "usd": "0.21",
+          "usd_foil": "0.47",
+          "usd_etched": null,
+          "eur": "0.18",
+          "eur_foil": "0.34",
+          "tix": "0.51"
+        },
+        "mana_cost": "{4}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Crab Mutant",
+        "scryfallCard": {
+          "id": "6e6d1843-9e05-4cdd-ad4e-15d7913d87f7",
+          "name": "Mirelurk Queen",
+          "type_line": "Creature — Crab Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.jpg?1708741932",
+            "normal": "https://cards.scryfall.io/normal/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.jpg?1708741932",
+            "large": "https://cards.scryfall.io/large/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.jpg?1708741932",
+            "png": "https://cards.scryfall.io/png/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.png?1708741932",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.jpg?1708741932",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/6/e/6e6d1843-9e05-4cdd-ad4e-15d7913d87f7.jpg?1708741932"
+          },
+          "mana_cost": "{4}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "0.21",
+            "usd_foil": "0.47",
+            "usd_etched": null,
+            "eur": "0.18",
+            "eur_foil": "0.34",
+            "tix": "0.51"
+          }
+        }
+      },
+      {
+        "name": "Vexing Radgull",
+        "count": 1,
+        "printing": "91580910-fe0e-4cd9-9e73-821af23abfe7",
+        "prices": {
+          "usd": "0.15",
+          "usd_foil": "1.80",
+          "usd_etched": null,
+          "eur": "0.16",
+          "eur_foil": "0.76",
+          "tix": "2.09"
+        },
+        "mana_cost": "{1}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 2,
+        "type_line": "Creature — Bird Mutant",
+        "scryfallCard": {
+          "id": "91580910-fe0e-4cd9-9e73-821af23abfe7",
+          "name": "Vexing Radgull",
+          "type_line": "Creature — Bird Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.jpg?1708801914",
+            "normal": "https://cards.scryfall.io/normal/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.jpg?1708801914",
+            "large": "https://cards.scryfall.io/large/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.jpg?1708801914",
+            "png": "https://cards.scryfall.io/png/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.png?1708801914",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.jpg?1708801914",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/9/1/91580910-fe0e-4cd9-9e73-821af23abfe7.jpg?1708801914"
+          },
+          "mana_cost": "{1}{U}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.15",
+            "usd_foil": "1.80",
+            "usd_etched": null,
+            "eur": "0.16",
+            "eur_foil": "0.76",
+            "tix": "2.09"
+          }
+        }
+      },
+      {
+        "name": "Accursed Duneyard",
+        "count": 1,
+        "printing": "bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41",
+        "prices": {
+          "usd": "2.19",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "1.75",
+          "eur_foil": null,
+          "tix": "1.63"
+        },
+        "mana_cost": "",
+        "color_identity": [],
+        "cmc": 0,
+        "type_line": "Land",
+        "scryfallCard": {
+          "id": "bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41",
+          "name": "Accursed Duneyard",
+          "type_line": "Land",
+          "color_identity": [],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.jpg?1738355380",
+            "normal": "https://cards.scryfall.io/normal/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.jpg?1738355380",
+            "large": "https://cards.scryfall.io/large/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.jpg?1738355380",
+            "png": "https://cards.scryfall.io/png/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.png?1738355380",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.jpg?1738355380",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/b/d/bd9e6ba8-1c5e-4416-8bff-90db3b3b1f41.jpg?1738355380"
+          },
+          "mana_cost": "",
+          "cmc": 0,
+          "prices": {
+            "usd": "2.19",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "1.75",
+            "eur_foil": null,
+            "tix": "1.63"
+          }
+        }
+      },
+      {
+        "name": "Geralf, the Fleshwright",
+        "count": 1,
+        "printing": "afe3b678-b340-4c53-bbf6-19252a809d73",
+        "prices": {
+          "usd": "0.92",
+          "usd_foil": "2.35",
+          "usd_etched": null,
+          "eur": "1.67",
+          "eur_foil": "2.23",
+          "tix": "0.17"
+        },
+        "mana_cost": "{2}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Legendary Creature — Human Warlock",
+        "scryfallCard": {
+          "id": "afe3b678-b340-4c53-bbf6-19252a809d73",
+          "name": "Geralf, the Fleshwright",
+          "type_line": "Legendary Creature — Human Warlock",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.jpg?1712355427",
+            "normal": "https://cards.scryfall.io/normal/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.jpg?1712355427",
+            "large": "https://cards.scryfall.io/large/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.jpg?1712355427",
+            "png": "https://cards.scryfall.io/png/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.png?1712355427",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.jpg?1712355427",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/a/f/afe3b678-b340-4c53-bbf6-19252a809d73.jpg?1712355427"
+          },
+          "mana_cost": "{2}{U}",
+          "cmc": 3,
+          "prices": {
+            "usd": "0.92",
+            "usd_foil": "2.35",
+            "usd_etched": null,
+            "eur": "1.67",
+            "eur_foil": "2.23",
+            "tix": "0.17"
+          }
+        }
+      },
+      {
+        "name": "Eternal Skylord",
+        "count": 1,
+        "printing": "d48d37d2-d776-41b4-9d20-7d2f5c51f814",
+        "prices": {
+          "usd": "0.16",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "0.12",
+          "eur_foil": null,
+          "tix": null
+        },
+        "mana_cost": "{4}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Zombie Wizard",
+        "scryfallCard": {
+          "id": "d48d37d2-d776-41b4-9d20-7d2f5c51f814",
+          "name": "Eternal Skylord",
+          "type_line": "Creature — Zombie Wizard",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.jpg?1637629637",
+            "normal": "https://cards.scryfall.io/normal/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.jpg?1637629637",
+            "large": "https://cards.scryfall.io/large/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.jpg?1637629637",
+            "png": "https://cards.scryfall.io/png/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.png?1637629637",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.jpg?1637629637",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/d/4/d48d37d2-d776-41b4-9d20-7d2f5c51f814.jpg?1637629637"
+          },
+          "mana_cost": "{4}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "0.16",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "0.12",
+            "eur_foil": null,
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Geralf, Visionary Stitcher",
+        "count": 1,
+        "printing": "69890076-9cc4-434f-8618-63b00fdf4515",
+        "prices": {
+          "usd": "1.18",
+          "usd_foil": "1.28",
+          "usd_etched": null,
+          "eur": "0.85",
+          "eur_foil": "0.80",
+          "tix": "0.02"
+        },
+        "mana_cost": "{2}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Legendary Creature — Human Wizard",
+        "scryfallCard": {
+          "id": "69890076-9cc4-434f-8618-63b00fdf4515",
+          "name": "Geralf, Visionary Stitcher",
+          "type_line": "Legendary Creature — Human Wizard",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.jpg?1643587870",
+            "normal": "https://cards.scryfall.io/normal/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.jpg?1643587870",
+            "large": "https://cards.scryfall.io/large/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.jpg?1643587870",
+            "png": "https://cards.scryfall.io/png/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.png?1643587870",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.jpg?1643587870",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/6/9/69890076-9cc4-434f-8618-63b00fdf4515.jpg?1643587870"
+          },
+          "mana_cost": "{2}{U}",
+          "cmc": 3,
+          "prices": {
+            "usd": "1.18",
+            "usd_foil": "1.28",
+            "usd_etched": null,
+            "eur": "0.85",
+            "eur_foil": "0.80",
+            "tix": "0.02"
+          }
+        }
+      },
+      {
+        "name": "Necroduality",
+        "count": 1,
+        "printing": "6385509a-6814-4039-83fb-1fa5a7439696",
+        "prices": {
+          "usd": "5.19",
+          "usd_foil": "5.93",
+          "usd_etched": null,
+          "eur": "6.27",
+          "eur_foil": "7.31",
+          "tix": null
+        },
+        "mana_cost": "{3}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 4,
+        "type_line": "Enchantment",
+        "scryfallCard": {
+          "id": "6385509a-6814-4039-83fb-1fa5a7439696",
+          "name": "Necroduality",
+          "type_line": "Enchantment",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.jpg?1736467797",
+            "normal": "https://cards.scryfall.io/normal/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.jpg?1736467797",
+            "large": "https://cards.scryfall.io/large/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.jpg?1736467797",
+            "png": "https://cards.scryfall.io/png/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.png?1736467797",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.jpg?1736467797",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/6/3/6385509a-6814-4039-83fb-1fa5a7439696.jpg?1736467797"
+          },
+          "mana_cost": "{3}{U}",
+          "cmc": 4,
+          "prices": {
+            "usd": "5.19",
+            "usd_foil": "5.93",
+            "usd_etched": null,
+            "eur": "6.27",
+            "eur_foil": "7.31",
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Prophet of the Scarab",
+        "count": 1,
+        "printing": "0208b947-78d9-45bd-855f-846d9a7c547d",
+        "prices": {
+          "usd": "0.19",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "0.39",
+          "eur_foil": null,
+          "tix": "1.52"
+        },
+        "mana_cost": "{4}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Zombie Wizard",
+        "scryfallCard": {
+          "id": "0208b947-78d9-45bd-855f-846d9a7c547d",
+          "name": "Prophet of the Scarab",
+          "type_line": "Creature — Zombie Wizard",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.jpg?1738355323",
+            "normal": "https://cards.scryfall.io/normal/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.jpg?1738355323",
+            "large": "https://cards.scryfall.io/large/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.jpg?1738355323",
+            "png": "https://cards.scryfall.io/png/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.png?1738355323",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.jpg?1738355323",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/0/2/0208b947-78d9-45bd-855f-846d9a7c547d.jpg?1738355323"
+          },
+          "mana_cost": "{4}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "0.19",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "0.39",
+            "eur_foil": null,
+            "tix": "1.52"
+          }
+        }
+      },
+      {
+        "name": "Rooftop Storm",
+        "count": 1,
+        "printing": "31146f03-cb5e-4f33-aad7-ce970b914d90",
+        "prices": {
+          "usd": "1.47",
+          "usd_foil": "1.76",
+          "usd_etched": null,
+          "eur": "1.02",
+          "eur_foil": "1.09",
+          "tix": null
+        },
+        "mana_cost": "{5}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 6,
+        "type_line": "Enchantment",
+        "scryfallCard": {
+          "id": "31146f03-cb5e-4f33-aad7-ce970b914d90",
+          "name": "Rooftop Storm",
+          "type_line": "Enchantment",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.jpg?1736467814",
+            "normal": "https://cards.scryfall.io/normal/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.jpg?1736467814",
+            "large": "https://cards.scryfall.io/large/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.jpg?1736467814",
+            "png": "https://cards.scryfall.io/png/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.png?1736467814",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.jpg?1736467814",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/3/1/31146f03-cb5e-4f33-aad7-ce970b914d90.jpg?1736467814"
+          },
+          "mana_cost": "{5}{U}",
+          "cmc": 6,
+          "prices": {
+            "usd": "1.47",
+            "usd_foil": "1.76",
+            "usd_etched": null,
+            "eur": "1.02",
+            "eur_foil": "1.09",
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Cleaver Skaab",
+        "count": 1,
+        "printing": "30498d6c-29e2-4d05-a5bc-e2e623c5704d",
+        "prices": {
+          "usd": "3.34",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "5.25",
+          "eur_foil": null,
+          "tix": null
+        },
+        "mana_cost": "{3}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 4,
+        "type_line": "Creature — Zombie Horror",
+        "scryfallCard": {
+          "id": "30498d6c-29e2-4d05-a5bc-e2e623c5704d",
+          "name": "Cleaver Skaab",
+          "type_line": "Creature — Zombie Horror",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.jpg?1637628015",
+            "normal": "https://cards.scryfall.io/normal/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.jpg?1637628015",
+            "large": "https://cards.scryfall.io/large/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.jpg?1637628015",
+            "png": "https://cards.scryfall.io/png/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.png?1637628015",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.jpg?1637628015",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/3/0/30498d6c-29e2-4d05-a5bc-e2e623c5704d.jpg?1637628015"
+          },
+          "mana_cost": "{3}{U}",
+          "cmc": 4,
+          "prices": {
+            "usd": "3.34",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "5.25",
+            "eur_foil": null,
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Cytoplast Manipulator",
+        "count": 1,
+        "printing": "cfb6b06d-b132-44e9-a743-61187afb6152",
+        "prices": {
+          "usd": "5.50",
+          "usd_foil": "22.40",
+          "usd_etched": null,
+          "eur": "2.04",
+          "eur_foil": "5.51",
+          "tix": "0.02"
+        },
+        "mana_cost": "{2}{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 4,
+        "type_line": "Creature — Human Wizard Mutant",
+        "scryfallCard": {
+          "id": "cfb6b06d-b132-44e9-a743-61187afb6152",
+          "name": "Cytoplast Manipulator",
+          "type_line": "Creature — Human Wizard Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.jpg?1593272651",
+            "normal": "https://cards.scryfall.io/normal/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.jpg?1593272651",
+            "large": "https://cards.scryfall.io/large/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.jpg?1593272651",
+            "png": "https://cards.scryfall.io/png/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.png?1593272651",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.jpg?1593272651",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/c/f/cfb6b06d-b132-44e9-a743-61187afb6152.jpg?1593272651"
+          },
+          "mana_cost": "{2}{U}{U}",
+          "cmc": 4,
+          "prices": {
+            "usd": "5.50",
+            "usd_foil": "22.40",
+            "usd_etched": null,
+            "eur": "2.04",
+            "eur_foil": "5.51",
+            "tix": "0.02"
+          }
+        }
+      },
+      {
+        "name": "Keeper of Keys",
+        "count": 1,
+        "printing": "990b343b-70a6-46d0-abae-f5faae75816a",
+        "prices": {
+          "usd": "2.23",
+          "usd_foil": "4.74",
+          "usd_etched": null,
+          "eur": "1.61",
+          "eur_foil": "4.54",
+          "tix": null
+        },
+        "mana_cost": "{3}{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Human Rogue Mutant",
+        "scryfallCard": {
+          "id": "990b343b-70a6-46d0-abae-f5faae75816a",
+          "name": "Keeper of Keys",
+          "type_line": "Creature — Human Rogue Mutant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.jpg?1576381752",
+            "normal": "https://cards.scryfall.io/normal/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.jpg?1576381752",
+            "large": "https://cards.scryfall.io/large/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.jpg?1576381752",
+            "png": "https://cards.scryfall.io/png/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.png?1576381752",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.jpg?1576381752",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/9/9/990b343b-70a6-46d0-abae-f5faae75816a.jpg?1576381752"
+          },
+          "mana_cost": "{3}{U}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "2.23",
+            "usd_foil": "4.74",
+            "usd_etched": null,
+            "eur": "1.61",
+            "eur_foil": "4.54",
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Hordewing Skaab",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "5.31",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "9.15",
+          "eur_foil": null,
+          "tix": null
+        },
+        "mana_cost": "{4}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Creature — Zombie Horror",
+        "scryfallCard": {
+          "id": "6e67802e-e0d9-4989-b1c2-77ef2ff69796",
+          "name": "Hordewing Skaab",
+          "type_line": "Creature — Zombie Horror",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.jpg?1637628135",
+            "normal": "https://cards.scryfall.io/normal/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.jpg?1637628135",
+            "large": "https://cards.scryfall.io/large/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.jpg?1637628135",
+            "png": "https://cards.scryfall.io/png/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.png?1637628135",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.jpg?1637628135",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/6/e/6e67802e-e0d9-4989-b1c2-77ef2ff69796.jpg?1637628135"
+          },
+          "mana_cost": "{4}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "5.31",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "9.15",
+            "eur_foil": null,
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Abjure",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "4.98",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "4.63",
+          "eur_foil": null,
+          "tix": "0.11"
+        },
+        "mana_cost": "{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 1,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf",
+          "name": "Abjure",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.jpg?1562804357",
+            "normal": "https://cards.scryfall.io/normal/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.jpg?1562804357",
+            "large": "https://cards.scryfall.io/large/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.jpg?1562804357",
+            "png": "https://cards.scryfall.io/png/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.png?1562804357",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.jpg?1562804357",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/f/b/fbad9449-d09c-4fd0-b2ad-2aa3a29e03bf.jpg?1562804357"
+          },
+          "mana_cost": "{U}",
+          "cmc": 1,
+          "prices": {
+            "usd": "4.98",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "4.63",
+            "eur_foil": null,
+            "tix": "0.11"
+          }
+        }
+      },
+      {
+        "name": "Louisoix's Sacrifice",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.31",
+          "usd_foil": "1.26",
+          "usd_etched": null,
+          "eur": "0.48",
+          "eur_foil": "1.51",
+          "tix": "0.02"
+        },
+        "mana_cost": "{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 1,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "4a6976f2-0bd5-449a-8fcf-f5a732ce22c1",
+          "name": "Louisoix's Sacrifice",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1748705976",
+            "normal": "https://cards.scryfall.io/normal/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1748705976",
+            "large": "https://cards.scryfall.io/large/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1748705976",
+            "png": "https://cards.scryfall.io/png/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.png?1748705976",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1748705976",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/4/a/4a6976f2-0bd5-449a-8fcf-f5a732ce22c1.jpg?1748705976"
+          },
+          "mana_cost": "{U}",
+          "cmc": 1,
+          "prices": {
+            "usd": "0.31",
+            "usd_foil": "1.26",
+            "usd_etched": null,
+            "eur": "0.48",
+            "eur_foil": "1.51",
+            "tix": "0.02"
+          }
+        }
+      },
+      {
+        "name": "Perilous Research",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.39",
+          "usd_foil": "0.62",
+          "usd_etched": null,
+          "eur": "0.60",
+          "eur_foil": "0.93",
+          "tix": "0.03"
+        },
+        "mana_cost": "{1}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 2,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "f425b017-8c4d-457f-919a-f2686d71bcac",
+          "name": "Perilous Research",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.jpg?1561969049",
+            "normal": "https://cards.scryfall.io/normal/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.jpg?1561969049",
+            "large": "https://cards.scryfall.io/large/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.jpg?1561969049",
+            "png": "https://cards.scryfall.io/png/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.png?1561969049",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.jpg?1561969049",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/f/4/f425b017-8c4d-457f-919a-f2686d71bcac.jpg?1561969049"
+          },
+          "mana_cost": "{1}{U}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.39",
+            "usd_foil": "0.62",
+            "usd_etched": null,
+            "eur": "0.60",
+            "eur_foil": "0.93",
+            "tix": "0.03"
+          }
+        }
+      },
+      {
+        "name": "Saruman's Trickery",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.14",
+          "usd_foil": "0.27",
+          "usd_etched": null,
+          "eur": "0.16",
+          "eur_foil": "0.31",
+          "tix": "0.03"
+        },
+        "mana_cost": "{1}{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "8eb6c23b-e52e-4533-9625-884eb0a4d866",
+          "name": "Saruman's Trickery",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.jpg?1686968278",
+            "normal": "https://cards.scryfall.io/normal/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.jpg?1686968278",
+            "large": "https://cards.scryfall.io/large/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.jpg?1686968278",
+            "png": "https://cards.scryfall.io/png/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.png?1686968278",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.jpg?1686968278",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/8/e/8eb6c23b-e52e-4533-9625-884eb0a4d866.jpg?1686968278"
+          },
+          "mana_cost": "{1}{U}{U}",
+          "cmc": 3,
+          "prices": {
+            "usd": "0.14",
+            "usd_foil": "0.27",
+            "usd_etched": null,
+            "eur": "0.16",
+            "eur_foil": "0.31",
+            "tix": "0.03"
+          }
+        }
+      },
+      {
+        "name": "Lazotep Plating",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.41",
+          "usd_foil": "5.09",
+          "usd_etched": null,
+          "eur": "0.52",
+          "eur_foil": "3.55",
+          "tix": "0.03"
+        },
+        "mana_cost": "{1}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 2,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "f03b5405-6016-405b-a504-a454731b9276",
+          "name": "Lazotep Plating",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/f/0/f03b5405-6016-405b-a504-a454731b9276.jpg?1557576262",
+            "normal": "https://cards.scryfall.io/normal/front/f/0/f03b5405-6016-405b-a504-a454731b9276.jpg?1557576262",
+            "large": "https://cards.scryfall.io/large/front/f/0/f03b5405-6016-405b-a504-a454731b9276.jpg?1557576262",
+            "png": "https://cards.scryfall.io/png/front/f/0/f03b5405-6016-405b-a504-a454731b9276.png?1557576262",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/f/0/f03b5405-6016-405b-a504-a454731b9276.jpg?1557576262",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/f/0/f03b5405-6016-405b-a504-a454731b9276.jpg?1557576262"
+          },
+          "mana_cost": "{1}{U}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.41",
+            "usd_foil": "5.09",
+            "usd_etched": null,
+            "eur": "0.52",
+            "eur_foil": "3.55",
+            "tix": "0.03"
+          }
+        }
+      },
+      {
+        "name": "Cellar Door",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.06",
+          "usd_foil": "0.54",
+          "usd_etched": null,
+          "eur": "0.09",
+          "eur_foil": "0.44",
+          "tix": "0.03"
+        },
+        "mana_cost": "{2}",
+        "color_identity": [],
+        "cmc": 2,
+        "type_line": "Artifact",
+        "scryfallCard": {
+          "id": "97bdfb00-7773-4af6-895c-c90088a96b07",
+          "name": "Cellar Door",
+          "type_line": "Artifact",
+          "color_identity": [],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.jpg?1562834265",
+            "normal": "https://cards.scryfall.io/normal/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.jpg?1562834265",
+            "large": "https://cards.scryfall.io/large/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.jpg?1562834265",
+            "png": "https://cards.scryfall.io/png/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.png?1562834265",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.jpg?1562834265",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/9/7/97bdfb00-7773-4af6-895c-c90088a96b07.jpg?1562834265"
+          },
+          "mana_cost": "{2}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.06",
+            "usd_foil": "0.54",
+            "usd_etched": null,
+            "eur": "0.09",
+            "eur_foil": "0.44",
+            "tix": "0.03"
+          }
+        }
+      },
+      {
+        "name": "Poppet Stitcher // Poppet Factory",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "1.61",
+          "usd_foil": "3.40",
+          "usd_etched": null,
+          "eur": "3.37",
+          "eur_foil": "3.92",
+          "tix": "0.02"
+        },
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Creature — Human Wizard // Artifact",
+        "scryfallCard": {
+          "id": "999038b3-7d64-4554-b341-0675d4af8d8b",
+          "name": "Poppet Stitcher // Poppet Factory",
+          "type_line": "Creature — Human Wizard // Artifact",
+          "color_identity": [
+            "U"
+          ],
+          "cmc": 3,
+          "prices": {
+            "usd": "1.61",
+            "usd_foil": "3.40",
+            "usd_etched": null,
+            "eur": "3.37",
+            "eur_foil": "3.92",
+            "tix": "0.02"
+          }
+        }
+      },
+      {
+        "name": "Stitcher Geralf",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.16",
+          "usd_foil": "0.23",
+          "usd_etched": null,
+          "eur": "0.23",
+          "eur_foil": "0.27",
+          "tix": "0.22"
+        },
+        "mana_cost": "{3}{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 5,
+        "type_line": "Legendary Creature — Human Wizard",
+        "scryfallCard": {
+          "id": "a4ce6c30-a301-4a8a-ac3a-abacaf358a56",
+          "name": "Stitcher Geralf",
+          "type_line": "Legendary Creature — Human Wizard",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.jpg?1689996644",
+            "normal": "https://cards.scryfall.io/normal/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.jpg?1689996644",
+            "large": "https://cards.scryfall.io/large/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.jpg?1689996644",
+            "png": "https://cards.scryfall.io/png/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.png?1689996644",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.jpg?1689996644",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/a/4/a4ce6c30-a301-4a8a-ac3a-abacaf358a56.jpg?1689996644"
+          },
+          "mana_cost": "{3}{U}{U}",
+          "cmc": 5,
+          "prices": {
+            "usd": "0.16",
+            "usd_foil": "0.23",
+            "usd_etched": null,
+            "eur": "0.23",
+            "eur_foil": "0.27",
+            "tix": "0.22"
+          }
+        }
+      },
+      {
+        "name": "Marang River Prowler",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.13",
+          "usd_foil": null,
+          "usd_etched": null,
+          "eur": "0.10",
+          "eur_foil": null,
+          "tix": null
+        },
+        "mana_cost": "{2}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 3,
+        "type_line": "Creature — Human Rogue",
+        "scryfallCard": {
+          "id": "491a3dc5-d297-47e1-acf9-dda103136519",
+          "name": "Marang River Prowler",
+          "type_line": "Creature — Human Rogue",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.jpg?1604192521",
+            "normal": "https://cards.scryfall.io/normal/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.jpg?1604192521",
+            "large": "https://cards.scryfall.io/large/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.jpg?1604192521",
+            "png": "https://cards.scryfall.io/png/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.png?1604192521",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.jpg?1604192521",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/4/9/491a3dc5-d297-47e1-acf9-dda103136519.jpg?1604192521"
+          },
+          "mana_cost": "{2}{U}",
+          "cmc": 3,
+          "prices": {
+            "usd": "0.13",
+            "usd_foil": null,
+            "usd_etched": null,
+            "eur": "0.10",
+            "eur_foil": null,
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "C.A.M.P.",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "0.08",
+          "usd_foil": "0.82",
+          "usd_etched": null,
+          "eur": "0.27",
+          "eur_foil": "0.45",
+          "tix": "0.93"
+        },
+        "mana_cost": "{3}",
+        "color_identity": [],
+        "cmc": 3,
+        "type_line": "Artifact — Fortification",
+        "scryfallCard": {
+          "id": "034d4543-2c53-4cda-acfd-7f26b8dd17fb",
+          "name": "C.A.M.P.",
+          "type_line": "Artifact — Fortification",
+          "color_identity": [],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.jpg?1708742716",
+            "normal": "https://cards.scryfall.io/normal/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.jpg?1708742716",
+            "large": "https://cards.scryfall.io/large/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.jpg?1708742716",
+            "png": "https://cards.scryfall.io/png/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.png?1708742716",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.jpg?1708742716",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/0/3/034d4543-2c53-4cda-acfd-7f26b8dd17fb.jpg?1708742716"
+          },
+          "mana_cost": "{3}",
+          "cmc": 3,
+          "prices": {
+            "usd": "0.08",
+            "usd_foil": "0.82",
+            "usd_etched": null,
+            "eur": "0.27",
+            "eur_foil": "0.45",
+            "tix": "0.93"
+          }
+        }
+      },
+      {
+        "name": "Danny Pink",
+        "count": 1,
+        "printing": null,
+        "prices": {
+          "usd": "13.71",
+          "usd_foil": "23.99",
+          "usd_etched": null,
+          "eur": "13.01",
+          "eur_foil": "18.63",
+          "tix": null
+        },
+        "mana_cost": "{3}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 4,
+        "type_line": "Legendary Creature — Human Soldier Advisor",
+        "scryfallCard": {
+          "id": "bf5e0a50-304c-4b3f-b5f7-1ca1213c0282",
+          "name": "Danny Pink",
+          "type_line": "Legendary Creature — Human Soldier Advisor",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.jpg?1696636558",
+            "normal": "https://cards.scryfall.io/normal/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.jpg?1696636558",
+            "large": "https://cards.scryfall.io/large/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.jpg?1696636558",
+            "png": "https://cards.scryfall.io/png/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.png?1696636558",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.jpg?1696636558",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/b/f/bf5e0a50-304c-4b3f-b5f7-1ca1213c0282.jpg?1696636558"
+          },
+          "mana_cost": "{3}{U}",
+          "cmc": 4,
+          "prices": {
+            "usd": "13.71",
+            "usd_foil": "23.99",
+            "usd_etched": null,
+            "eur": "13.01",
+            "eur_foil": "18.63",
+            "tix": null
+          }
+        }
+      },
+      {
+        "name": "Essence Capture",
+        "count": 1,
+        "printing": "ce137910-0f0e-4f94-9b95-6e0eeeba164e",
+        "foil": false,
+        "modalPrice": "0.05",
+        "cardName": "Essence Capture",
+        "prices": {
+          "usd": "0.05",
+          "usd_foil": "0.29",
+          "usd_etched": null,
+          "eur": "0.13",
+          "eur_foil": "0.46",
+          "tix": "0.03"
+        },
+        "mana_cost": "{U}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 2,
+        "type_line": "Instant",
+        "scryfallCard": {
+          "id": "ce137910-0f0e-4f94-9b95-6e0eeeba164e",
+          "name": "Essence Capture",
+          "type_line": "Instant",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.jpg?1584830187",
+            "normal": "https://cards.scryfall.io/normal/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.jpg?1584830187",
+            "large": "https://cards.scryfall.io/large/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.jpg?1584830187",
+            "png": "https://cards.scryfall.io/png/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.png?1584830187",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.jpg?1584830187",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/c/e/ce137910-0f0e-4f94-9b95-6e0eeeba164e.jpg?1584830187"
+          },
+          "mana_cost": "{U}{U}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.05",
+            "usd_foil": "0.29",
+            "usd_etched": null,
+            "eur": "0.13",
+            "eur_foil": "0.46",
+            "tix": "0.03"
+          }
+        }
+      },
+      {
+        "name": "Patchwork Crawler",
+        "count": 1,
+        "printing": null,
+        "modalPrice": "0.12",
+        "prices": {
+          "usd": "0.12",
+          "usd_foil": "0.17",
+          "usd_etched": null,
+          "eur": "0.17",
+          "eur_foil": "0.21",
+          "tix": "0.02"
+        },
+        "mana_cost": "{1}{U}",
+        "color_identity": [
+          "U"
+        ],
+        "cmc": 2,
+        "type_line": "Creature — Zombie Horror",
+        "scryfallCard": {
+          "id": "6bb86ebf-f145-43c1-8f05-f4b55ded59b6",
+          "name": "Patchwork Crawler",
+          "type_line": "Creature — Zombie Horror",
+          "color_identity": [
+            "U"
+          ],
+          "image_uris": {
+            "small": "https://cards.scryfall.io/small/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.jpg?1643588398",
+            "normal": "https://cards.scryfall.io/normal/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.jpg?1643588398",
+            "large": "https://cards.scryfall.io/large/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.jpg?1643588398",
+            "png": "https://cards.scryfall.io/png/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.png?1643588398",
+            "art_crop": "https://cards.scryfall.io/art_crop/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.jpg?1643588398",
+            "border_crop": "https://cards.scryfall.io/border_crop/front/6/b/6bb86ebf-f145-43c1-8f05-f4b55ded59b6.jpg?1643588398"
+          },
+          "mana_cost": "{1}{U}",
+          "cmc": 2,
+          "prices": {
+            "usd": "0.12",
+            "usd_foil": "0.17",
+            "usd_etched": null,
+            "eur": "0.17",
+            "eur_foil": "0.21",
+            "tix": "0.02"
+          }
+        }
+      }
+    ],
+    "createdAt": "2025-10-22T02:17:30.199Z",
+    "updatedAt": "2025-10-25T00:23:32.559Z",
+    "commander": "Jason Bright, Glowing Prophet",
+    "commanderNames": [
+      "Jason Bright, Glowing Prophet"
+    ],
+    "sideboard": [],
+    "techIdeas": []
+  }
+]

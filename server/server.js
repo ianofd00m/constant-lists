@@ -8,16 +8,19 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware - CORS Configuration
 const allowedOrigins = [
   'http://localhost:5173', // Local development
   'https://admirable-fairy-0fd24b.netlify.app', // Your Netlify deployment (old)
   'https://68fc6f15d22b69b96c1602f5--admirable-fairy-0fd24b.netlify.app', // Current Netlify deployment
-  'https://constant-lists.netlify.app' // If you get a custom domain
-];
+  'https://constant-lists.netlify.app', // If you get a custom domain
+  process.env.CORS_ORIGIN // Production frontend URL from environment
+].filter(Boolean); // Remove undefined values
+
+console.log('🔒 CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
-  origin: true, // Allow all origins for now
+  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
