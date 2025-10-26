@@ -1,28 +1,11 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": null,
   "rewrites": [
     {
-      "source": "/((?!\\.well-known|api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*\\.js)$",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/javascript; charset=utf-8"
-        }
-      ]
-    },
-    {
-      "source": "/(.*\\.svg)$",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "image/svg+xml"
-        }
-      ]
     }
   ]
 }

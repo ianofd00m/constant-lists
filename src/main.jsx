@@ -9,15 +9,8 @@ import PrintingCache from './utils/PrintingCache'
 
 console.log('main.jsx loaded');
 
-// 🏷️ PRODUCTION OTAG SYSTEM - Load dynamically to avoid build issues
-(function loadOtagSystem() {
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.src = '/production-otag-system.js';
-  script.onload = () => console.log('🏷️ Production OTAG System loaded');
-  script.onerror = () => console.warn('⚠️ Could not load Production OTAG System');
-  document.head.appendChild(script);
-})();
+// 🏷️ PRODUCTION OTAG SYSTEM - Import directly to ensure proper bundling
+import './production-otag-system.js';
 
 // 🚀 PRODUCTION MODAL FIX - Load immediately to ensure working modals
 // This prevents the "Show all results..." modal from showing blank content
