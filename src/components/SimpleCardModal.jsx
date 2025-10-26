@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CardActionsModal.css';
-import OracleTagsIntegration from './OracleTagsIntegration';
+// import OracleTagsIntegration from './OracleTagsIntegration'; // Disabled: Using Production OTAG System
 
 const SimpleCardModal = ({ card, isOpen, onClose, userDecks }) => {
   const [selectedDeckId, setSelectedDeckId] = useState('');
@@ -415,8 +415,8 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks }) => {
                   </div>
                 )}
                 
-                {/* Oracle Tags Integration */}
-                <OracleTagsIntegration 
+                {/* Oracle Tags Integration - Disabled: Using Production OTAG System instead */}
+                {/* <OracleTagsIntegration 
                   card={selectedPrinting}
                   onOracleTagSearch={(oracleTag) => {
                     console.log(`[SimpleCardModal] Oracle tag search requested: ${oracleTag}`);
@@ -424,7 +424,7 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks }) => {
                     // This could be enhanced to trigger actual search functionality
                     alert(`Search for oracle tag: "${oracleTag}"\n\nThis feature can be enhanced to integrate with your search system.`);
                   }}
-                />
+                /> */}
               </div>
             </div>
           </div>
