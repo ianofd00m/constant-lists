@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTAG System - Full Implementation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .status-panel {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .deck-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .deck-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .deck-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+            border-color: #667eea;
+        }
+        .card-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .card-type {
+            font-size: 12px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+        .card-cost {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 600;
+        }
+        .feature-list {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .feature-list h3 {
+            margin-top: 0;
+            color: #fbbf24;
+        }
+        .feature-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+        button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .instruction-box {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏷️ OTAG System - Full Implementation</h1>
+        
+        <div class="instruction-box">
+            <div style="font-size: 18px; margin-bottom: 10px;">📋 Quick Setup</div>
+            <div>1. Look for the floating "🏷️ OTAG System" button in the bottom-right</div>
+            <div>2. Click it and select your CSV file (scryfall-card-otags-2025-08-06.csv)</div>
+            <div>3. Click any card below to see OTAG enhancement in action!</div>
+        </div>
+
+        <div class="status-panel">
+            <h3>🔧 System Status</h3>
+            <div id="status-display">
+                <div id="component-status">🔄 Initializing OTAG components...</div>
+                <div id="data-status">⏳ No OTAG data loaded</div>
+                <div id="integration-status">⏳ Waiting for CSV data</div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button onclick="checkSystemStatus()">🔄 Refresh Status</button>
+                <button onclick="testOtagSearch()">🔍 Test Search</button>
+                <button onclick="showOtagStats()">📊 Show Stats</button>
+            </div>
+        </div>
+
+        <div class="feature-list">
+            <h3>✨ What This Implementation Provides</h3>
+            <ul>
+                <li><strong>Automatic Modal Enhancement:</strong> Any card modal gets OTAG tags added automatically</li>
+                <li><strong>Clickable Functional Tags:</strong> Click any OTAG to search for similar cards</li>
+                <li><strong>Existing Search Integration:</strong> Uses your createModalWithData() function</li>
+                <li><strong>Smart Card Detection:</strong> Finds card names in various modal formats</li>
+                <li><strong>Local Storage Caching:</strong> CSV data cached for 24 hours</li>
+                <li><strong>Zero Configuration:</strong> Just include scripts and load CSV once</li>
+                <li><strong>Deck List Integration:</strong> Detects clicks on deck list items</li>
+                <li><strong>Beautiful UI:</strong> Organized, color-coded OTAG categories</li>
+            </ul>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h3>🃏 Sample Deck List</h3>
+            <p>Click any card to open a modal and see OTAG enhancement:</p>
+            
+            <div class="deck-list">
+                <div class="deck-card" onclick="openCardModal('Sol Ring')">
+                    <div class="card-name">Sol Ring</div>
+                    <div class="card-type">Artifact</div>
+                    <div class="card-cost">Mana Cost: {1}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Lightning Bolt')">
+                    <div class="card-name">Lightning Bolt</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {R}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Birds of Paradise')">
+                    <div class="card-name">Birds of Paradise</div>
+                    <div class="card-type">Creature — Bird</div>
+                    <div class="card-cost">Mana Cost: {G}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Counterspell')">
+                    <div class="card-name">Counterspell</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {U}{U}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Path to Exile')">
+                    <div class="card-name">Path to Exile</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {W}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Llanowar Elves')">
+                    <div class="card-name">Llanowar Elves</div>
+                    <div class="card-type">Creature — Elf Druid</div>
+                    <div class="card-cost">Mana Cost: {G}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h3>🛠️ Implementation Details</h3>
+            <p><strong>Files included in this implementation:</strong></p>
+            <ul>
+                <li><code>local-otag-helper.js</code> - Core OTAG database system</li>
+                <li><code>otag-data-loader.js</code> - CSV loading utilities</li>
+                <li><code>direct-modal-fix.js</code> - Your existing search modal system</li>
+                <li><code>complete-otag-implementation.js</code> - Full integration layer</li>
+            </ul>
+            
+            <p><strong>Integration Points:</strong></p>
+            <ul>
+                <li>Hooks into your existing <code>createModalWithData()</code> function</li>
+                <li>Detects modals with ID <code>show-all-modal</code> and similar patterns</li>
+                <li>Monitors deck list clicks and enhances resulting modals</li>
+                <li>Preserves all existing functionality while adding OTAG features</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal for card display -->
+    <div id="card-modal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            color: #1e293b;
+        ">
+            <button onclick="closeCardModal()" style="
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 12px;
+                cursor: pointer;
+                font-weight: 600;
+            ">✕ Close</button>
+            
+            <h2 id="modal-card-name" class="card-name">Card Name</h2>
+            <div id="modal-card-type" class="card-type">Card Type</div>
+            <div id="modal-card-text" style="margin: 15px 0; line-height: 1.4;"></div>
+            <!-- OTAG enhancement will be automatically added here -->
+        </div>
+    </div>
+
+    <!-- Include all OTAG system scripts -->
+    <script src="local-otag-helper.js"></script>
+    <script src="otag-data-loader.js"></script>
+    <script src="direct-modal-fix.js"></script>
+    <script src="complete-otag-implementation.js"></script>
+    
+    <script>
+        // Sample card modal system
+        function openCardModal(cardName) {
+            console.log(`🃏 Opening modal for: ${cardName}`);
+            
+            // Sample card data
+            const cardData = {
+                'Sol Ring': { 
+                    type: 'Artifact', 
+                    text: '{T}: Add {C}{C}. A powerful mana-producing artifact that accelerates your game plan.',
+                    cost: '{1}'
+                },
+                'Lightning Bolt': { 
+                    type: 'Instant', 
+                    text: 'Lightning Bolt deals 3 damage to any target. Classic direct damage spell.',
+                    cost: '{R}'
+                },
+                'Birds of Paradise': { 
+                    type: 'Creature — Bird', 
+                    text: 'Flying. {T}: Add one mana of any color. Iconic mana-producing creature.',
+                    cost: '{G}'
+                },
+                'Counterspell': { 
+                    type: 'Instant', 
+                    text: 'Counter target spell. The quintessential counterspell.',
+                    cost: '{U}{U}'
+                },
+                'Path to Exile': { 
+                    type: 'Instant', 
+                    text: 'Exile target creature. Its controller may search their library for a basic land.',
+                    cost: '{W}'
+                },
+                'Llanowar Elves': { 
+                    type: 'Creature — Elf Druid', 
+                    text: '{T}: Add {G}. One-mana creature that produces mana.',
+                    cost: '{G}'
+                }
+            };
+            
+            const card = cardData[cardName] || { 
+                type: 'Unknown', 
+                text: 'Card text not available.',
+                cost: '{?}'
+            };
+            
+            // Populate modal
+            document.getElementById('modal-card-name').textContent = cardName;
+            document.getElementById('modal-card-type').textContent = card.type;
+            document.getElementById('modal-card-text').textContent = card.text;
+            
+            // Remove any existing OTAG enhancement
+            const existingOtag = document.querySelector('.otag-enhancement');
+            if (existingOtag) {
+                existingOtag.remove();
+            }
+            
+            // Show modal
+            const modal = document.getElementById('card-modal');
+            modal.style.display = 'flex';
+            
+            // Let the OTAG enhancer work (small delay to ensure modal is fully rendered)
+            setTimeout(() => {
+                if (window.otagImplementation && window.otagImplementation.isReady()) {
+                    window.otagImplementation.enhanceModal(modal);
+                    console.log('🏷️ OTAG enhancement applied to modal');
+                } else {
+                    console.log('⚠️ OTAG system not ready yet');
+                }
+            }, 100);
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').style.display = 'none';
+        }
+
+        // Status and testing functions
+        function checkSystemStatus() {
+            const componentStatus = document.getElementById('component-status');
+            const dataStatus = document.getElementById('data-status');
+            const integrationStatus = document.getElementById('integration-status');
+            
+            // Check components
+            if (window.otagImplementation && window.otagImplementation.isReady()) {
+                componentStatus.innerHTML = '✅ All OTAG components loaded';
+            } else {
+                componentStatus.innerHTML = '⚠️ OTAG components not fully ready';
+            }
+            
+            // Check data
+            if (window.otagImplementation && window.otagImplementation.isLoaded()) {
+                const stats = window.otagImplementation.getStats();
+                dataStatus.innerHTML = `✅ OTAG data loaded: ${stats.totalCards.toLocaleString()} cards, ${stats.totalOtags.toLocaleString()} categories`;
+            } else {
+                dataStatus.innerHTML = '⏳ No OTAG data loaded - use the floating button to load CSV';
+            }
+            
+            // Check integration
+            if (window.createModalWithData) {
+                integrationStatus.innerHTML = '✅ Search modal integration active';
+            } else {
+                integrationStatus.innerHTML = '⚠️ Search modal system not detected';
+            }
+        }
+
+        function testOtagSearch() {
+            if (!window.otagImplementation || !window.otagImplementation.isLoaded()) {
+                alert('⚠️ Please load OTAG data first using the floating button!');
+                return;
+            }
+            
+            // Test search for removal cards
+            const results = window.otagImplementation.searchCards('removal');
+            console.log('🔍 Removal search results:', results);
+            
+            if (results.length > 0) {
+                alert(`✅ Found ${results.length} removal cards. Check console for details.`);
+                
+                // Trigger a real OTAG search modal
+                if (window.otagImplementation.isReady()) {
+                    window.otagImplementation.triggerSearch('removal');
+                }
+            } else {
+                alert('❌ No removal cards found in OTAG database.');
+            }
+        }
+
+        function showOtagStats() {
+            if (!window.otagImplementation || !window.otagImplementation.isLoaded()) {
+                alert('⚠️ Please load OTAG data first!');
+                return;
+            }
+            
+            const stats = window.otagImplementation.getStats();
+            console.log('📊 OTAG Statistics:', stats);
+            
+            alert(`📊 OTAG Database Stats:
+• ${stats.totalCards.toLocaleString()} cards with OTAG data
+• ${stats.totalOtags.toLocaleString()} unique functional categories
+• Top categories: ${stats.topOtags.slice(0, 3).map(([tag, count]) => `${tag} (${count})`).join(', ')}
+
+Check console for full details.`);
+        }
+
+        // Auto-refresh status
+        setInterval(checkSystemStatus, 3000);
+        
+        // Initial status check
+        setTimeout(checkSystemStatus, 1000);
+
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCardModal();
+            }
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('card-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'card-modal') {
+                closeCardModal();
+            }
+        });
+
+        console.log('🎯 OTAG Full Implementation Demo Ready!');
+        console.log('💡 Steps to test:');
+        console.log('  1. Load CSV data using the floating button');
+        console.log('  2. Click any card to see OTAG enhancement');
+        console.log('  3. Click OTAG tags to search for similar cards');
+        console.log('  4. See your existing search modal with OTAG results');
+    </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Constant Lists - Public Sharing Setup
+echo "🚀 Setting up Constant Lists for public sharing..."
+
+# Get the current API URL from ngrok
+API_URL="https://unobtainable-kaleb-pomologically.ngrok-free.dev"
+
+echo ""
+echo "📋 Setup Instructions for Your Friends:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "🌐 Backend API is running at: $API_URL"
+echo "💻 Frontend is running locally at: http://localhost:5173"
+echo ""
+echo "For friends to test your app, you have 2 options:"
+echo ""
+echo "Option 1: Share Backend + Local Frontend"
+echo "  1. Keep the current ngrok tunnel running for your API"
+echo "  2. Your friends can run your frontend locally:"
+echo "     - git clone your repo"
+echo "     - npm install"
+echo "     - Create .env file with: VITE_API_URL=$API_URL"
+echo "     - npm run dev"
+echo ""
+echo "Option 2: Deploy Frontend to Vercel/Netlify (Recommended)"
+echo "  1. Push your code to GitHub"
+echo "  2. Deploy to Vercel with env var: VITE_API_URL=$API_URL"
+echo "  3. Share the deployed URL"
+echo ""
+echo "Current Status:"
+echo "✅ Backend API: Public via ngrok"
+echo "⚠️  Frontend: Local only (localhost:5173)"
+echo ""
+echo "Press Ctrl+C to stop the API tunnel when done testing"

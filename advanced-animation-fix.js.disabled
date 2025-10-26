@@ -1,0 +1,592 @@
+/**
+ * Advanced   // Configuration
+  const CONFIG = {
+    debugMode: false,
+    styleTag: 'advanced-foil-fix-styles',
+    dataAttribute: 'data-foil-fixed',
+    fixMethod: 'auto', // 'css', 'dom', 'canvas', or 'auto'
+    animationDuration: '15s',
+    refreshInterval: 1000, // ms to check for new elements,
+    preventHoverResets: true, // Additional protection against hover-induced resets
+  }; Fix Utility v2.0
+ * 
+ * This script provides multiple strategies for fixing foil animations:
+ * 1. First attempts to fix existing CSS animations through unique animation names
+ * 2. If that fails, injects direct DOM elements with animations
+ * 3. Monitors for class changes to keep animations consistent
+ * 4. Can fall back to Canvas-based rendering for problematic elements
+ * 
+ * Usage: Run in browser console or include as a script in your HTML
+ */
+
+(function() {
+  console.clear();
+  console.log('%c🌈 Advanced Animation Fix Utility v2.0 loaded', 'font-size: 14px; font-weight: bold; color: #6600cc');
+  
+  // Configuration
+  const CONFIG = {
+    debugMode: false,
+    styleTag: 'advanced-foil-fix-styles',
+    dataAttribute: 'data-foil-fixed',
+    fixMethod: 'auto', // 'css', 'dom', 'canvas', or 'auto'
+    animationDuration: '15s',
+    refreshInterval: 1000, // ms to check for new elements
+  };
+  
+  // Store references to created elements for cleanup
+  const createdElements = new Map();
+  
+  // Logging
+  const log = (message, data) => {
+    if (CONFIG.debugMode) {
+      console.log(`%c[Foil Fix] ${message}`, 'color: #6600cc', data || '');
+    }
+  };
+  
+  // Ensure our style tag exists
+  const getStyleTag = () => {
+    let styleEl = document.getElementById(CONFIG.styleTag);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = CONFIG.styleTag;
+      document.head.appendChild(styleEl);
+      log('Created global style tag');
+    }
+    return styleEl;
+  };
+  
+  // Initialize keyframes
+  const injectKeyframes = () => {
+    const styleEl = getStyleTag();
+    
+    // Add our keyframes with unique names
+    styleEl.textContent += `
+      @keyframes foil-shimmer-fixed {
+        0%, 100% { background-position: 0% 50%; }
+        25% { background-position: 100% 0%; }
+        50% { background-position: 100% 100%; }
+        75% { background-position: 0% 100%; }
+      }
+      
+      /* Add hardware acceleration triggers */
+      .foil-active-border, .foil-active-border::before {
+        will-change: background-position;
+        transform: translateZ(0);
+      }
+    `;
+    
+    log('Injected keyframes definition');
+  };
+  
+  // Apply CSS-based fix using unique animation names and selectors
+  const applyCssFix = (element) => {
+    // Generate unique identifier for this element
+    const uniqueId = `foil-${Math.random().toString(36).substring(2, 9)}`;
+    element.setAttribute(CONFIG.dataAttribute, uniqueId);
+    
+    // Create CSS rules for this specific element
+    const styleEl = getStyleTag();
+    styleEl.textContent += `
+      [${CONFIG.dataAttribute}="${uniqueId}"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 10px;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(110deg,
+          rgba(255, 190, 220, 0.6),
+          rgba(200, 190, 255, 0.6),
+          rgba(190, 220, 255, 0.6),
+          rgba(190, 255, 220, 0.6),
+          rgba(220, 255, 190, 0.6),
+          rgba(255, 220, 190, 0.6),
+          rgba(255, 190, 220, 0.6)
+        );
+        background-size: 700% 700%;
+        filter: blur(1.5px);
+        mix-blend-mode: overlay;
+        /* Always run animation to prevent restart on hover - just control opacity */
+        animation: foil-shimmer-fixed ${CONFIG.animationDuration} ease-in-out infinite alternate;
+        animation-play-state: running !important;
+        animation-delay: -${Math.random() * 15}s;
+      }
+      
+      [${CONFIG.dataAttribute}="${uniqueId}"].foil-active-border::before {
+        opacity: 0.4;
+        /* Animation always runs, just control opacity */
+      }
+      
+      [${CONFIG.dataAttribute}="${uniqueId}"]::before {
+        opacity: 0;
+        /* Animation keeps running in background, just invisible */
+      }
+    `;
+    
+    // Make sure position is set to enable absolute positioning of pseudo-element
+    const currentPosition = window.getComputedStyle(element).position;
+    if (currentPosition === 'static') {
+      element.style.position = 'relative';
+    }
+    
+    log(`Applied CSS fix to element with ID ${uniqueId}`);
+    return uniqueId;
+  };
+  
+  // Apply DOM-based fix by creating a real element
+  const applyDomFix = (element) => {
+    // Generate unique identifier for this element
+    const uniqueId = `foil-dom-${Math.random().toString(36).substring(2, 9)}`;
+    element.setAttribute(CONFIG.dataAttribute, uniqueId);
+    
+    // Create and style the overlay element
+    const overlay = document.createElement('div');
+    overlay.classList.add('foil-overlay-element');
+    
+    // Style the overlay to match the ::before behavior
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.right = '0';
+    overlay.style.bottom = '0';
+    overlay.style.borderRadius = '10px';
+    overlay.style.zIndex = '1';
+    overlay.style.pointerEvents = 'none';
+    
+    // Set up the gradient background
+    overlay.style.background = `
+      linear-gradient(110deg,
+        rgba(255, 190, 220, 0.6),
+        rgba(200, 190, 255, 0.6),
+        rgba(190, 220, 255, 0.6),
+        rgba(190, 255, 220, 0.6),
+        rgba(220, 255, 190, 0.6),
+        rgba(255, 220, 190, 0.6),
+        rgba(255, 190, 220, 0.6)
+      )
+    `;
+    overlay.style.backgroundSize = '700% 700%';
+    overlay.style.filter = 'blur(1.5px)';
+    overlay.style.mixBlendMode = 'overlay';
+    
+    // Set animation properties directly - always animate, just control visibility
+    // This prevents animation restarts caused by hover events and class changes
+    overlay.style.animation = `foil-shimmer-fixed ${CONFIG.animationDuration} ease-in-out infinite alternate`;
+    overlay.style.animationPlayState = 'running';
+    overlay.style.willChange = 'background-position';
+    overlay.style.transform = 'translateZ(0)';
+    
+    // Add random delay to stagger animations and make them look less synchronized
+    overlay.style.animationDelay = `-${Math.random() * 15}s`;
+    
+    // Set initial state based on element class (control visibility only)
+    if (element.classList.contains('foil-active-border')) {
+      overlay.style.opacity = '0.4';
+    } else {
+      overlay.style.opacity = '0';
+    }
+    
+    // Make sure the element has relative positioning
+    const currentPosition = window.getComputedStyle(element).position;
+    if (currentPosition === 'static') {
+      element.style.position = 'relative';
+    }
+    
+    // Add the overlay to the element
+    element.prepend(overlay);
+    
+    // Store reference to the created element
+    createdElements.set(uniqueId, overlay);
+    
+    log(`Applied DOM fix to element with ID ${uniqueId}`);
+    return uniqueId;
+  };
+  
+  // Apply Canvas-based fix for most problematic cases
+  const applyCanvasFix = (element) => {
+    // Generate unique identifier for this element
+    const uniqueId = `foil-canvas-${Math.random().toString(36).substring(2, 9)}`;
+    element.setAttribute(CONFIG.dataAttribute, uniqueId);
+    
+    // Create canvas element
+    const canvas = document.createElement('canvas');
+    canvas.classList.add('foil-canvas-element');
+    
+    // Style the canvas
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.borderRadius = '10px';
+    canvas.style.zIndex = '1';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.mixBlendMode = 'overlay';
+    
+    // Make sure the element has relative positioning
+    const currentPosition = window.getComputedStyle(element).position;
+    if (currentPosition === 'static') {
+      element.style.position = 'relative';
+    }
+    
+    // Add the canvas to the element
+    element.prepend(canvas);
+    
+    // Set up the animation
+    const ctx = canvas.getContext('2d');
+    let phase = 0;
+    let animationFrame = null;
+    let isActive = element.classList.contains('foil-active-border');
+    
+    // Resize function to match parent
+    const resizeCanvas = () => {
+      canvas.width = element.offsetWidth;
+      canvas.height = element.offsetHeight;
+    };
+    
+    // Initial sizing
+    resizeCanvas();
+    
+    // Drawing function
+    const drawFoilEffect = () => {
+      if (!ctx) return;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (!isActive) {
+        return;
+      }
+      
+      // Create gradient
+      const gradient = ctx.createLinearGradient(
+        0, 0, 
+        canvas.width * Math.cos(phase), 
+        canvas.height * Math.sin(phase)
+      );
+      
+      // Add colors
+      gradient.addColorStop(0, 'rgba(255, 190, 220, 0.6)');
+      gradient.addColorStop(0.16, 'rgba(200, 190, 255, 0.6)');
+      gradient.addColorStop(0.33, 'rgba(190, 220, 255, 0.6)');
+      gradient.addColorStop(0.5, 'rgba(190, 255, 220, 0.6)');
+      gradient.addColorStop(0.66, 'rgba(220, 255, 190, 0.6)');
+      gradient.addColorStop(0.83, 'rgba(255, 220, 190, 0.6)');
+      gradient.addColorStop(1, 'rgba(255, 190, 220, 0.6)');
+      
+      // Apply the gradient
+      ctx.fillStyle = gradient;
+      ctx.globalAlpha = 0.4;
+      
+      // Draw rounded rectangle
+      const radius = 10;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(canvas.width - radius, 0);
+      ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+      ctx.lineTo(canvas.width, canvas.height - radius);
+      ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+      ctx.lineTo(radius, canvas.height);
+      ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Increment phase
+      phase += 0.005;
+      if (phase > Math.PI * 2) {
+        phase = 0;
+      }
+      
+      // Continue animation
+      if (isActive) {
+        animationFrame = requestAnimationFrame(drawFoilEffect);
+      }
+    };
+    
+    // Create an observer to watch for class changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          isActive = element.classList.contains('foil-active-border');
+          
+          if (isActive && !animationFrame) {
+            animationFrame = requestAnimationFrame(drawFoilEffect);
+          }
+        }
+      });
+    });
+    
+    // Start observing
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    // Initial draw
+    if (isActive) {
+      animationFrame = requestAnimationFrame(drawFoilEffect);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Store references for cleanup
+    createdElements.set(uniqueId, {
+      canvas,
+      observer,
+      animationFrame,
+      cleanup: () => {
+        observer.disconnect();
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+        }
+        window.removeEventListener('resize', resizeCanvas);
+        canvas.remove();
+      }
+    });
+    
+    log(`Applied Canvas fix to element with ID ${uniqueId}`);
+    return uniqueId;
+  };
+  
+  // Main fix function
+  const applyFixToElement = (element) => {
+    // Skip if already fixed
+    if (element.hasAttribute(CONFIG.dataAttribute)) {
+      return;
+    }
+    
+    // Apply the appropriate fix based on configuration
+    let fixId = null;
+    
+    switch (CONFIG.fixMethod) {
+      case 'css':
+        fixId = applyCssFix(element);
+        break;
+      case 'dom':
+        fixId = applyDomFix(element);
+        break;
+      case 'canvas':
+        fixId = applyCanvasFix(element);
+        break;
+      case 'auto':
+      default:
+        // Check for hover sensitivity
+        const isHoverSensitive = element.matches(':hover') || 
+                                element.querySelector(':hover') || 
+                                element.parentElement?.matches(':hover');
+        
+        if (isHoverSensitive) {
+          // For hover-sensitive elements, go straight to DOM approach
+          log('Hover-sensitive element detected, using DOM approach', element);
+          fixId = applyDomFix(element);
+        } else {
+          // Try CSS fix first, then DOM as fallback
+          try {
+            fixId = applyCssFix(element);
+            
+            // Check if CSS fix worked - wait for a frame to render
+            setTimeout(() => {
+              const beforeElement = window.getComputedStyle(element, '::before');
+              const hasAnimation = beforeElement.animationName !== 'none';
+              
+              if (!hasAnimation) {
+                log('CSS fix failed, trying DOM approach', element);
+                // Remove CSS fix
+                element.removeAttribute(CONFIG.dataAttribute);
+                // Apply DOM fix
+                fixId = applyDomFix(element);
+              }
+            }, 50);
+          } catch (e) {
+            log('Error applying CSS fix, falling back to DOM', e);
+            fixId = applyDomFix(element);
+          }
+        }
+    }
+    
+    return fixId;
+  };
+  
+  // Update element animation state based on class
+  const updateElementState = (element) => {
+    const uniqueId = element.getAttribute(CONFIG.dataAttribute);
+    if (!uniqueId) return;
+    
+    const isFoil = element.classList.contains('foil-active-border');
+    
+    // Handle different fix types
+    if (uniqueId.startsWith('foil-dom-')) {
+      const overlay = createdElements.get(uniqueId);
+      if (overlay) {
+        // Only update opacity, not animation-play-state to prevent animation resets
+        overlay.style.opacity = isFoil ? '0.4' : '0';
+      }
+    } else if (uniqueId.startsWith('foil-canvas-')) {
+      const canvasData = createdElements.get(uniqueId);
+      if (canvasData) {
+        // Canvas state is handled by the mutation observer
+      }
+    }
+    // CSS fixes are handled by the CSS rules automatically
+  };
+  
+  // Prevent hover-related animation resets
+  const handleHoverEvents = () => {
+    document.querySelectorAll('.card-preview-container, .current-printing-container')
+      .forEach(element => {
+        // Only add event listeners if they don't already exist
+        if (!element.dataset.hoverFixed) {
+          element.dataset.hoverFixed = 'true';
+          
+          // Store original class name to prevent modifications during hover
+          const originalClassName = element.className;
+          
+          // Prevent hover-related class changes from affecting animation
+          element.addEventListener('mouseenter', (e) => {
+            // Store current foil state before hover effects
+            if (element.hasAttribute(CONFIG.dataAttribute)) {
+              element.dataset.foilState = element.classList.contains('foil-active-border') ? 'true' : 'false';
+            }
+          }, true);
+          
+          element.addEventListener('mouseleave', (e) => {
+            // Restore foil state after hover effects if needed
+            if (element.hasAttribute(CONFIG.dataAttribute) && element.dataset.foilState) {
+              const shouldBeFoil = element.dataset.foilState === 'true';
+              if (shouldBeFoil && !element.classList.contains('foil-active-border')) {
+                element.classList.add('foil-active-border');
+              } else if (!shouldBeFoil && element.classList.contains('foil-active-border')) {
+                element.classList.remove('foil-active-border');
+              }
+            }
+          }, true);
+        }
+      });
+  };
+  
+  // Process all elements with foil class
+  const processAllElements = () => {
+    const foilElements = document.querySelectorAll('.card-preview-container, .current-printing-container');
+    log(`Found ${foilElements.length} elements to process`);
+    
+    foilElements.forEach(element => {
+      applyFixToElement(element);
+    });
+    
+    // Setup hover protection
+    handleHoverEvents();
+  };
+  
+  // Set up mutation observer for class changes and new elements
+  const setupObserver = () => {
+    // First observer for class changes on fixed elements
+    const classObserver = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'attributes' && 
+            mutation.attributeName === 'class' && 
+            mutation.target.hasAttribute(CONFIG.dataAttribute)) {
+          updateElementState(mutation.target);
+        }
+      });
+    });
+    
+    // Second observer for new elements added to the DOM
+    const domObserver = new MutationObserver(mutations => {
+      let needsProcessing = false;
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if it's a candidate for fixing
+              if (node.classList.contains('card-preview-container') || 
+                  node.classList.contains('current-printing-container')) {
+                applyFixToElement(node);
+              }
+              
+              // Check for nested candidates
+              const candidates = node.querySelectorAll('.card-preview-container, .current-printing-container');
+              if (candidates.length > 0) {
+                needsProcessing = true;
+              }
+            }
+          });
+        }
+      });
+      
+      // Process all elements if needed
+      if (needsProcessing) {
+        processAllElements();
+      }
+    });
+    
+    // Start observing
+    classObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true
+    });
+    
+    domObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    return { classObserver, domObserver };
+  };
+  
+  // Initialize everything
+  const initialize = () => {
+    // Inject keyframes
+    injectKeyframes();
+    
+    // Process existing elements
+    processAllElements();
+    
+    // Set up observers
+    const observers = setupObserver();
+    
+    // Set up interval for periodic checks
+    const intervalId = setInterval(processAllElements, CONFIG.refreshInterval);
+    
+    // Return control functions
+    return {
+      reapply: processAllElements,
+      update: (options = {}) => {
+        Object.assign(CONFIG, options);
+        log('Configuration updated:', CONFIG);
+        processAllElements();
+      },
+      debug: (enable = true) => {
+        CONFIG.debugMode = enable;
+        log('Debug mode ' + (enable ? 'enabled' : 'disabled'));
+      },
+      stop: () => {
+        observers.classObserver.disconnect();
+        observers.domObserver.disconnect();
+        clearInterval(intervalId);
+        
+        // Clean up created elements
+        createdElements.forEach((data, id) => {
+          if (typeof data.cleanup === 'function') {
+            data.cleanup();
+          }
+        });
+        
+        log('Animation fix stopped and cleaned up');
+      }
+    };
+  };
+  
+  // Run the init and expose the API
+  window.advancedAnimationFix = initialize();
+  
+  console.log('%c🌈 Advanced Animation Fix Utility ready!', 'font-size: 14px; font-weight: bold; color: #6600cc');
+  console.log('Available methods: window.advancedAnimationFix.reapply(), .update(), .debug(), .stop()');
+})();

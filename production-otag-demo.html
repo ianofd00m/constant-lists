@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production OTAG System Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .production-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin: 20px 0;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .status-panel {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .deck-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .deck-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .deck-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+            border-color: #667eea;
+        }
+        .card-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .card-type {
+            font-size: 12px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+        .card-cost {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 600;
+        }
+        button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .features {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .features h3 {
+            color: #fbbf24;
+            margin-top: 0;
+        }
+        .features ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .features li {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Production OTAG System</h1>
+        
+        <div class="production-badge">
+            ✅ PRODUCTION READY - Zero Configuration Required
+        </div>
+
+        <div class="status-panel">
+            <h3>📊 System Status</h3>
+            <div id="status-display">
+                <div id="system-status">🔄 Initializing production OTAG system...</div>
+                <div id="data-status">⏳ Loading OTAG data from server...</div>
+                <div id="performance-status">⚡ Optimizing for production...</div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button onclick="checkSystemStatus()">🔄 Refresh Status</button>
+                <button onclick="showSystemStats()">📊 Show Statistics</button>
+                <button onclick="testSearch()">🔍 Test Search</button>
+                <button onclick="clearCache()">🗑️ Clear Cache</button>
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>⚡ Production Features</h3>
+            <ul>
+                <li><strong>Automatic Data Loading:</strong> Loads OTAG data from server on page load</li>
+                <li><strong>24-Hour Caching:</strong> Fast performance with intelligent local caching</li>
+                <li><strong>Zero Configuration:</strong> Works immediately - no user setup required</li>
+                <li><strong>Fallback Support:</strong> Graceful degradation if CSV unavailable</li>
+                <li><strong>Smart Modal Detection:</strong> Automatically finds and enhances card modals</li>
+                <li><strong>Production Optimized:</strong> Minimal overhead, maximum performance</li>
+                <li><strong>Error Handling:</strong> Robust error handling and diagnostic logging</li>
+                <li><strong>Backward Compatible:</strong> Works with existing deck builder systems</li>
+            </ul>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h3>🃏 Test Card Modals</h3>
+            <p>Click any card to see automatic OTAG enhancement:</p>
+            
+            <div class="deck-list">
+                <div class="deck-card" onclick="openCardModal('Sol Ring')">
+                    <div class="card-name">Sol Ring</div>
+                    <div class="card-type">Artifact</div>
+                    <div class="card-cost">Mana Cost: {1}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Lightning Bolt')">
+                    <div class="card-name">Lightning Bolt</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {R}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Birds of Paradise')">
+                    <div class="card-name">Birds of Paradise</div>
+                    <div class="card-type">Creature — Bird</div>
+                    <div class="card-cost">Mana Cost: {G}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Counterspell')">
+                    <div class="card-name">Counterspell</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {U}{U}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Path to Exile')">
+                    <div class="card-name">Path to Exile</div>
+                    <div class="card-type">Instant</div>
+                    <div class="card-cost">Mana Cost: {W}</div>
+                </div>
+                
+                <div class="deck-card" onclick="openCardModal('Llanowar Elves')">
+                    <div class="card-name">Llanowar Elves</div>
+                    <div class="card-type">Creature — Elf Druid</div>
+                    <div class="card-cost">Mana Cost: {G}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h3>🛠️ Deployment Instructions</h3>
+            <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; font-family: monospace; margin: 10px 0;">
+                <div style="color: #34d399; margin-bottom: 10px;">// Step 1: Add to your HTML</div>
+                <div style="color: #fbbf24;">&lt;script src="production-otag-system.js"&gt;&lt;/script&gt;</div>
+                <br>
+                <div style="color: #34d399; margin-bottom: 10px;">// Step 2: Upload CSV to server</div>
+                <div style="color: #fbbf24;">./scryfall-card-otags-2025-08-06.csv</div>
+                <br>
+                <div style="color: #34d399; margin-bottom: 10px;">// That's it! System auto-loads and works</div>
+            </div>
+            
+            <p><strong>File Requirements:</strong></p>
+            <ul>
+                <li><code>production-otag-system.js</code> - Single production script</li>
+                <li><code>scryfall-card-otags-2025-08-06.csv</code> - OTAG data file</li>
+            </ul>
+            
+            <p><strong>No user interaction required!</strong> The system automatically:</p>
+            <ul>
+                <li>Loads OTAG data when page loads</li>
+                <li>Caches data locally for 24 hours</li>
+                <li>Enhances all card modals with OTAG tags</li>
+                <li>Makes tags clickable for card discovery</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal for card display -->
+    <div id="card-modal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            color: #1e293b;
+        ">
+            <button onclick="closeCardModal()" style="
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 12px;
+                cursor: pointer;
+                font-weight: 600;
+            ">✕ Close</button>
+            
+            <h2 id="modal-card-name" class="card-name">Card Name</h2>
+            <div id="modal-card-type" class="card-type">Card Type</div>
+            <div id="modal-card-text" style="margin: 15px 0; line-height: 1.4;"></div>
+            <!-- OTAG enhancement will be automatically added here by production system -->
+        </div>
+    </div>
+
+    <!-- Production OTAG System - Single Script -->
+        <!-- Load Production OTAG System -->
+    <script src="/public/production-otag-system.js"></script>
+    
+    <!-- Debug Script -->
+    <script src="/debug-modal-detection.js"></script>
+    
+    <!-- Debug Script for Cache Issues -->
+    <script src="otag-cache-debug.js"></script>
+    
+    <script>
+        // Demo card modal system
+        function openCardModal(cardName) {
+            console.log(`🃏 Opening modal for: ${cardName}`);
+            
+            const cardData = {
+                'Sol Ring': { 
+                    type: 'Artifact', 
+                    text: '{T}: Add {C}{C}. A powerful mana-producing artifact that accelerates your game plan.',
+                    cost: '{1}'
+                },
+                'Lightning Bolt': { 
+                    type: 'Instant', 
+                    text: 'Lightning Bolt deals 3 damage to any target. Classic direct damage spell.',
+                    cost: '{R}'
+                },
+                'Birds of Paradise': { 
+                    type: 'Creature — Bird', 
+                    text: 'Flying. {T}: Add one mana of any color. Iconic mana-producing creature.',
+                    cost: '{G}'
+                },
+                'Counterspell': { 
+                    type: 'Instant', 
+                    text: 'Counter target spell. The quintessential counterspell.',
+                    cost: '{U}{U}'
+                },
+                'Path to Exile': { 
+                    type: 'Instant', 
+                    text: 'Exile target creature. Its controller may search their library for a basic land.',
+                    cost: '{W}'
+                },
+                'Llanowar Elves': { 
+                    type: 'Creature — Elf Druid', 
+                    text: '{T}: Add {G}. One-mana creature that produces mana.',
+                    cost: '{G}'
+                }
+            };
+            
+            const card = cardData[cardName] || { 
+                type: 'Unknown', 
+                text: 'Card text not available.',
+                cost: '{?}'
+            };
+            
+            document.getElementById('modal-card-name').textContent = cardName;
+            document.getElementById('modal-card-type').textContent = card.type;
+            document.getElementById('modal-card-text').textContent = card.text;
+            
+            // Remove any existing OTAG enhancement
+            const existingOtag = document.querySelector('.otag-enhancement');
+            if (existingOtag) {
+                existingOtag.remove();
+            }
+            
+            // Show modal
+            const modal = document.getElementById('card-modal');
+            modal.style.display = 'flex';
+            
+            console.log('⚡ Modal opened, waiting for production OTAG system...');
+            
+            // Force production system to check for modal
+            setTimeout(() => {
+                if (window.productionOtagSystem) {
+                    console.log('🔧 Manually triggering modal scan...');
+                    window.productionOtagSystem.scanExistingModals();
+                }
+            }, 200);
+            
+            // Debug: Test manual enhancement after a delay
+            setTimeout(() => {
+                console.log('🔍 Modal debug info:', {
+                    modalVisible: modal && modal.style.display !== 'none',
+                    modalHasCardName: !!modal.querySelector('.card-name'),
+                    cardNameText: modal.querySelector('.card-name')?.textContent,
+                    modalHasOtagEnhancement: !!modal.querySelector('.otag-enhancement')
+                });
+                
+                // Manually trigger enhancement if production system missed it
+                if (window.productionOtagSystem && !modal.querySelector('.otag-enhancement')) {
+                    console.log('🔧 Manually triggering OTAG enhancement...');
+                    window.productionOtagSystem.enhanceModal(modal);
+                }
+            }, 1000);
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').style.display = 'none';
+        }
+
+        function checkSystemStatus() {
+            const systemStatus = document.getElementById('system-status');
+            const dataStatus = document.getElementById('data-status');
+            const performanceStatus = document.getElementById('performance-status');
+            
+            if (window.productionOtagSystem) {
+                if (window.productionOtagSystem.isSystemReady()) {
+                    systemStatus.innerHTML = '✅ Production OTAG system fully operational';
+                } else {
+                    systemStatus.innerHTML = '🔄 Production system initializing...';
+                }
+                
+                if (window.productionOtagSystem.isDataLoaded()) {
+                    const stats = window.productionOtagSystem.getStats();
+                    dataStatus.innerHTML = `✅ OTAG data loaded: ${stats.totalCards.toLocaleString()} cards, ${stats.totalOtags.toLocaleString()} categories`;
+                } else {
+                    dataStatus.innerHTML = '⏳ Loading OTAG data from server...';
+                }
+                
+                performanceStatus.innerHTML = '⚡ Local caching active, optimal performance';
+            } else {
+                systemStatus.innerHTML = '⚠️ Production system not yet initialized';
+                dataStatus.innerHTML = '⏳ Waiting for system initialization';
+                performanceStatus.innerHTML = '⏳ Performance optimization pending';
+            }
+        }
+
+        function showSystemStats() {
+            if (!window.productionOtagSystem || !window.productionOtagSystem.isDataLoaded()) {
+                alert('⚠️ Production system not ready yet!');
+                return;
+            }
+            
+            const stats = window.productionOtagSystem.getStats();
+            console.log('📊 Production OTAG Statistics:', stats);
+            
+            alert(`📊 Production OTAG System Stats:
+• ${stats.totalCards.toLocaleString()} cards with OTAG data
+• ${stats.totalOtags.toLocaleString()} unique functional categories
+• Top categories: ${stats.topOtags.slice(0, 3).map(([tag, count]) => `${tag} (${count})`).join(', ')}
+• Data cached locally for 24 hours
+• Zero user setup required
+
+Check console for detailed statistics.`);
+        }
+
+        function testSearch() {
+            if (!window.productionOtagSystem || !window.productionOtagSystem.isDataLoaded()) {
+                alert('⚠️ Production system not ready yet!');
+                return;
+            }
+            
+            const results = window.productionOtagSystem.searchCards('removal');
+            console.log('🔍 Removal search results:', results);
+            
+            if (results.length > 0) {
+                alert(`✅ Found ${results.length} removal cards in production database. Check console for details.`);
+            } else {
+                alert('❌ No removal cards found. Fallback data may be active.');
+            }
+        }
+
+        function clearCache() {
+            localStorage.removeItem('otagData');
+            localStorage.removeItem('otagDataTimestamp');
+            console.log('🗑️ OTAG cache cleared');
+            alert('Cache cleared! Refresh the page to reload data.');
+        }
+
+        // Listen for production system ready event
+        window.addEventListener('otagSystemReady', (event) => {
+            console.log('🚀 Production OTAG System Ready!', event.detail);
+            checkSystemStatus();
+        });
+
+        // Auto-refresh status
+        setInterval(checkSystemStatus, 3000);
+        
+        // Initial status check
+        setTimeout(checkSystemStatus, 1000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCardModal();
+            }
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('card-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'card-modal') {
+                closeCardModal();
+            }
+        });
+
+        console.log('🎯 Production OTAG Demo Ready!');
+        console.log('💡 This demonstrates the zero-configuration production system');
+        console.log('  ✅ No user setup required');
+        console.log('  ✅ Automatic data loading from server');
+        console.log('  ✅ Intelligent local caching');
+        console.log('  ✅ Automatic modal enhancement');
+        console.log('  ✅ Ready for production deployment');
+    </script>
+</body>
+</html>

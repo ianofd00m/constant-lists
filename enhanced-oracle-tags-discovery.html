@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Oracle Tags Discovery</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .info {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .warning {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid rgba(255, 152, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+        
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        .warning { color: #FF9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Enhanced Oracle Tags Discovery</h1>
+        
+        <div class="info">
+            <h3>🎯 What This Does:</h3>
+            <ul>
+                <li>Automatically discovers ALL valid oracle tags by testing thousands of possibilities</li>
+                <li>Tests common MTG terms, mechanics, archetypes, and patterns</li>
+                <li>Generates a complete downloadable list of every valid oracle tag</li>
+                <li>Much more comprehensive than the hardcoded 239 tags</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h3>⚠️ Important Notes:</h3>
+            <ul>
+                <li>This will take 10-30 minutes to complete (testing thousands of tags)</li>
+                <li>The script respects API rate limits with delays</li>
+                <li>You'll get a downloadable .txt file with all valid oracle tags</li>
+                <li>Watch the console for progress updates</li>
+            </ul>
+        </div>
+        
+        <button id="startDiscovery">🚀 Discover ALL Oracle Tags</button>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="tested">0</div>
+                <div>Tags Tested</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="found">0</div>
+                <div>Valid Tags Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="status">Ready</div>
+                <div>Status</div>
+            </div>
+        </div>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">🔍 Enhanced Oracle Tags Discovery Ready</div>
+            <div class="log-entry info">📊 Will test thousands of potential oracle tags automatically</div>
+            <div class="log-entry info">⏱️ Expected time: 10-30 minutes depending on API response</div>
+            <div class="log-entry info">💾 Will download complete list when finished</div>
+        </div>
+    </div>
+
+    <script src="enhanced-oracle-tags-discovery.js"></script>
+    <script>
+        const log = document.getElementById('log');
+        const testedEl = document.getElementById('tested');
+        const foundEl = document.getElementById('found');
+        const statusEl = document.getElementById('status');
+        const startBtn = document.getElementById('startDiscovery');
+        
+        let tested = 0;
+        let found = 0;
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Override console.log to capture discovery logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            const message = args.join(' ');
+            
+            let type = 'info';
+            if (message.includes('✅')) type = 'success';
+            else if (message.includes('❌')) type = 'error';
+            else if (message.includes('⚠️')) type = 'warning';
+            
+            addLog(message, type);
+            
+            // Update stats
+            if (message.includes('Progress:')) {
+                const matches = message.match(/(\d+)\/\d+ tested, (\d+) valid/);
+                if (matches) {
+                    tested = parseInt(matches[1]);
+                    found = parseInt(matches[2]);
+                    testedEl.textContent = tested;
+                    foundEl.textContent = found;
+                }
+            }
+            
+            if (message.includes('Discovery complete')) {
+                statusEl.textContent = 'Complete';
+            } else if (message.includes('Starting')) {
+                statusEl.textContent = 'Running';
+            }
+            
+            originalLog.apply(console, args);
+        };
+        
+        startBtn.addEventListener('click', async () => {
+            try {
+                startBtn.disabled = true;
+                statusEl.textContent = 'Starting...';
+                
+                addLog('🚀 Starting comprehensive oracle tag discovery...', 'info');
+                
+                const result = await discoverAllOracleTags();
+                
+                addLog(`✅ Discovery completed successfully!`, 'success');
+                addLog(`📊 Found ${result.validTags.length} valid oracle tags`, 'success');
+                addLog(`💾 Downloaded complete list as .txt file`, 'success');
+                
+                statusEl.textContent = 'Complete';
+                foundEl.textContent = result.validTags.length;
+                
+            } catch (error) {
+                addLog(`💥 Discovery failed: ${error.message}`, 'error');
+                statusEl.textContent = 'Failed';
+            } finally {
+                startBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

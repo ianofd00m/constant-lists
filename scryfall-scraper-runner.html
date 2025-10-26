@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scryfall OTAG Scraper Runner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16,185,129,0.4);
+        }
+        button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .export-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+        }
+        .export-btn:hover {
+            box-shadow: 0 8px 25px rgba(59,130,246,0.4);
+        }
+        #console {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #00ff00;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .progress {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Scryfall OTAG Data Scraper</h1>
+        
+        <div class="controls">
+            <button id="runScraper" onclick="startScraping()">
+                🚀 Start Scraping All Cards
+            </button>
+            <button id="exportCards" onclick="exportCardCSV()" disabled class="export-btn">
+                📄 Export Card Data CSV
+            </button>
+            <button id="exportFreq" onclick="exportFrequencyCSV()" disabled class="export-btn">
+                📊 Export OTAG Frequencies CSV
+            </button>
+            <button id="exportAll" onclick="exportAllFiles()" disabled class="export-btn">
+                📦 Download All CSV Files
+            </button>
+        </div>
+
+        <div class="progress" id="progressContainer">
+            <div><strong>Scraping Progress:</strong></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="progressText">Initializing...</div>
+        </div>
+
+        <div class="stats" id="statsContainer" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCards">0</div>
+                <div class="stat-label">Total Cards</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="cardsWithOtags">0</div>
+                <div class="stat-label">Cards with OTAGs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="uniqueOtags">0</div>
+                <div class="stat-label">Unique OTAG Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="processingRate">0</div>
+                <div class="stat-label">Cards/Second</div>
+            </div>
+        </div>
+
+        <div>
+            <h3>📊 Console Output:</h3>
+            <div id="console"></div>
+        </div>
+    </div>
+
+    <script src="scryfall-otag-scraper.js"></script>
+    <script>
+        // Redirect console.log to our custom console
+        const originalLog = console.log;
+        const consoleElement = document.getElementById('console');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            consoleElement.innerHTML += message + '\n';
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        };
+
+        // Global progress tracking
+        let scrapingStartTime;
+        let progressInterval;
+
+        async function startScraping() {
+            const runButton = document.getElementById('runScraper');
+            const progressContainer = document.getElementById('progressContainer');
+            const statsContainer = document.getElementById('statsContainer');
+            
+            runButton.disabled = true;
+            runButton.textContent = '🔄 Scraping in Progress...';
+            progressContainer.style.display = 'block';
+            statsContainer.style.display = 'grid';
+            
+            scrapingStartTime = Date.now();
+            
+            // Start progress monitoring
+            progressInterval = setInterval(updateProgress, 1000);
+            
+            try {
+                console.log('🚀 Starting comprehensive Scryfall OTAG scraping...');
+                const result = await window.runScryfallOtagScraper();
+                
+                if (result.success) {
+                    console.log('✅ Scraping completed successfully!');
+                    enableExportButtons();
+                    updateFinalStats();
+                } else {
+                    console.log('❌ Scraping failed:', result.error);
+                }
+            } catch (error) {
+                console.log('💥 Scraping error:', error.message);
+            } finally {
+                clearInterval(progressInterval);
+                runButton.disabled = false;
+                runButton.textContent = '🔄 Run Again';
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        function updateProgress() {
+            if (window.scryfallScraper && window.scryfallScraper.progress) {
+                const progress = window.scryfallScraper.progress;
+                const elapsed = (Date.now() - scrapingStartTime) / 1000;
+                const rate = progress.processedCards / elapsed;
+                
+                // Update progress bar
+                const percent = (progress.processedCards / progress.totalCards) * 100;
+                document.getElementById('progressFill').style.width = percent + '%';
+                document.getElementById('progressText').textContent = 
+                    `${progress.processedCards}/${progress.totalCards} cards processed (${percent.toFixed(1)}%)`;
+                
+                // Update stats
+                document.getElementById('totalCards').textContent = progress.totalCards.toLocaleString();
+                document.getElementById('cardsWithOtags').textContent = progress.cardsWithOtags.toLocaleString();
+                document.getElementById('uniqueOtags').textContent = 
+                    window.scryfallScraper.uniqueOtags ? window.scryfallScraper.uniqueOtags.size.toLocaleString() : '0';
+                document.getElementById('processingRate').textContent = rate.toFixed(0);
+            }
+        }
+
+        function updateFinalStats() {
+            if (window.scryfallOtagData) {
+                const data = window.scryfallOtagData;
+                document.getElementById('totalCards').textContent = data.metadata.totalCards.toLocaleString();
+                document.getElementById('cardsWithOtags').textContent = data.metadata.cardsWithOtags.toLocaleString();
+                document.getElementById('uniqueOtags').textContent = data.metadata.uniqueOtagCategories.toLocaleString();
+                
+                const elapsed = (Date.now() - scrapingStartTime) / 1000;
+                const finalRate = data.metadata.totalCards / elapsed;
+                document.getElementById('processingRate').textContent = finalRate.toFixed(0);
+            }
+        }
+
+        function enableExportButtons() {
+            document.getElementById('exportCards').disabled = false;
+            document.getElementById('exportFreq').disabled = false;
+            document.getElementById('exportAll').disabled = false;
+        }
+
+        function exportCardCSV() {
+            console.log('📄 Exporting card data as CSV...');
+            const csv = window.exportCardDataAsCSV();
+            if (csv) {
+                window.downloadCSV(csv, `scryfall-card-otags-${new Date().toISOString().split('T')[0]}.csv`);
+            }
+        }
+
+        function exportFrequencyCSV() {
+            console.log('📊 Exporting OTAG frequencies as CSV...');
+            const csv = window.exportOtagFrequencyAsCSV();
+            if (csv) {
+                window.downloadCSV(csv, `scryfall-otag-frequencies-${new Date().toISOString().split('T')[0]}.csv`);
+            }
+        }
+
+        function exportAllFiles() {
+            console.log('📦 Exporting all CSV files...');
+            window.exportAllCSVFiles();
+        }
+
+        // Initialize
+        console.log('✅ Scryfall OTAG Scraper interface ready!');
+        console.log('💡 Click "Start Scraping" to begin collecting data from all Magic cards');
+        console.log('📊 This will process 200,000+ cards and may take several minutes');
+    </script>
+</body>
+</html>

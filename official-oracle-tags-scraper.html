@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Scryfall Oracle Tags Scraper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .info-box {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+        
+        .log-entry.success { color: #4CAF50; }
+        .log-entry.error { color: #f44336; }
+        .log-entry.info { color: #2196F3; }
+        .log-entry.warning { color: #FF9800; }
+        
+        .tag-examples {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .tag-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .tag {
+            background: rgba(76, 175, 80, 0.8);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .highlight {
+            background: rgba(255, 215, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Official Scryfall Oracle Tags Scraper</h1>
+        <p class="subtitle">
+            Using the complete list of functional oracle tags from 
+            <a href="https://scryfall.com/docs/tagger-tags" target="_blank" style="color: #FFD700;">Scryfall's official documentation</a>
+        </p>
+        
+        <div class="info-box">
+            <h3>🎯 What This Does:</h3>
+            <ul>
+                <li>Scrapes <span class="highlight">ALL official functional oracle tags</span> from Scryfall's tagger documentation</li>
+                <li>Collects every card with functional tags like <code>acceleration</code>, <code>ramp</code>, <code>removal</code>, etc.</li>
+                <li>Generates a comprehensive CSV with cards and their functional categorization</li>
+                <li>Uses only tags that actually exist (no more 404 errors!)</li>
+            </ul>
+        </div>
+        
+        <div class="controls">
+            <button id="startScraping">🚀 Start Official Scraping</button>
+            <button id="testTag" class="test-button">🧪 Test Single Tag</button>
+            <button id="showTags" class="test-button">📋 Show All Tags</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="tagsProcessed">0</div>
+                <div class="stat-label">Tags Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="cardsFound">0</div>
+                <div class="stat-label">Unique Cards</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="currentTag">Ready</div>
+                <div class="stat-label">Current Status</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="errorCount">0</div>
+                <div class="stat-label">Errors</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="tag-examples">
+            <h3>📊 Sample Official Oracle Tags (150+ total):</h3>
+            <div class="tag-grid">
+                <span class="tag">acceleration</span>
+                <span class="tag">ramp</span>
+                <span class="tag">removal</span>
+                <span class="tag">counterspell</span>
+                <span class="tag">card-advantage</span>
+                <span class="tag">draw</span>
+                <span class="tag">burn</span>
+                <span class="tag">tutor</span>
+                <span class="tag">bounce</span>
+                <span class="tag">edict</span>
+                <span class="tag">mill</span>
+                <span class="tag">wheel</span>
+                <span class="tag">board-wipe</span>
+                <span class="tag">spot-removal</span>
+                <span class="tag">mana-dork</span>
+                <span class="tag">mana-doubler</span>
+                <span class="tag">lifegain</span>
+                <span class="tag">damage-prevention</span>
+                <span class="tag">tribal</span>
+                <span class="tag">win-condition</span>
+            </div>
+            <p style="margin-top: 15px; opacity: 0.8;">
+                <strong>And many more!</strong> This scraper uses the complete official list from Scryfall's documentation.
+            </p>
+        </div>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">🎯 Official Oracle Tags Scraper Ready</div>
+            <div class="log-entry info">📋 Uses complete list from https://scryfall.com/docs/tagger-tags</div>
+            <div class="log-entry info">✅ No more 404 errors - only real oracle tags!</div>
+            <div class="log-entry info">📊 Expected result: 30,000+ cards with functional categorization</div>
+        </div>
+    </div>
+
+    <script src="official-oracle-tags-scraper.js"></script>
+    <script>
+        let scraper = null;
+        
+        // UI Elements
+        const startBtn = document.getElementById('startScraping');
+        const testBtn = document.getElementById('testTag');
+        const showTagsBtn = document.getElementById('showTags');
+        const log = document.getElementById('log');
+        const progressFill = document.getElementById('progressFill');
+        
+        // Stats elements
+        const tagsProcessedEl = document.getElementById('tagsProcessed');
+        const cardsFoundEl = document.getElementById('cardsFound');
+        const currentTagEl = document.getElementById('currentTag');
+        const errorCountEl = document.getElementById('errorCount');
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateStats(stats) {
+            if (stats.tagsProcessed !== undefined) tagsProcessedEl.textContent = stats.tagsProcessed;
+            if (stats.cardsFound !== undefined) cardsFoundEl.textContent = stats.cardsFound;
+            if (stats.currentTag !== undefined) currentTagEl.textContent = stats.currentTag;
+            if (stats.errorCount !== undefined) errorCountEl.textContent = stats.errorCount;
+        }
+        
+        function updateProgress(current, total) {
+            const percentage = total > 0 ? (current / total) * 100 : 0;
+            progressFill.style.width = `${percentage}%`;
+        }
+        
+        // Override console.log to capture logs from the scraper
+        const originalLog = console.log;
+        console.log = function(...args) {
+            const message = args.join(' ');
+            
+            // Determine log type based on content
+            let type = 'info';
+            if (message.includes('✅') || message.includes('Found')) type = 'success';
+            else if (message.includes('❌') || message.includes('Error') || message.includes('Failed')) type = 'error';
+            else if (message.includes('⚠️') || message.includes('Warning')) type = 'warning';
+            
+            addLog(message, type);
+            
+            // Extract stats from messages
+            if (message.includes('Progress:')) {
+                const matches = message.match(/(\d+)\/(\d+) tags processed, (\d+) unique cards/);
+                if (matches) {
+                    updateStats({ 
+                        tagsProcessed: parseInt(matches[1]),
+                        cardsFound: parseInt(matches[3])
+                    });
+                    updateProgress(parseInt(matches[1]), parseInt(matches[2]));
+                }
+            }
+            
+            if (message.includes('Searching oracle tag:')) {
+                const tagMatch = message.match(/Searching oracle tag: (\S+)/);
+                if (tagMatch) {
+                    updateStats({ currentTag: tagMatch[1] });
+                }
+            }
+            
+            if (message.includes('completed!')) {
+                updateStats({ currentTag: 'Complete' });
+                updateProgress(100, 100);
+            }
+            
+            originalLog.apply(console, args);
+        };
+        
+        startBtn.addEventListener('click', async () => {
+            if (scraper) {
+                addLog('Scraping already in progress...', 'warning');
+                return;
+            }
+            
+            try {
+                startBtn.disabled = true;
+                testBtn.disabled = true;
+                
+                addLog('🚀 Starting official oracle tag scraping...', 'info');
+                scraper = new OfficialOracleTagScraper();
+                
+                const results = await scraper.start();
+                
+                addLog(`✅ Scraping completed successfully!`, 'success');
+                addLog(`📊 Found ${results.tags.length} oracle tags across ${results.stats.cardCount} cards`, 'success');
+                addLog(`💾 CSV file generated (${results.stats.fileSize} MB)`, 'success');
+                
+                updateStats({ 
+                    tagsProcessed: results.tags.length,
+                    cardsFound: results.stats.cardCount,
+                    currentTag: 'Complete',
+                    errorCount: results.errors
+                });
+                
+            } catch (error) {
+                addLog(`💥 Scraping failed: ${error.message}`, 'error');
+                updateStats({ currentTag: 'Failed' });
+            } finally {
+                startBtn.disabled = false;
+                testBtn.disabled = false;
+                scraper = null;
+            }
+        });
+        
+        testBtn.addEventListener('click', async () => {
+            const tag = prompt('Enter oracle tag to test:');
+            if (!tag) return;
+            
+            addLog(`🧪 Testing oracle tag: ${tag}`, 'info');
+            
+            try {
+                const response = await fetch(`https://api.scryfall.com/cards/search?q=oracletag:${tag}&page=1`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ Oracle tag "${tag}" exists! Found ${data.total_cards} cards`, 'success');
+                } else if (response.status === 404) {
+                    addLog(`❌ Oracle tag "${tag}" does not exist`, 'error');
+                } else {
+                    addLog(`⚠️ HTTP ${response.status}: ${response.statusText}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`💥 Error testing "${tag}": ${error.message}`, 'error');
+            }
+        });
+        
+        showTagsBtn.addEventListener('click', () => {
+            const tempScraper = new OfficialOracleTagScraper();
+            const tags = tempScraper.functionalOracleTags;
+            
+            addLog(`📋 Complete list of ${tags.length} official oracle tags:`, 'info');
+            
+            // Show tags in groups of 10
+            for (let i = 0; i < tags.length; i += 10) {
+                const group = tags.slice(i, i + 10);
+                addLog(`   ${group.join(', ')}`, 'info');
+            }
+            
+            addLog('📊 These are all the functional oracle tags from Scryfall documentation', 'success');
+        });
+    </script>
+</body>
+</html>

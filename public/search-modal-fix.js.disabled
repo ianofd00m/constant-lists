@@ -1,0 +1,1598 @@
+// 🔧 COMPREHENSIVE SEARCH MODAL FIX
+// This fixes the search functionality to always show the proper modal with all results
+
+console.log('🔧 Loading comprehensive search modal fix...');
+
+// Memory leak prevention - store references for cleanup
+let searchModalFixCleanup = {
+  eventListeners: [],
+  observers: [],
+  timeouts: [],
+  intervals: []
+};
+
+// Console spam prevention
+let consolePrevention = {
+  lastLogTime: {},
+  logThrottle: 1000, // 1 second between same log messages
+  maxRepeats: 3,
+  counts: {}
+};
+
+// Execution prevention for repeated function calls
+let executionPrevention = {
+  lastExecution: {},
+  debounceTime: 500, // 500ms between same function executions
+  inProgress: new Set()
+};
+
+// Throttled console logging to prevent spam
+function throttledConsoleLog(message, ...args) {
+  const key = typeof message === 'string' ? message : JSON.stringify(message);
+  const now = Date.now();
+  
+  if (!consolePrevention.counts[key]) {
+    consolePrevention.counts[key] = 0;
+  }
+  
+  consolePrevention.counts[key]++;
+  
+  // If we've logged this message too many times, throttle it
+  if (consolePrevention.counts[key] > consolePrevention.maxRepeats) {
+    if (!consolePrevention.lastLogTime[key] || 
+        now - consolePrevention.lastLogTime[key] > consolePrevention.logThrottle) {
+      console.log(`[THROTTLED ${consolePrevention.counts[key]}x] ${message}`, ...args);
+      consolePrevention.lastLogTime[key] = now;
+    }
+    return;
+  }
+  
+  console.log(message, ...args);
+  consolePrevention.lastLogTime[key] = now;
+}
+
+// Debounced function execution to prevent rapid calls
+function debounceExecution(functionName, func, ...args) {
+  const now = Date.now();
+  const key = `${functionName}_${JSON.stringify(args)}`;
+  
+  // If this exact function call is already in progress, skip it
+  if (executionPrevention.inProgress.has(key)) {
+    throttledConsoleLog(`⏭️ Skipping duplicate ${functionName} call (already in progress)`);
+    return Promise.resolve();
+  }
+  
+  // If we called this function very recently, debounce it
+  if (executionPrevention.lastExecution[key] && 
+      now - executionPrevention.lastExecution[key] < executionPrevention.debounceTime) {
+    throttledConsoleLog(`⏭️ Debouncing ${functionName} call (too recent)`);
+    return Promise.resolve();
+  }
+  
+  // Mark as in progress and execute
+  executionPrevention.inProgress.add(key);
+  executionPrevention.lastExecution[key] = now;
+  
+  const result = func(...args);
+  
+  // If it's a promise, clean up when done
+  if (result && typeof result.then === 'function') {
+    return result.finally(() => {
+      executionPrevention.inProgress.delete(key);
+    });
+  } else {
+    // Clean up immediately for sync functions
+    executionPrevention.inProgress.delete(key);
+    return result;
+  }
+}
+
+// Fix 1: Ensure Enter key always opens modal with all results
+function fixEnterKeyBehavior() {
+  throttledConsoleLog('⌨️ Fixing Enter key behavior...');
+  
+  // Override the keyboard handler for search input
+  const keydownHandler = function(event) {
+    // Only handle if we're in a search input
+    const target = event.target;
+    if (target.tagName !== 'INPUT' || target.type !== 'text') return;
+    
+    // Check if this looks like a search input (has search-related parent or value)
+    const isSearchInput = target.closest('.search-container') || 
+                          target.value.trim().length > 0;
+    
+    if (!isSearchInput) return;
+    
+    if (event.key === 'Enter') {
+      const query = target.value.trim();
+      if (query) {
+        throttledConsoleLog('🎯 Enter pressed in search field with query:', query);
+        
+        // Prevent default behavior
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Trigger the fixed modal
+        openFixedSearchModal(query);
+      }
+    }
+  };
+  
+  document.addEventListener('keydown', keydownHandler, true); // Use capture to intercept before React
+  
+  // Store for cleanup
+  searchModalFixCleanup.eventListeners.push({
+    element: document,
+    type: 'keydown',
+    handler: keydownHandler,
+    options: true
+  });
+  
+  throttledConsoleLog('✅ Enter key fix installed');
+}
+
+// Fix 2: Enhanced search modal function
+async function openFixedSearchModal(query) {
+  return debounceExecution('openFixedSearchModal', async (query) => {
+    throttledConsoleLog('🚀 Opening fixed search modal for:', query);
+    
+    try {
+      // Show loading state
+      showLoadingModal(query);
+      
+      // Fetch ALL results (no limit)
+      const results = await fetchAllResultsFixed(query);
+      
+      // Remove loading modal
+      removeLoadingModal();
+      
+      if (results.length > 0) {
+        throttledConsoleLog(`✅ Got ${results.length} results, showing modal`);
+        showEnhancedSearchModal(results, query);
+      } else {
+        throttledConsoleLog('❌ No results found');
+        showNoResultsModal(query);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching search results:', error);
+      removeLoadingModal();
+      showErrorModal(query, error);
+    }
+  }, query);
+}
+
+// Fix 3: Always use Scryfall for unlimited results
+async function fetchAllResultsFixed(query) {
+  console.log('📡 Fetching ALL results for:', query, '(bypassing backend limit)');
+  
+  // ALWAYS use Scryfall to get unlimited results
+  // The backend is hardcoded to return only 5 results regardless of limit parameter
+  console.log('🌐 Using Scryfall directly to bypass backend limits');
+  return await fetchFromScryfallDirect(query);
+}
+
+// Enhanced Scryfall fetching with pagination
+async function fetchFromScryfallDirect(query) {
+  throttledConsoleLog('🌐 Fetching from Scryfall with pagination:', query);
+  
+  try {
+    // Handle oracle tag format
+    let scryfallQuery = query;
+    if (query.includes('otag:')) {
+      scryfallQuery = query.replace('otag:', 'oracletag:');
+    }
+    
+    // Get commander color identity BEFORE making the API call
+    let colorIdentity = '';
+    throttledConsoleLog('🔍 Checking for color identity...');
+    throttledConsoleLog('🔍 window.deckViewEditComponent exists:', !!window.deckViewEditComponent);
+    
+    if (window.deckViewEditComponent) {
+      throttledConsoleLog('🔍 deckViewEditComponent methods:', Object.keys(window.deckViewEditComponent));
+      throttledConsoleLog('🔍 getCommanderColorIdentity exists:', !!window.deckViewEditComponent.getCommanderColorIdentity);
+      
+      if (window.deckViewEditComponent.getCommanderColorIdentity) {
+        try {
+          colorIdentity = window.deckViewEditComponent.getCommanderColorIdentity();
+          throttledConsoleLog('🎨 Got color identity from React component:', colorIdentity);
+        } catch (error) {
+          throttledConsoleLog('⚠️ Could not get color identity from React component:', error);
+        }
+      }
+    }
+    
+    // If we couldn't get it from React, try to detect it from the current deck
+    if (!colorIdentity && window.deckViewEditComponent && window.deckViewEditComponent.deck) {
+      const deck = window.deckViewEditComponent.deck;
+      throttledConsoleLog('🔍 Checking deck data:', deck);
+      
+      if (deck.commander) {
+        throttledConsoleLog('🔍 Commander data:', deck.commander);
+        const commander = Array.isArray(deck.commander) ? deck.commander[0] : deck.commander;
+        throttledConsoleLog('🔍 Single commander:', commander);
+        
+        if (commander?.color_identity && Array.isArray(commander.color_identity)) {
+          colorIdentity = commander.color_identity.join('').toLowerCase();
+          throttledConsoleLog('🎨 Extracted color identity from deck data:', colorIdentity);
+        } else if (commander?.card?.color_identity && Array.isArray(commander.card.color_identity)) {
+          colorIdentity = commander.card.color_identity.join('').toLowerCase();
+          throttledConsoleLog('🎨 Extracted color identity from commander card data:', colorIdentity);
+        }
+      }
+    }
+    
+    // Add color identity constraint to Scryfall query BEFORE the API call
+    if (colorIdentity) {
+      scryfallQuery += ` id<=${colorIdentity}`;
+      throttledConsoleLog('🎨 Added color identity constraint to Scryfall query:', scryfallQuery);
+    } else {
+      throttledConsoleLog('⚠️ No color identity constraint applied - will show all colors');
+    }
+    
+    // Fetch ALL pages from Scryfall, not just the first page
+    let allResults = [];
+    let nextPageUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(scryfallQuery)}&unique=cards&order=name`;
+    
+    throttledConsoleLog('🔗 Starting Scryfall pagination from:', nextPageUrl);
+    
+    // Fetch all pages
+    while (nextPageUrl) {
+      throttledConsoleLog('📄 Fetching Scryfall page:', nextPageUrl);
+      const response = await fetch(nextPageUrl);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throttledConsoleLog('❌ No results found on Scryfall');
+          break;
+        }
+        throw new Error(`Scryfall error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const pageResults = data.data || [];
+      allResults = allResults.concat(pageResults);
+      
+      throttledConsoleLog(`📦 Scryfall page results: ${pageResults.length} cards (total so far: ${allResults.length})`);
+      
+      // Check if there are more pages
+      nextPageUrl = data.has_more ? data.next_page : null;
+      
+      // Safety check to prevent infinite loops
+      if (allResults.length > 500) {
+        console.warn('⚠️ Stopping Scryfall pagination at 500 cards to prevent excessive requests');
+        break;
+      }
+    }
+    
+    throttledConsoleLog(`✅ Scryfall returned ${allResults.length} total cards (all pages) with color identity filtering applied`);
+    
+    return allResults;
+    
+  } catch (error) {
+    console.error('❌ Scryfall error:', error);
+    return [];
+  }
+}
+
+// Fix 4: Enhanced modal display (matching the desired design)
+function showEnhancedSearchModal(results, query) {
+  console.log('🎭 Showing enhanced search modal with', results.length, 'results');
+  
+  // Remove any existing modal
+  const existingModal = document.getElementById('enhanced-search-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Create the modal with proper styling
+  const modalHTML = `
+    <div id="enhanced-search-modal" onclick="if(event.target === this) closeEnhancedModal()" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    ">
+      <div style="
+        background: white;
+        border-radius: 12px;
+        width: 95%;
+        max-width: 1400px;
+        height: 90%;
+        max-height: 900px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        overflow: hidden;
+      ">
+        <!-- Clean white header matching the design -->
+        <div style="
+          background: white;
+          color: #374151;
+          padding: 20px 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e5e7eb;
+        ">
+          <div>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 500;">
+              Search Results for "${query}"
+            </h2>
+            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+              Found ${results.length} results
+            </p>
+          </div>
+          <button onclick="closeEnhancedModal()" style="
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+          " onmouseover="this.style.background='#f3f4f6'; this.style.color='#374151';" onmouseout="this.style.background='none'; this.style.color='#6b7280';">×</button>
+        </div>
+        
+        <!-- Card Grid -->
+        <div style="
+          flex: 1;
+          padding: 24px;
+          overflow-y: auto;
+          background: white;
+        ">
+          <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 250px));
+            gap: 16px;
+            max-width: 100%;
+            justify-content: start;
+          ">
+            ${results.map((card, index) => createCardHTML(card, index)).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  // Prevent background scrolling
+  document.body.style.overflow = 'hidden';
+  
+  // Focus the modal for keyboard navigation
+  const modal = document.getElementById('enhanced-search-modal');
+  modal.focus();
+  
+  // Handle escape key - store handler for cleanup
+  const escapeHandler = function(e) {
+    if (e.key === 'Escape') {
+      closeEnhancedModal();
+    }
+  };
+  
+  const modalEscapeHandler = function(e) {
+    if (e.key === 'Escape') {
+      modal.remove();
+    }
+  };
+  
+  document.addEventListener('keydown', escapeHandler);
+  modal.addEventListener('keydown', modalEscapeHandler);
+  
+  // Store for cleanup
+  searchModalFixCleanup.eventListeners.push(
+    {
+      element: document,
+      type: 'keydown',
+      handler: escapeHandler,
+      modalSpecific: true
+    },
+    {
+      element: modal,
+      type: 'keydown',
+      handler: modalEscapeHandler,
+      modalSpecific: true
+    }
+  );
+  
+  // Handle click outside - store handler for cleanup
+  const clickOutsideHandler = function(e) {
+    if (e.target === modal) {
+      closeEnhancedModal();
+    }
+  };
+  
+  modal.addEventListener('click', clickOutsideHandler);
+  
+  // Store for cleanup
+  searchModalFixCleanup.eventListeners.push({
+    element: modal,
+    type: 'click',
+    handler: clickOutsideHandler,
+    modalSpecific: true
+  });
+}
+
+// Helper function to create card HTML
+function createCardHTML(card, index) {
+  const imageUrl = card.image_uris?.normal || card.image_uris?.small || '';
+  const cardName = card.name || 'Unknown Card';
+  const setName = card.set_name || '';
+  const manaCost = card.mana_cost || '';
+  const typeLine = card.type_line || '';
+  
+  return `
+    <div style="
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      transition: all 0.2s ease;
+      border: 1px solid #e5e7eb;
+    " onmouseover="
+      this.style.transform='translateY(-2px)';
+      this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12)';
+    " onmouseout="
+      this.style.transform='translateY(0)';
+      this.style.boxShadow='0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
+    ">
+      <!-- Card Image -->
+      ${imageUrl ? `
+        <div style="
+          width: 100%;
+          aspect-ratio: 5/7;
+          background-image: url('${imageUrl}');
+          background-size: cover;
+          background-position: center;
+          cursor: pointer;
+        " onclick="window.open('${imageUrl}', '_blank')"></div>
+      ` : `
+        <div style="
+          width: 100%;
+          aspect-ratio: 5/7;
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          font-size: 14px;
+        ">No Image</div>
+      `}
+      
+      <!-- Card Info -->
+      <div style="padding: 12px;">
+        <!-- Action Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button onclick="addCardToDeck('${card.id || card.scryfall_id}', '${cardName.replace(/'/g, "\\'")}');" style="
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+          " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            Add to Deck
+          </button>
+          
+          <button onclick="addToTechIdeas('${cardName.replace(/'/g, "\\'")}');" style="
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+          " onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='#8b5cf6'">
+            Add to Tech Ideas
+          </button>
+          
+          <button onclick="addToShoppingCart('${card.id || card.scryfall_id}', '${cardName.replace(/'/g, "\\'")}', '${(card.set_name || '').replace(/'/g, "\\'")}', '${(card.type_line || '').replace(/'/g, "\\'")}', '${card.image_uris?.normal || card.image_uris?.small || ''}', '${card.prices?.usd || card.prices?.usd_foil || '0.00'}');" style="
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            width: 100%;
+          " onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">
+            Add to Shopping Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Helper functions for modal actions
+window.addCardToDeck = function(cardId, cardName) {
+  console.log('➕ Adding card to deck:', cardName);
+  
+  try {
+    // Method 1: Try using the exposed global functions
+    if (window.deckViewEditComponent && typeof window.deckViewEditComponent.handleAddCard === 'function') {
+      console.log('✅ Using exposed global function to add card');
+      window.deckViewEditComponent.handleAddCard({ id: cardId, name: cardName });
+      showFeedback(`Added ${cardName} to deck!`, '#10b981');
+      return;
+    }
+    
+    // Method 2: Try finding the component through React DevTools
+    if (window.React && window.React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
+      const fiberRoot = document.querySelector('#root')._reactInternalFiber || 
+                       document.querySelector('#root')._reactInternalInstance ||
+                       document.querySelector('#root').__reactInternalInstance;
+      
+      if (fiberRoot) {
+        console.log('🔍 Searching React fiber tree for DeckViewEdit component');
+        const deckComponent = findReactComponent(fiberRoot, 'DeckViewEdit');
+        if (deckComponent && deckComponent.handleAddCard) {
+          console.log('✅ Found DeckViewEdit component through fiber search');
+          deckComponent.handleAddCard({ id: cardId, name: cardName });
+          showFeedback(`Added ${cardName} to deck!`, '#10b981');
+          return;
+        }
+      }
+    }
+    
+    // Method 3: Try triggering a click on existing add button if available
+    const existingAddButtons = document.querySelectorAll('button');
+    for (const button of existingAddButtons) {
+      const buttonText = button.textContent || button.innerText || '';
+      if (buttonText.includes('Add to Deck') && button.onclick) {
+        console.log('✅ Found existing add button, simulating click');
+        button.click();
+        showFeedback(`Added ${cardName} to deck!`, '#10b981');
+        return;
+      }
+    }
+    
+    // Method 4: Try using direct API call to add the card
+    if (window.fetch) {
+      console.log('🌐 Attempting direct API call to add card');
+      fetch('/api/deck/add-card', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cardId: cardId,
+          cardName: cardName
+        })
+      }).then(response => {
+        if (response.ok) {
+          showFeedback(`Added ${cardName} to deck!`, '#10b981');
+        } else {
+          throw new Error('API call failed');
+        }
+      }).catch(error => {
+        console.log('⚠️ Direct API call failed:', error);
+        showFeedback(`Could not add ${cardName} - please add manually`, '#f59e0b');
+      });
+      return;
+    }
+    
+    // Fallback - show instruction message
+    showFeedback(`Copy this card name to add manually: ${cardName}`, '#f59e0b');
+    
+  } catch (error) {
+    console.error('❌ Error adding card to deck:', error);
+    showFeedback(`Error adding ${cardName} - please add manually`, '#ef4444');
+  }
+};
+
+// Helper function to find React component in fiber tree
+function findReactComponent(fiber, componentName, depth = 0, maxDepth = 50) {
+  if (!fiber || depth > maxDepth) return null;
+  
+  // Check if this fiber node has the component we're looking for
+  if (fiber.stateNode && 
+      fiber.stateNode.constructor && 
+      fiber.stateNode.constructor.name === componentName) {
+    return fiber.stateNode;
+  }
+  
+  // Check type name for functional components
+  if (fiber.type && fiber.type.name === componentName) {
+    return fiber.stateNode;
+  }
+  
+  // Search children
+  if (fiber.child) {
+    const result = findReactComponent(fiber.child, componentName, depth + 1, maxDepth);
+    if (result) return result;
+  }
+  
+  // Search siblings
+  if (fiber.sibling) {
+    const result = findReactComponent(fiber.sibling, componentName, depth + 1, maxDepth);
+    if (result) return result;
+  }
+  
+  return null;
+}
+
+window.addToTechIdeas = function(cardName) {
+  console.log('💡 Adding to tech ideas:', cardName);
+  
+  try {
+    // Try using the exposed global functions
+    if (window.deckViewEditComponent && typeof window.deckViewEditComponent.handleAddToTechIdeas === 'function') {
+      console.log('✅ Using exposed global function to add to tech ideas');
+      window.deckViewEditComponent.handleAddToTechIdeas({ name: cardName });
+      showFeedback(`Added ${cardName} to Tech Ideas!`, '#8b5cf6');
+      return;
+    }
+    
+    // Fallback - show instruction message
+    showFeedback(`Copy this card name to add to tech ideas manually: ${cardName}`, '#8b5cf6');
+    
+  } catch (error) {
+    console.error('❌ Error adding card to tech ideas:', error);
+    showFeedback(`Error adding ${cardName} to tech ideas - please add manually`, '#ef4444');
+  }
+};
+
+window.addToSideboard = function(cardName) {
+  console.log('📋 Adding to sideboard:', cardName);
+  
+  try {
+    // Try using the exposed global functions
+    if (window.deckViewEditComponent && typeof window.deckViewEditComponent.handleAddToSideboard === 'function') {
+      console.log('✅ Using exposed global function to add to sideboard');
+      window.deckViewEditComponent.handleAddToSideboard({ name: cardName });
+      showFeedback(`Added ${cardName} to Sideboard!`, '#f59e0b');
+      return;
+    }
+    
+    // Fallback - show instruction message
+    showFeedback(`Copy this card name to add to sideboard manually: ${cardName}`, '#f59e0b');
+    
+  } catch (error) {
+    console.error('❌ Error adding card to sideboard:', error);
+    showFeedback(`Error adding ${cardName} to sideboard - please add manually`, '#ef4444');
+  }
+};
+
+window.addToShoppingCart = function(cardId, cardName, setName, typeLine, imageUrl, price) {
+  console.log('🛒 Adding to shopping cart:', cardName);
+  
+  try {
+    // Get current cart from localStorage
+    const existingCart = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
+    
+    // Check if card already exists in cart
+    const existingItemIndex = existingCart.findIndex(item => item.id === cardId);
+    
+    if (existingItemIndex !== -1) {
+      // Card exists, increment quantity
+      existingCart[existingItemIndex].quantity = (existingCart[existingItemIndex].quantity || 1) + 1;
+      showFeedback(`Increased ${cardName} quantity to ${existingCart[existingItemIndex].quantity}`, '#059669');
+    } else {
+      // Card doesn't exist, add new item
+      const cartItem = {
+        id: cardId,
+        name: cardName,
+        set_name: setName,
+        type_line: typeLine,
+        image_url: imageUrl,
+        price: price || '0.00',
+        quantity: 1,
+        dateAdded: new Date().toISOString()
+      };
+      
+      existingCart.push(cartItem);
+      showFeedback(`Added ${cardName} to shopping cart`, '#059669');
+    }
+    
+    // Save updated cart
+    localStorage.setItem('shoppingCart', JSON.stringify(existingCart));
+    
+    // Dispatch custom event to update navbar counter
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+    
+  } catch (error) {
+    console.error('Error adding to shopping cart:', error);
+    showFeedback(`Failed to add ${cardName} to shopping cart`, '#ef4444');
+  }
+};
+
+// Loading modal
+function showLoadingModal(query) {
+  const loadingHTML = `
+    <div id="search-loading-modal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <div style="
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      ">
+        <div style="
+          width: 40px;
+          height: 40px;
+          border: 4px solid #e2e8f0;
+          border-top: 4px solid #6366f1;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 20px auto;
+        "></div>
+        <h3 style="margin: 0 0 8px 0; color: #1e293b;">Searching...</h3>
+        <p style="margin: 0; color: #64748b;">Finding all cards for "${query}"</p>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', loadingHTML);
+}
+
+function removeLoadingModal() {
+  const loading = document.getElementById('search-loading-modal');
+  if (loading) {
+    loading.remove();
+  }
+}
+
+function closeEnhancedModal() {
+  const modal = document.getElementById('enhanced-search-modal');
+  if (modal) {
+    // Clean up any event listeners on the modal before removing
+    const buttons = modal.querySelectorAll('button');
+    buttons.forEach(button => {
+      // Clone node to remove all event listeners
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+    });
+    
+    modal.remove();
+  }
+  
+  // Clean up any modal-specific event listeners
+  const modalKeydownListeners = searchModalFixCleanup.eventListeners.filter(
+    listener => listener.modalSpecific
+  );
+  modalKeydownListeners.forEach(listener => {
+    listener.element.removeEventListener(listener.type, listener.handler, listener.options);
+  });
+  
+  // Remove modal-specific listeners from cleanup array
+  searchModalFixCleanup.eventListeners = searchModalFixCleanup.eventListeners.filter(
+    listener => !listener.modalSpecific
+  );
+  
+  // Restore background scrolling
+  document.body.style.overflow = '';
+}
+
+// Error and no results modals
+function showNoResultsModal(query) {
+  showMessageModal(
+    '🔍 No Results Found',
+    `No cards found matching "${query}".`,
+    '#64748b'
+  );
+}
+
+function showErrorModal(query, error) {
+  showMessageModal(
+    '❌ Search Error',
+    `Error searching for "${query}": ${error.message}`,
+    '#ef4444'
+  );
+}
+
+function showMessageModal(title, message, color) {
+  const modalHTML = `
+    <div id="message-modal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <div style="
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        max-width: 400px;
+      ">
+        <h3 style="margin: 0 0 16px 0; color: ${color};">${title}</h3>
+        <p style="margin: 0 0 24px 0; color: #64748b;">${message}</p>
+        <button onclick="document.getElementById('message-modal').remove()" style="
+          background: ${color};
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+        ">OK</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  // Auto-remove after 3 seconds with cleanup
+  const timeoutId = setTimeout(() => {
+    const modal = document.getElementById('message-modal');
+    if (modal) modal.remove();
+  }, 3000);
+  
+  // Store timeout for cleanup
+  searchModalFixCleanup.timeouts.push(timeoutId);
+}
+
+// Feedback notifications
+function showFeedback(message, color) {
+  const feedbackHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${color};
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10002;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    ">${message}</div>
+    <style>
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    </style>
+  `;
+  
+  const feedback = document.createElement('div');
+  feedback.innerHTML = feedbackHTML;
+  document.body.appendChild(feedback);
+  
+  // Auto-remove after 3 seconds with cleanup
+  const timeoutId = setTimeout(() => {
+    feedback.remove();
+  }, 3000);
+  
+  // Store timeout for cleanup
+  searchModalFixCleanup.timeouts.push(timeoutId);
+}
+
+// Fix 5: Override "Show all results..." button clicks AND oracle tag searches
+function fixShowAllResultsButton() {
+  console.log('🔲 Fixing "Show all results..." button behavior...');
+  
+  const showAllResultsHandler = function(event) {
+    const target = event.target;
+    const text = target.textContent || target.innerText || '';
+    
+    if (text.includes('Show all results') || text.includes('show all results')) {
+      console.log('🎯 "Show all results..." button clicked');
+      
+      // Find the search query
+      const searchInputs = document.querySelectorAll('input[type="text"]');
+      let query = '';
+      
+      for (const input of searchInputs) {
+        if (input.value && input.value.trim()) {
+          query = input.value.trim();
+          break;
+        }
+      }
+      
+      if (query) {
+        console.log('🔍 Opening fixed modal for query:', query);
+        
+        // Prevent default behavior
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Open our fixed modal
+        openFixedSearchModal(query);
+      }
+    }
+  };
+  
+  document.addEventListener('click', showAllResultsHandler, true); // Use capture to intercept before React
+  
+  // Store for cleanup
+  searchModalFixCleanup.eventListeners.push({
+    element: document,
+    type: 'click',
+    handler: showAllResultsHandler,
+    options: true
+  });
+  
+  console.log('✅ "Show all results..." button fix installed');
+}
+
+// Fix 6: Intercept oracle tag searches from the main application
+function interceptOracleTagSearches() {
+  console.log('🏷️ Installing oracle tag search interceptor...');
+  
+  // Method 0: Intercept at the earliest possible point - override OracleTagsIntegration
+  // This targets the specific component that's handling the oracle tag clicks
+  const originalConsoleLog = console.log;
+  let oracleTagClickDetected = false;
+  
+  console.log = function(...args) {
+    const message = args.join(' ');
+    
+    // Detect when OracleTagsIntegration reports an oracle tag click
+    if (message.includes('[OracleTagsIntegration] 🔍 Oracle tag clicked:')) {
+      const tagMatch = message.match(/Oracle tag clicked: ([a-z-]+)/);
+      if (tagMatch) {
+        const tagName = tagMatch[1];
+        console.log('🚨 INTERCEPTED OracleTagsIntegration oracle tag click:', tagName);
+        
+        // Set flag to block subsequent processing
+        oracleTagClickDetected = tagName;
+        
+        // Open our filtered modal immediately
+        setTimeout(() => {
+          const query = `otag:${tagName}`;
+          console.log('🚀 Opening color-filtered modal for intercepted tag:', query);
+          openFixedSearchModal(query);
+          oracleTagClickDetected = false;
+        }, 10);
+        
+        // Still log the original message
+        return originalConsoleLog.apply(this, args);
+      }
+    }
+    
+    // Block CardActionsModal and DeckViewEdit processing if we detected an oracle tag click
+    if (oracleTagClickDetected && (
+        message.includes('[CardActionsModal] 🔍 Oracle tag search requested:') ||
+        message.includes('[DeckViewEdit] 🏷️ Oracle tag search modal requested:') ||
+        message.includes('🎭 Modal rendering with 175 results')
+      )) {
+      console.log('🚫 BLOCKING React component processing for oracle tag:', oracleTagClickDetected);
+      return; // Don't log these messages since we're intercepting
+    }
+    
+    return originalConsoleLog.apply(this, args);
+  };
+  
+  // Method 0.5: Intercept fetch requests to block oracle tag searches at the network level
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    const url = args[0];
+    
+    // Check if this is an oracle tag search request
+    if (typeof url === 'string' && url.includes('/api/cards/search') && url.includes('Oracle%20Tag%3A')) {
+      console.log('🚨 INTERCEPTED Oracle Tag fetch request:', url);
+      
+      // Extract tag name from URL
+      const tagMatch = url.match(/Oracle%20Tag%3A%20([^&]+)/);
+      if (tagMatch) {
+        const encodedTagName = tagMatch[1];
+        const tagName = decodeURIComponent(encodedTagName).toLowerCase().replace(/\s+/g, '-');
+        console.log('🔍 Extracted tag name from fetch URL:', tagName);
+        
+        // Open our filtered modal instead
+        setTimeout(() => {
+          const query = `otag:${tagName}`;
+          console.log('🚀 Opening filtered modal instead of fetch:', query);
+          openFixedSearchModal(query);
+        }, 10);
+        
+        // Return a fake empty response to prevent the unfiltered modal
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ data: [], total: 0 })
+        });
+      }
+    }
+    
+    // For non-oracle tag requests, use original fetch
+    return originalFetch.apply(this, args);
+  };
+  
+  // Method 1: Override global functions
+  const originalOpenSearchModal = window.openSearchModal;
+  const originalOpenOracleTagModal = window.openOracleTagModal;
+  
+  // Intercept any oracle tag modal opening
+  window.openSearchModal = function(query, ...args) {
+    console.log('🎯 Intercepted openSearchModal call with query:', query);
+    
+    // If it's an oracle tag search, use our fixed version
+    if (query && (query.includes('otag:') || query.includes('oracletag:') || query.includes('Oracle Tag:'))) {
+      console.log('🏷️ Oracle tag detected, using color-filtered modal');
+      
+      // Convert to our format
+      let fixedQuery = query;
+      if (query.includes('Oracle Tag:')) {
+        // Convert "Oracle Tag: Power Boost To All" to "otag:power-boost-to-all"
+        const tagName = query.replace('Oracle Tag:', '').trim().toLowerCase().replace(/\s+/g, '-');
+        fixedQuery = `otag:${tagName}`;
+      }
+      
+      openFixedSearchModal(fixedQuery);
+      return;
+    }
+    
+    // For non-oracle tag searches, call the original if it exists
+    if (originalOpenSearchModal) {
+      return originalOpenSearchModal.call(this, query, ...args);
+    }
+  };
+  
+  // Also intercept direct oracle tag modal calls
+  window.openOracleTagModal = function(tagName, ...args) {
+    console.log('🎯 Intercepted openOracleTagModal call with tag:', tagName);
+    
+    const query = `otag:${tagName}`;
+    openFixedSearchModal(query);
+  };
+  
+  // Method 2: Intercept DeckViewEdit component oracle tag searches
+  const interceptDeckViewEditMethods = (component) => {
+    if (!component) return;
+    
+    console.log('🔗 Intercepting DeckViewEdit methods on component:', component);
+    
+    // Intercept handleOracleTagSearch if it exists
+    if (component.handleOracleTagSearch) {
+      const originalMethod = component.handleOracleTagSearch.bind(component);
+      
+      component.handleOracleTagSearch = function(tagName, ...args) {
+        console.log('🎯 Intercepted DeckViewEdit handleOracleTagSearch:', tagName);
+        
+        const query = `otag:${tagName}`;
+        openFixedSearchModal(query);
+        
+        // Don't call the original to prevent duplicate modals
+        return;
+      };
+      
+      console.log('✅ Intercepted DeckViewEdit handleOracleTagSearch');
+    }
+    
+    // Intercept openOracleTagModal if it exists
+    if (component.openOracleTagModal) {
+      const originalMethod = component.openOracleTagModal.bind(component);
+      
+      component.openOracleTagModal = function(tagName, ...args) {
+        console.log('🎯 Intercepted DeckViewEdit openOracleTagModal:', tagName);
+        
+        const query = `otag:${tagName}`;
+        openFixedSearchModal(query);
+        
+        return;
+      };
+      
+      console.log('✅ Intercepted DeckViewEdit openOracleTagModal');
+    }
+    
+    // NEW: Intercept handleOracleTagClick specifically
+    if (component.handleOracleTagClick) {
+      const originalMethod = component.handleOracleTagClick.bind(component);
+      
+      component.handleOracleTagClick = function(tagName, ...args) {
+        console.log('🎯 Intercepted DeckViewEdit handleOracleTagClick:', tagName);
+        
+        const query = `otag:${tagName}`;
+        openFixedSearchModal(query);
+        
+        return;
+      };
+      
+      console.log('✅ Intercepted DeckViewEdit handleOracleTagClick');
+    }
+    
+    // NEW: Intercept any search-related methods that might handle oracle tags
+    if (component.handleSearch) {
+      const originalMethod = component.handleSearch.bind(component);
+      
+      component.handleSearch = function(query, ...args) {
+        console.log('🎯 Intercepted DeckViewEdit handleSearch:', query);
+        
+        // Check if it's an oracle tag search
+        if (query && (query.includes('Oracle Tag:') || query.includes('otag:') || query.includes('oracletag:'))) {
+          console.log('🏷️ Oracle tag search detected in handleSearch, using filtered version');
+          
+          let fixedQuery = query;
+          if (query.includes('Oracle Tag:')) {
+            const tagName = query.replace('Oracle Tag:', '').trim().toLowerCase().replace(/\s+/g, '-');
+            fixedQuery = `otag:${tagName}`;
+          }
+          
+          openFixedSearchModal(fixedQuery);
+          return;
+        }
+        
+        // For non-oracle tag searches, call original
+        return originalMethod.call(this, query, ...args);
+      };
+      
+      console.log('✅ Intercepted DeckViewEdit handleSearch');
+    }
+    
+    // Intercept any method that might handle oracle tag searches
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(component));
+    for (const methodName of methodNames) {
+      if (methodName.toLowerCase().includes('oracle') && methodName.toLowerCase().includes('tag')) {
+        if (typeof component[methodName] === 'function' && 
+            methodName !== 'handleOracleTagSearch' && 
+            methodName !== 'openOracleTagModal' &&
+            methodName !== 'handleOracleTagClick') {
+          console.log('🔍 Found additional oracle tag method:', methodName);
+          
+          const originalMethod = component[methodName].bind(component);
+          component[methodName] = function(...args) {
+            console.log('🎯 Intercepted additional oracle tag method:', methodName, 'with args:', args);
+            
+            // Try to extract tag name from arguments
+            const tagName = args.find(arg => typeof arg === 'string') || args[0];
+            if (tagName) {
+              const query = `otag:${tagName}`;
+              openFixedSearchModal(query);
+              return;
+            }
+            
+            return originalMethod.apply(this, args);
+          };
+        }
+      }
+    }
+  };
+  
+  // Intercept existing component
+  if (window.deckViewEditComponent) {
+    interceptDeckViewEditMethods(window.deckViewEditComponent);
+  }
+  
+  // Watch for DeckViewEdit component being set later
+  Object.defineProperty(window, 'deckViewEditComponent', {
+    get() {
+      return this._deckViewEditComponent;
+    },
+    set(component) {
+      console.log('🔗 DeckViewEdit component being set, intercepting oracle tag methods...');
+      
+      this._deckViewEditComponent = component;
+      interceptDeckViewEditMethods(component);
+      
+      // Also intercept setState calls that might trigger oracle tag searches
+      if (component && component.setState) {
+        const originalSetState = component.setState.bind(component);
+        
+        component.setState = function(stateUpdate, callback) {
+          // Check if this state update is related to search results
+          if (stateUpdate && stateUpdate.searchResults) {
+            console.log('🔍 Intercepting setState with searchResults:', stateUpdate.searchResults);
+            
+            // Check if it's oracle tag results (175 is a common count for power-boost-to-all)
+            if (Array.isArray(stateUpdate.searchResults) && stateUpdate.searchResults.length === 175) {
+              console.log('🚨 Detected oracle tag search results in setState - BLOCKING and opening filtered modal');
+              
+              // Prevent the state update completely
+              console.log('🚫 PREVENTING setState with 175 unfiltered results');
+              
+              // Open our filtered modal instead with a slight delay
+              setTimeout(() => {
+                // Try to determine the tag name from recent context
+                let tagName = 'power-boost-to-all'; // default
+                if (oracleTagClickDetected) {
+                  tagName = oracleTagClickDetected;
+                }
+                const query = `otag:${tagName}`;
+                console.log('🚀 Opening filtered modal instead of setState:', query);
+                openFixedSearchModal(query);
+              }, 50);
+              
+              // Don't call the original setState - completely block it
+              return;
+            }
+          }
+          
+          // Also block any setState that sets showSearchModal to true for oracle tags
+          if (stateUpdate && stateUpdate.showSearchModal === true) {
+            console.log('🔍 Intercepting showSearchModal setState');
+            
+            // Check if we recently detected an oracle tag click
+            if (oracleTagClickDetected) {
+              console.log('🚨 BLOCKING showSearchModal setState for oracle tag:', oracleTagClickDetected);
+              return; // Don't show the modal
+            }
+          }
+          
+          // For non-oracle tag updates, call the original
+          return originalSetState.call(this, stateUpdate, callback);
+        };
+        
+        console.log('✅ Intercepted setState for oracle tag filtering');
+      }
+    }
+  });
+  
+  // Method 3: Aggressive DOM level interception for oracle tags
+  const oracleTagClickHandler = function(event) {
+    const target = event.target;
+    const text = target.textContent || target.innerText || '';
+    
+    // More comprehensive oracle tag detection
+    const isOracleTagPattern = text && (
+      // Standard hyphenated pattern
+      text.match(/^[a-z]+-[a-z-]+$/) ||
+      // Allow underscores and mixed case
+      text.match(/^[a-zA-Z]+-[a-zA-Z-_]+$/) ||
+      // Check for specific known oracle tags
+      text === 'power-boost-to-all' ||
+      text === 'gives-vigilance' ||
+      text === 'mana-ramp' ||
+      text.includes('power-boost-to-all') ||
+      text.includes('gives-vigilance') ||
+      text.includes('mana-ramp')
+    );
+    
+    if (isOracleTagPattern && text.length > 3 && text.length < 50) {
+      // Be VERY liberal about detecting oracle tag context
+      const hasOracleContext = target.closest('[class*="oracle"]') || 
+                              target.closest('[class*="tag"]') ||
+                              target.closest('[class*="otag"]') ||
+                              target.parentElement?.textContent?.includes('Oracle') ||
+                              target.parentElement?.className?.includes('tag') ||
+                              target.className?.includes('tag') ||
+                              // Check ancestors for oracle/tag context
+                              (function() {
+                                let parent = target.parentElement;
+                                for (let i = 0; i < 5 && parent; i++) {
+                                  if (parent.textContent?.includes('Oracle') || 
+                                      parent.className?.includes('tag') ||
+                                      parent.className?.includes('oracle')) {
+                                    return true;
+                                  }
+                                  parent = parent.parentElement;
+                                }
+                                return false;
+                              })();
+      
+      // Also check if this is a clickable element
+      const isClickable = target.tagName === 'SPAN' || 
+                         target.tagName === 'DIV' || 
+                         target.tagName === 'BUTTON' ||
+                         target.style.cursor === 'pointer' ||
+                         target.onclick ||
+                         window.getComputedStyle(target).cursor === 'pointer';
+      
+      if (hasOracleContext || isClickable) {
+        console.log('🎯 Oracle tag click detected for:', text);
+        console.log('🚨 AGGRESSIVELY PREVENTING all default handling');
+        
+        // AGGRESSIVELY PREVENT all event handling
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        // Set global flag
+        oracleTagClickDetected = text;
+        
+        // Open our filtered modal immediately
+        const query = `otag:${text}`;
+        console.log('🚀 Opening color-filtered modal for:', query);
+        
+        // Use immediate timeout to bypass any React batching
+        setTimeout(() => {
+          openFixedSearchModal(query);
+        }, 1);
+        
+        return false;
+      }
+    }
+  };
+  
+  // Add multiple event listeners with different priorities
+  document.addEventListener('click', oracleTagClickHandler, true); // Capture phase
+  document.addEventListener('mousedown', oracleTagClickHandler, true); // Even earlier
+  document.addEventListener('mouseup', oracleTagClickHandler, true); // Later too
+  
+  // Store for cleanup
+  searchModalFixCleanup.eventListeners.push(
+    {
+      element: document,
+      type: 'click',
+      handler: oracleTagClickHandler,
+      options: true
+    },
+    {
+      element: document,
+      type: 'mousedown',
+      handler: oracleTagClickHandler,
+      options: true
+    },
+    {
+      element: document,
+      type: 'mouseup',
+      handler: oracleTagClickHandler,
+      options: true
+    }
+  );
+
+  // Method 4: Targeted modal replacement - only for actual search modals
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) { // Element node
+          const modalContent = node.textContent || '';
+          
+          // Check for search result modals with 175 results (typical oracle tag count)
+          const isOracleTagModal = (modalContent.includes('175 results') || 
+                                   modalContent.includes('Found 175') ||
+                                   modalContent.includes('175 cards')) &&
+                                  (modalContent.includes('Oracle Tag') || 
+                                   modalContent.includes('power-boost-to-all') ||
+                                   modalContent.includes('Search Results'));
+          
+          // Also check for modals with position fixed and high z-index
+          const isPositionedModal = node.style && 
+                                  node.style.position === 'fixed' && 
+                                  (parseInt(node.style.zIndex) > 1000 || node.style.zIndex === '');
+          
+          if (isOracleTagModal || (isPositionedModal && modalContent.includes('175'))) {
+            console.log('🚨 Detected unfiltered oracle tag modal with 175 results - intercepting');
+            console.log('📄 Modal content preview:', modalContent.substring(0, 200));
+            
+            // Hide the unfiltered modal immediately
+            node.style.display = 'none';
+            node.style.visibility = 'hidden';
+            node.style.opacity = '0';
+            node.style.pointerEvents = 'none';
+            node.style.zIndex = '-1';
+            
+            // Extract tag name from various possible formats
+            let tagName = 'power-boost-to-all'; // default
+            
+            // Try to extract from "Oracle Tag: Power Boost To All"
+            const oracleTagMatch = modalContent.match(/Oracle Tag:\s*([^"'\n]+)/i);
+            if (oracleTagMatch) {
+              tagName = oracleTagMatch[1].trim().toLowerCase().replace(/\s+/g, '-');
+              console.log('🔍 Extracted tag name from "Oracle Tag:":', tagName);
+            }
+            
+            // Try to extract from otag: format
+            const otagMatch = modalContent.match(/otag:([a-z-]+)/i);
+            if (otagMatch) {
+              tagName = otagMatch[1];
+              console.log('🔍 Extracted tag name from "otag:":', tagName);
+            }
+            
+            // Try to extract from context
+            if (modalContent.includes('power-boost-to-all')) {
+              tagName = 'power-boost-to-all';
+            } else if (modalContent.includes('gives-vigilance')) {
+              tagName = 'gives-vigilance';
+            } else if (modalContent.includes('mana-ramp')) {
+              tagName = 'mana-ramp';
+            }
+            
+            console.log('🎯 Using tag name for filtered search:', tagName);
+            
+            // Open filtered modal with small delay
+            const timeout1 = setTimeout(() => {
+              const query = `otag:${tagName}`;
+              console.log('🚀 Opening color-filtered modal for:', query);
+              openFixedSearchModal(query);
+            }, 50);
+            
+            searchModalFixCleanup.timeouts.push(timeout1);
+            
+            // Remove the unfiltered modal completely
+            const timeout2 = setTimeout(() => {
+              if (node.parentNode) {
+                node.parentNode.removeChild(node);
+                console.log('🗑️ Removed unfiltered oracle tag modal');
+              }
+            }, 200);
+            
+            searchModalFixCleanup.timeouts.push(timeout2);
+          }
+        }
+      });
+    });
+  });
+  
+  // Only observe direct children of body to avoid interfering with sidebar
+  observer.observe(document.body, {
+    childList: true,
+    subtree: false
+  });
+  
+  // Store observer for cleanup
+  searchModalFixCleanup.observers.push(observer);
+  
+  console.log('🔍 Targeted modal replacement observer started (sidebar-safe)');
+  
+  console.log('✅ Oracle tag search interceptor installed');
+}
+
+// Initialize all fixes
+function initializeSearchModalFix() {
+  throttledConsoleLog('🚀 Initializing comprehensive search modal fix...');
+  
+  // Clean up any previous initialization
+  cleanupSearchModalFix();
+  
+  fixEnterKeyBehavior();
+  fixShowAllResultsButton();
+  interceptOracleTagSearches();
+  
+  // Expose functions globally for testing
+  window.openFixedSearchModal = openFixedSearchModal;
+  window.testSearchModal = function(query = 'otag:gives-vigilance') {
+    throttledConsoleLog('🧪 Testing search modal with query:', query);
+    openFixedSearchModal(query);
+  };
+  
+  // Expose cleanup function globally
+  window.cleanupSearchModalFix = cleanupSearchModalFix;
+  
+  // Expose console management functions
+  window.clearSearchModalLogs = function() {
+    consolePrevention = {
+      lastLogTime: {},
+      logThrottle: 1000,
+      maxRepeats: 3,
+      counts: {}
+    };
+    executionPrevention = {
+      lastExecution: {},
+      debounceTime: 500,
+      inProgress: new Set()
+    };
+    console.clear();
+    throttledConsoleLog('🧹 Cleared search modal logs and reset counters');
+  };
+  
+  window.setSilentMode = function(silent = true) {
+    if (silent) {
+      consolePrevention.maxRepeats = 0; // No repeated logs
+      consolePrevention.logThrottle = 5000; // Much longer throttle
+      throttledConsoleLog('🔇 Search modal silent mode enabled');
+    } else {
+      consolePrevention.maxRepeats = 3;
+      consolePrevention.logThrottle = 1000;
+      throttledConsoleLog('🔊 Search modal silent mode disabled');
+    }
+  };
+  
+  throttledConsoleLog('✅ Search modal fix ready!');
+  throttledConsoleLog('💡 Test with: window.testSearchModal("otag:gives-vigilance")');
+  throttledConsoleLog('🧹 Clean up with: window.cleanupSearchModalFix()');
+  throttledConsoleLog('🔇 Silent mode: window.setSilentMode(true/false)');
+  throttledConsoleLog('🧹 Clear logs: window.clearSearchModalLogs()');
+}
+
+// Cleanup function to prevent memory leaks
+function cleanupSearchModalFix() {
+  throttledConsoleLog('🧹 Cleaning up search modal fix...');
+  
+  // Remove all event listeners
+  searchModalFixCleanup.eventListeners.forEach(listenerInfo => {
+    try {
+      listenerInfo.element.removeEventListener(
+        listenerInfo.type, 
+        listenerInfo.handler, 
+        listenerInfo.options
+      );
+    } catch (error) {
+      console.warn('Could not remove event listener:', error);
+    }
+  });
+  
+  // Disconnect all observers
+  searchModalFixCleanup.observers.forEach(observer => {
+    try {
+      observer.disconnect();
+    } catch (error) {
+      console.warn('Could not disconnect observer:', error);
+    }
+  });
+  
+  // Clear all timeouts
+  searchModalFixCleanup.timeouts.forEach(timeoutId => {
+    try {
+      clearTimeout(timeoutId);
+    } catch (error) {
+      console.warn('Could not clear timeout:', error);
+    }
+  });
+  
+  // Clear all intervals
+  searchModalFixCleanup.intervals.forEach(intervalId => {
+    try {
+      clearInterval(intervalId);
+    } catch (error) {
+      console.warn('Could not clear interval:', error);
+    }
+  });
+  
+  // Reset cleanup arrays
+  searchModalFixCleanup = {
+    eventListeners: [],
+    observers: [],
+    timeouts: [],
+    intervals: []
+  };
+  
+  // Remove any remaining modals
+  const modalsToRemove = [
+    'enhanced-search-modal',
+    'search-loading-modal', 
+    'message-modal'
+  ];
+  
+  modalsToRemove.forEach(modalId => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.remove();
+    }
+  });
+  
+  // Restore body overflow
+  document.body.style.overflow = '';
+  
+  throttledConsoleLog('✅ Search modal fix cleanup completed');
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeSearchModalFix);
+} else {
+  initializeSearchModalFix();
+}
+
+// Clean up when page unloads to prevent memory leaks
+window.addEventListener('beforeunload', cleanupSearchModalFix);
+
+// Also clean up on page navigation (for SPAs)
+window.addEventListener('pagehide', cleanupSearchModalFix);
+
+console.log('✅ Search modal fix loaded successfully with memory leak prevention!');
+window.testOtagSearch = function() { window.testSearchModal("otag:gives-vigilance"); };

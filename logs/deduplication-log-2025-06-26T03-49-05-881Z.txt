@@ -1,0 +1,543 @@
+Analyzing database for duplicate cards...
+Found 58611 distinct cards with duplicates (394711 duplicate entries)
+Starting deduplication process...
+Processing batch 1 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6756 duplicates
+Overall progress: 1000/58611 cards processed, 6756 duplicates removed
+Processing batch 2 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6695 duplicates
+Overall progress: 2000/58611 cards processed, 13451 duplicates removed
+Processing batch 3 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6748 duplicates
+Overall progress: 3000/58611 cards processed, 20199 duplicates removed
+Processing batch 4 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6743 duplicates
+Overall progress: 4000/58611 cards processed, 26942 duplicates removed
+Processing batch 5 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6774 duplicates
+Overall progress: 5000/58611 cards processed, 33716 duplicates removed
+Processing batch 6 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6635 duplicates
+Overall progress: 6000/58611 cards processed, 40351 duplicates removed
+Processing batch 7 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6835 duplicates
+Overall progress: 7000/58611 cards processed, 47186 duplicates removed
+Processing batch 8 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6652 duplicates
+Overall progress: 8000/58611 cards processed, 53838 duplicates removed
+Processing batch 9 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6618 duplicates
+Overall progress: 9000/58611 cards processed, 60456 duplicates removed
+Processing batch 10 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6739 duplicates
+Overall progress: 10000/58611 cards processed, 67195 duplicates removed
+Processing batch 11 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6841 duplicates
+Overall progress: 11000/58611 cards processed, 74036 duplicates removed
+Processing batch 12 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6838 duplicates
+Overall progress: 12000/58611 cards processed, 80874 duplicates removed
+Processing batch 13 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6816 duplicates
+Overall progress: 13000/58611 cards processed, 87690 duplicates removed
+Processing batch 14 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6619 duplicates
+Overall progress: 14000/58611 cards processed, 94309 duplicates removed
+Processing batch 15 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6645 duplicates
+Overall progress: 15000/58611 cards processed, 100954 duplicates removed
+Processing batch 16 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6858 duplicates
+Overall progress: 16000/58611 cards processed, 107812 duplicates removed
+Processing batch 17 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6547 duplicates
+Overall progress: 17000/58611 cards processed, 114359 duplicates removed
+Processing batch 18 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6892 duplicates
+Overall progress: 18000/58611 cards processed, 121251 duplicates removed
+Processing batch 19 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6592 duplicates
+Overall progress: 19000/58611 cards processed, 127843 duplicates removed
+Processing batch 20 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6769 duplicates
+Overall progress: 20000/58611 cards processed, 134612 duplicates removed
+Processing batch 21 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6868 duplicates
+Overall progress: 21000/58611 cards processed, 141480 duplicates removed
+Processing batch 22 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6858 duplicates
+Overall progress: 22000/58611 cards processed, 148338 duplicates removed
+Processing batch 23 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6965 duplicates
+Overall progress: 23000/58611 cards processed, 155303 duplicates removed
+Processing batch 24 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6865 duplicates
+Overall progress: 24000/58611 cards processed, 162168 duplicates removed
+Processing batch 25 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6839 duplicates
+Overall progress: 25000/58611 cards processed, 169007 duplicates removed
+Processing batch 26 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6403 duplicates
+Overall progress: 26000/58611 cards processed, 175410 duplicates removed
+Processing batch 27 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6801 duplicates
+Overall progress: 27000/58611 cards processed, 182211 duplicates removed
+Processing batch 28 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6740 duplicates
+Overall progress: 28000/58611 cards processed, 188951 duplicates removed
+Processing batch 29 of 59...
+Found 1000 cards to process in this batch
+Batch progress: 100/1000 cards processed
+Batch progress: 200/1000 cards processed
+Batch progress: 300/1000 cards processed
+Batch progress: 400/1000 cards processed
+Batch progress: 500/1000 cards processed
+Batch progress: 600/1000 cards processed
+Batch progress: 700/1000 cards processed
+Batch progress: 800/1000 cards processed
+Batch progress: 900/1000 cards processed
+Batch progress: 1000/1000 cards processed
+Batch complete: Processed 1000 cards, removed 6572 duplicates
+Overall progress: 29000/58611 cards processed, 195523 duplicates removed
+Processing batch 30 of 59...
+Found 611 cards to process in this batch
+Batch progress: 100/611 cards processed
+Batch progress: 200/611 cards processed
+Batch progress: 300/611 cards processed
+Batch progress: 400/611 cards processed
+Batch progress: 500/611 cards processed
+Batch progress: 600/611 cards processed
+Batch complete: Processed 611 cards, removed 4040 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 31 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 32 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 33 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 34 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 35 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 36 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 37 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 38 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 39 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 40 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 41 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 42 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 43 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 44 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 45 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 46 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 47 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 48 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 49 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 50 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 51 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 52 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 53 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 54 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 55 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 56 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 57 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 58 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+Processing batch 59 of 59...
+Found 0 cards to process in this batch
+Batch complete: Processed 0 cards, removed 0 duplicates
+Overall progress: 29611/58611 cards processed, 199563 duplicates removed
+
+Deduplication complete!
+Processed 29611 unique cards with duplicates
+Removed 199563 duplicate entries
+Original card count: 502338
+Final card count: 302775
+Difference: 199563
+Full log is available at: /Users/ianofdoom/Desktop/Constant-Lists-v2/logs/deduplication-log-2025-06-26T03-49-05-881Z.txt

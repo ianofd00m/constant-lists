@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Foil Effect Diagnostic</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #222;
+      color: #fff;
+      padding: 20px;
+    }
+    .console-output {
+      background: #000;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border: 1px solid #555;
+      min-height: 400px;
+      overflow-y: auto;
+    }
+    .test-button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    .test-button:hover {
+      background: #005999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Foil Effect Diagnostic Tool</h1>
+  <p>This tool will test the foil effect implementation.</p>
+  
+  <button class="test-button" onclick="runDiagnostic()">Run Diagnostic</button>
+  <button class="test-button" onclick="clearConsole()">Clear Console</button>
+  
+  <div class="console-output" id="console-output"></div>
+  
+  <script>
+    // Redirect console.log to our output div
+    const originalLog = console.log;
+    const consoleOutput = document.getElementById('console-output');
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const message = args.join(' ');
+      consoleOutput.innerHTML += message + '\n';
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    };
+    
+    function clearConsole() {
+      consoleOutput.innerHTML = '';
+    }
+    
+    function runDiagnostic() {
+      clearConsole();
+      
+      // Load the main app CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'http://localhost:3000/src/App.css';
+      document.head.appendChild(link);
+      
+      // Wait for CSS to load then run diagnostic
+      setTimeout(() => {
+        // Comprehensive foil effect diagnostic
+        console.log("=== COMPREHENSIVE FOIL EFFECT DIAGNOSTIC ===");
+
+        // Step 1: Check if CSS is loaded
+        console.log("1. CHECKING CSS LOADING...");
+        function checkCSSLoading() {
+          const styleSheets = document.styleSheets;
+          let foundFoilCSS = false;
+          let foundAnimation = false;
+          
+          for (let sheet of styleSheets) {
+            try {
+              for (let rule of sheet.cssRules) {
+                if (rule.cssText && rule.cssText.includes('foil-rainbow-overlay')) {
+                  console.log("✅ Found foil CSS rule:", rule.cssText);
+                  foundFoilCSS = true;
+                }
+                if (rule.name && rule.name.includes('super-obvious-foil')) {
+                  console.log("✅ Found foil animation:", rule.name);
+                  foundAnimation = true;
+                }
+              }
+            } catch (e) {
+              // Cross-origin or other access issues
+            }
+          }
+          
+          return { foundFoilCSS, foundAnimation };
+        }
+
+        const cssCheck = checkCSSLoading();
+        console.log("CSS Check Results:", cssCheck);
+
+        // Step 2: Test CSS directly
+        console.log("\n2. TESTING CSS DIRECTLY...");
+        const testDiv = document.createElement('div');
+        testDiv.className = 'foil-rainbow-overlay';
+        testDiv.style.position = 'fixed';
+        testDiv.style.top = '20px';
+        testDiv.style.left = '20px';
+        testDiv.style.width = '100px';
+        testDiv.style.height = '100px';
+        testDiv.style.zIndex = '9999';
+        testDiv.style.border = '2px solid cyan';
+        document.body.appendChild(testDiv);
+
+        setTimeout(() => {
+          const computed = window.getComputedStyle(testDiv);
+          console.log("Direct CSS Test Results:");
+          console.log("  Background:", computed.background);
+          console.log("  Animation:", computed.animation);
+          console.log("  Border:", computed.border);
+          
+          const hasGradient = computed.background.includes('linear-gradient') || 
+                             computed.backgroundImage.includes('linear-gradient');
+          const hasAnimation = computed.animation !== 'none' && computed.animationName !== 'none';
+          
+          console.log("  Has gradient:", hasGradient);
+          console.log("  Has animation:", hasAnimation);
+          
+          if (hasGradient && hasAnimation) {
+            console.log("✅ CSS is working correctly!");
+          } else {
+            console.log("❌ CSS is not working");
+          }
+          
+          document.body.removeChild(testDiv);
+        }, 100);
+
+        // Step 3: Test CardPreview component
+        console.log("\n3. TESTING CARDPREVIEW COMPONENT...");
+        setTimeout(() => {
+          console.log("Creating CardPreview-style test...");
+          
+          const container = document.createElement('div');
+          container.className = 'card-preview-container';
+          container.style.position = 'fixed';
+          container.style.top = '150px';
+          container.style.left = '20px';
+          container.style.zIndex = '1000';
+          container.style.border = '3px solid yellow';
+          container.style.overflow = 'hidden';
+          
+          const img = document.createElement('img');
+          img.src = 'https://cards.scryfall.io/normal/front/1/e/1e5b2e3f-4f5b-4e5b-9b5b-1e5b2e3f4f5b.jpg';
+          img.style.width = '150px';
+          img.style.borderRadius = '10px';
+          img.style.position = 'relative';
+          img.style.zIndex = '1';
+          img.style.display = 'block';
+          
+          const foilOverlay = document.createElement('div');
+          foilOverlay.className = 'foil-rainbow-overlay';
+          
+          container.appendChild(img);
+          container.appendChild(foilOverlay);
+          document.body.appendChild(container);
+          
+          setTimeout(() => {
+            const computed = window.getComputedStyle(foilOverlay);
+            console.log("CardPreview-style Test Results:");
+            console.log("  Background:", computed.background);
+            console.log("  Animation:", computed.animation);
+            console.log("  Z-index:", computed.zIndex);
+            console.log("  Opacity:", computed.opacity);
+            console.log("  Mix-blend-mode:", computed.mixBlendMode);
+            
+            const rect = foilOverlay.getBoundingClientRect();
+            console.log("  Dimensions:", rect.width, "x", rect.height);
+            
+            if (rect.width > 0 && rect.height > 0) {
+              console.log("✅ CardPreview-style foil overlay is visible");
+            } else {
+              console.log("❌ CardPreview-style foil overlay is not visible");
+            }
+            
+            document.body.removeChild(container);
+          }, 100);
+        }, 200);
+
+        console.log("\n=== DIAGNOSTIC COMPLETE ===");
+        console.log("Watch for test elements appearing on screen:");
+        console.log("- Cyan-bordered square at (20, 20)");
+        console.log("- Yellow-bordered card at (20, 150)");
+        
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

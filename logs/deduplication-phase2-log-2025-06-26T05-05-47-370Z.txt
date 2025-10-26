@@ -1,0 +1,40 @@
+Getting list of cards with duplicates...
+Found 29000 distinct cards with duplicates
+Progress: 1000/29000 cards processed, removed 10000 duplicates
+Progress: 2000/29000 cards processed, removed 20000 duplicates
+Progress: 3000/29000 cards processed, removed 30000 duplicates
+Progress: 4000/29000 cards processed, removed 40000 duplicates
+Progress: 5000/29000 cards processed, removed 50000 duplicates
+Progress: 6000/29000 cards processed, removed 59872 duplicates
+Progress: 7000/29000 cards processed, removed 68872 duplicates
+Progress: 8000/29000 cards processed, removed 77872 duplicates
+Progress: 9000/29000 cards processed, removed 86133 duplicates
+Progress: 10000/29000 cards processed, removed 94133 duplicates
+Progress: 11000/29000 cards processed, removed 102133 duplicates
+Progress: 12000/29000 cards processed, removed 110133 duplicates
+Progress: 13000/29000 cards processed, removed 117958 duplicates
+Progress: 14000/29000 cards processed, removed 124958 duplicates
+Progress: 15000/29000 cards processed, removed 131958 duplicates
+Progress: 16000/29000 cards processed, removed 138958 duplicates
+Progress: 17000/29000 cards processed, removed 145958 duplicates
+Progress: 18000/29000 cards processed, removed 152214 duplicates
+Progress: 19000/29000 cards processed, removed 158214 duplicates
+Progress: 20000/29000 cards processed, removed 164028 duplicates
+Progress: 21000/29000 cards processed, removed 169028 duplicates
+Progress: 22000/29000 cards processed, removed 174028 duplicates
+Progress: 23000/29000 cards processed, removed 179028 duplicates
+Progress: 24000/29000 cards processed, removed 183280 duplicates
+Progress: 25000/29000 cards processed, removed 187280 duplicates
+Progress: 26000/29000 cards processed, removed 190318 duplicates
+Progress: 27000/29000 cards processed, removed 192404 duplicates
+Progress: 28000/29000 cards processed, removed 194148 duplicates
+Progress: 29000/29000 cards processed, removed 195148 duplicates
+
+Deduplication phase 2 complete!
+Processed 29000 unique cards with duplicates
+Removed 195148 duplicate entries
+Original card count: 302775
+Final card count: 107627
+Difference: 195148
+Success: No duplicate cards remain in the database!
+Full log is available at: /Users/ianofdoom/Desktop/Constant-Lists-v2/logs/deduplication-phase2-log-2025-06-26T05-05-47-370Z.txt

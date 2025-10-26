@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTAG Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        .status.loading { background: #fef3c7; color: #92400e; }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .test-modal {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .card-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+        .card-type {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏷️ OTAG Integration Test</h1>
+    
+    <div class="test-container">
+        <h2>System Status</h2>
+        <div id="system-status" class="status loading">Initializing OTAG system...</div>
+        <div id="data-status" class="status loading">Loading OTAG data...</div>
+        <div id="integration-status" class="status loading">Checking integration...</div>
+        
+        <button onclick="runTests()">🔄 Run Tests</button>
+        <button onclick="showStats()">📊 Show Stats</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>Modal Enhancement Test</h2>
+        <p>These mock modals will be automatically enhanced with OTAG tags:</p>
+        
+        <div class="test-modal" id="test-modal-1">
+            <div class="card-name">Sol Ring</div>
+            <div class="card-type">Artifact</div>
+            <div>Tap: Add two colorless mana.</div>
+        </div>
+        
+        <div class="test-modal" id="test-modal-2">
+            <div class="card-name">Lightning Bolt</div>
+            <div class="card-type">Instant</div>
+            <div>Lightning Bolt deals 3 damage to any target.</div>
+        </div>
+        
+        <div class="test-modal" id="test-modal-3">
+            <div class="card-name">Birds of Paradise</div>
+            <div class="card-type">Creature — Bird</div>
+            <div>Flying. Tap: Add one mana of any color.</div>
+        </div>
+        
+        <button onclick="testModalEnhancement()">🧪 Test Modal Enhancement</button>
+        <button onclick="clearEnhancements()">🗑️ Clear Enhancements</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>Search Integration Test</h2>
+        <p>Test OTAG search functionality:</p>
+        <button onclick="testSearch('removal')">Search: Removal</button>
+        <button onclick="testSearch('ramp')">Search: Ramp</button>
+        <button onclick="testSearch('artifact')">Search: Artifact</button>
+    </div>
+
+    <!-- Include the production OTAG system -->
+    <script src="production-otag-system.js"></script>
+    
+    <script>
+        function runTests() {
+            console.log('🧪 Running OTAG integration tests...');
+            
+            // Test system availability
+            const systemStatus = document.getElementById('system-status');
+            const dataStatus = document.getElementById('data-status');
+            const integrationStatus = document.getElementById('integration-status');
+            
+            if (window.productionOtagSystem) {
+                if (window.productionOtagSystem.isSystemReady()) {
+                    systemStatus.className = 'status success';
+                    systemStatus.textContent = '✅ OTAG system operational';
+                } else {
+                    systemStatus.className = 'status loading';
+                    systemStatus.textContent = '🔄 OTAG system initializing...';
+                }
+                
+                if (window.productionOtagSystem.isDataLoaded()) {
+                    const stats = window.productionOtagSystem.getStats();
+                    dataStatus.className = 'status success';
+                    dataStatus.textContent = `✅ Data loaded: ${stats.totalCards} cards, ${stats.totalOtags} categories`;
+                } else {
+                    dataStatus.className = 'status loading';
+                    dataStatus.textContent = '⏳ Loading OTAG data...';
+                }
+                
+                integrationStatus.className = 'status success';
+                integrationStatus.textContent = '✅ Integration ready for testing';
+            } else {
+                systemStatus.className = 'status error';
+                systemStatus.textContent = '❌ OTAG system not found';
+                dataStatus.className = 'status error';
+                dataStatus.textContent = '❌ No data available';
+                integrationStatus.className = 'status error';
+                integrationStatus.textContent = '❌ Integration failed';
+            }
+        }
+        
+        function showStats() {
+            if (!window.productionOtagSystem || !window.productionOtagSystem.isDataLoaded()) {
+                alert('⚠️ OTAG system not ready yet!');
+                return;
+            }
+            
+            const stats = window.productionOtagSystem.getStats();
+            console.log('📊 OTAG Statistics:', stats);
+            
+            alert(`📊 OTAG System Statistics:
+• ${stats.totalCards} cards in database
+• ${stats.totalOtags} unique categories
+• Top categories: ${stats.topOtags.slice(0, 3).map(([tag, count]) => `${tag} (${count})`).join(', ')}
+
+Check console for detailed information.`);
+        }
+        
+        function testModalEnhancement() {
+            if (!window.productionOtagSystem || !window.productionOtagSystem.isDataLoaded()) {
+                alert('⚠️ OTAG system not ready yet!');
+                return;
+            }
+            
+            console.log('🧪 Testing modal enhancement...');
+            
+            // Test each modal
+            const modals = ['test-modal-1', 'test-modal-2', 'test-modal-3'];
+            
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    // Remove existing enhancement
+                    const existing = modal.querySelector('.otag-enhancement');
+                    if (existing) existing.remove();
+                    
+                    // Trigger enhancement
+                    window.productionOtagSystem.enhanceModal(modal);
+                }
+            });
+            
+            alert('✅ Modal enhancement test completed. Check the cards above for OTAG tags!');
+        }
+        
+        function clearEnhancements() {
+            const enhancements = document.querySelectorAll('.otag-enhancement');
+            enhancements.forEach(el => el.remove());
+            console.log('🗑️ Cleared all OTAG enhancements');
+        }
+        
+        function testSearch(searchTerm) {
+            if (!window.productionOtagSystem || !window.productionOtagSystem.isDataLoaded()) {
+                alert('⚠️ OTAG system not ready yet!');
+                return;
+            }
+            
+            console.log(`🔍 Testing search for: ${searchTerm}`);
+            
+            const results = window.productionOtagSystem.searchCards(searchTerm);
+            console.log(`Found ${results.length} results:`, results);
+            
+            if (results.length > 0) {
+                const cardNames = results.slice(0, 5).map(card => card.cardName).join(', ');
+                alert(`✅ Found ${results.length} cards matching "${searchTerm}":
+
+First 5 results: ${cardNames}${results.length > 5 ? '...' : ''}
+
+Check console for full results.`);
+            } else {
+                alert(`❌ No cards found matching "${searchTerm}". This might indicate fallback data is active.`);
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 1000);
+            
+            // Auto-refresh status
+            setInterval(runTests, 3000);
+        });
+        
+        // Listen for OTAG system ready event
+        window.addEventListener('otagSystemReady', (event) => {
+            console.log('🚀 OTAG System Ready Event:', event.detail);
+            runTests();
+        });
+        
+        console.log('🎯 OTAG Integration Test Page Ready');
+        console.log('💡 This page tests the production OTAG system integration');
+        console.log('  1. System initialization and data loading');
+        console.log('  2. Modal enhancement functionality');
+        console.log('  3. Search integration capabilities');
+    </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commander Preservation Fix - Test Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .fix-item { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        .status { font-weight: bold; color: #007acc; }
+        .critical { color: #ff6b6b; font-weight: bold; }
+        .success { color: #51cf66; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🛠️ Commander Preservation Fix Implementation</h1>
+    
+    <h2>Problem Identified:</h2>
+    <p class="critical">Bug where adding any card to a commander deck would remove the commander from the decklist, leaving the deck invalid.</p>
+    
+    <h2>Root Cause:</h2>
+    <p>The server response when adding cards to a deck sometimes returns a cards array that doesn't properly include the commander. The <code>ensureCommanderInCards()</code> function exists but wasn't being called after server updates.</p>
+    
+    <h2>🔧 Fixes Applied:</h2>
+    
+    <div class="fix-item">
+        <h3>1. Fixed handleAddCard function</h3>
+        <p><span class="status">Location:</span> DeckViewEdit.jsx, line ~1150</p>
+        <p><span class="status">Fix:</span> Added call to <code>ensureCommanderInCards()</code> after server response before setting deck state</p>
+        <p><span class="status">Code:</span></p>
+        <pre>// CRITICAL FIX: Ensure commander is always present in the deck after server update
+const finalDeck = {
+  ...correctedDeck,
+  cards: ensureCommanderInCards(correctedDeck)
+};</pre>
+    </div>
+    
+    <div class="fix-item">
+        <h3>2. Fixed deck loading function</h3>
+        <p><span class="status">Location:</span> DeckViewEdit.jsx, line ~1850</p>
+        <p><span class="status">Fix:</span> Added <code>ensureCommanderInCards()</code> call when initially loading deck data</p>
+        <p><span class="status">Code:</span></p>
+        <pre>const deckWithCommander = { ...data, cards: processedCards };
+const finalCardsWithCommander = ensureCommanderInCards(deckWithCommander);
+const finalDeckData = { ...deckWithCommander, cards: finalCardsWithCommander };</pre>
+    </div>
+    
+    <div class="fix-item">
+        <h3>3. Fixed deck save function</h3>
+        <p><span class="status">Location:</span> DeckViewEdit.jsx, line ~1991</p>
+        <p><span class="status">Fix:</span> Added commander preservation when saving deck changes</p>
+        <p><span class="status">Code:</span></p>
+        <pre>const deckWithCommander = {
+  ...data,
+  cards: ensureCommanderInCards(data)
+};</pre>
+    </div>
+    
+    <h2>✅ Expected Results:</h2>
+    <ul>
+        <li class="success">Commander should always remain in the decklist when adding new cards</li>
+        <li class="success">Commander should appear in the "Commander" category in the deck view</li>
+        <li class="success">Commander should be properly counted in deck statistics</li>
+        <li class="success">Commander should remain the first card in the deck list</li>
+        <li class="success">Deck should remain valid (with commander) after any card additions</li>
+    </ul>
+    
+    <h2>🧪 Test Procedure:</h2>
+    <ol>
+        <li>Open a commander deck (like the "Dusk" deck from the screenshot)</li>
+        <li>Verify the commander appears in the decklist</li>
+        <li>Add any card to the deck using the search function</li>
+        <li>Verify the commander is still present in the decklist</li>
+        <li>Check that the commander appears in the "Commander" category</li>
+        <li>Verify deck stats still count the commander properly</li>
+    </ol>
+    
+    <h2>🔍 Debug Logging:</h2>
+    <p>Added debug logs to track commander preservation:</p>
+    <ul>
+        <li><code>[DEBUG - handleAddCard] Before ensureCommanderInCards</code> - shows card count before fix</li>
+        <li><code>[DEBUG - handleAddCard] After ensureCommanderInCards</code> - shows card count after fix</li>
+        <li>Console will show if commander is being properly preserved</li>
+    </ul>
+    
+    <h2>📈 Status:</h2>
+    <p class="success">✅ Fix implemented and compiled successfully</p>
+    <p class="success">✅ Build completed without errors</p>
+    <p class="success">✅ Ready for testing</p>
+    
+    <p><em>The MTG deck builder app should now properly preserve commanders when adding cards to commander decks.</em></p>
+</body>
+</html>

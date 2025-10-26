@@ -464,6 +464,12 @@ function RecentDecks({ decks, onSelect }) {
     return deck.cards.reduce((total, card) => total + (card.quantity || 1), 0);
   };
 
+  // Helper function to generate art crop URL from card ID
+  const getArtCropUrl = (cardId) => {
+    if (!cardId || cardId.length < 36) return null;
+    return `https://cards.scryfall.io/art_crop/front/${cardId.substring(0, 1)}/${cardId.substring(1, 2)}/${cardId}.jpg`;
+  };
+
   // Helper function to get preview image from deck with specific printing preference
   const getDeckPreviewImage = (deck) => {
     if (!deck.cards || deck.cards.length === 0) return null;
@@ -473,9 +479,6 @@ function RecentDecks({ decks, onSelect }) {
       console.log('🖼️ Using custom preview image for deck:', deck.name, deck.customPreviewImage);
       return deck.customPreviewImage;
     }
-    
-    // Debug: Log if no custom image found
-    console.log('🔍 No custom preview image found for deck:', deck.name, 'customPreviewImage:', deck.customPreviewImage);
     
     // Priority 1: Look for commander with specific printing
     const commander = deck.cards.find(cardObj => {
@@ -490,18 +493,33 @@ function RecentDecks({ decks, onSelect }) {
     });
     
     if (commander) {
-      // Use the specific printing if available
+      // Try to get art_crop from existing data
       const commanderArt = commander?.scryfallCard?.image_uris?.art_crop || 
                           commander?.card?.scryfall_json?.image_uris?.art_crop ||
                           commander?.scryfall_json?.image_uris?.art_crop ||
                           commander?.image_uris?.art_crop ||
                           commander?.card?.image_uris?.art_crop;
+      
       if (commanderArt) {
+        console.log('🖼️ Found commander art crop from data:', deck.name, commanderArt);
         return commanderArt;
+      }
+      
+      // Fallback: Generate art crop URL from card ID
+      const commanderId = commander?.scryfallCard?.id || 
+                         commander?.card?.scryfall_json?.id ||
+                         commander?.scryfall_json?.id ||
+                         commander?.id ||
+                         commander?.card?.id;
+      
+      if (commanderId) {
+        const generatedArt = getArtCropUrl(commanderId);
+        console.log('🖼️ Generated commander art crop URL for:', deck.name, generatedArt);
+        return generatedArt;
       }
     }
     
-    // Priority 2: Find any card with art_crop, preserving printing order
+    // Priority 2: Find any card with existing art_crop data
     const cardWithArt = deck.cards.find(cardObj => {
       const artCrop = cardObj.scryfallCard?.image_uris?.art_crop || 
                      cardObj.card?.scryfall_json?.image_uris?.art_crop ||
@@ -517,7 +535,30 @@ function RecentDecks({ decks, onSelect }) {
                      cardWithArt?.scryfall_json?.image_uris?.art_crop ||
                      cardWithArt?.image_uris?.art_crop ||
                      cardWithArt?.card?.image_uris?.art_crop;
+      console.log('🖼️ Found card art crop from data:', deck.name, artUrl);
       return artUrl;
+    }
+    
+    // Priority 3: Generate art crop from any card with an ID
+    const cardWithId = deck.cards.find(cardObj => {
+      const cardId = cardObj.scryfallCard?.id || 
+                    cardObj.card?.scryfall_json?.id ||
+                    cardObj.scryfall_json?.id ||
+                    cardObj.id ||
+                    cardObj.card?.id;
+      return cardId && cardId.length >= 36;
+    });
+    
+    if (cardWithId) {
+      const cardId = cardWithId.scryfallCard?.id || 
+                    cardWithId.card?.scryfall_json?.id ||
+                    cardWithId.scryfall_json?.id ||
+                    cardWithId.id ||
+                    cardWithId.card?.id;
+      
+      const generatedArt = getArtCropUrl(cardId);
+      console.log('🖼️ Generated art crop from any card ID for:', deck.name, generatedArt);
+      return generatedArt;
     }
     
     return null;

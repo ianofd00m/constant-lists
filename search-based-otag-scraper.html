@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search-Based OTAG Scraper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #FFC107;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .approach {
+            background: rgba(33, 150, 243, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Search-Based OTAG Scraper</h1>
+        
+        <div class="approach">
+            <h3>🆕 New Approach</h3>
+            <p>Since oracle tags aren't in the API responses, this scraper searches for each functional tag individually and collects all the cards that match. This method guarantees we get the proper functional tags that are actually being used on Scryfall.</p>
+        </div>
+        
+        <div class="info">
+            <h3>📋 How This Works</h3>
+            <p>This scraper searches for each of the <strong>functional oracle tags</strong> individually:</p>
+            <ul>
+                <li><strong>acceleration</strong> - Sol Ring, Mana Crypt, etc.</li>
+                <li><strong>ramp</strong> - Cultivate, Kodama's Reach, etc.</li>
+                <li><strong>removal</strong> - Lightning Bolt, Path to Exile, etc.</li>
+                <li><strong>card-advantage</strong> - Divination, Rhystic Study, etc.</li>
+                <li><strong>mana-dork</strong> - Birds of Paradise, Llanowar Elves, etc.</li>
+                <li>And 100+ more functional categories!</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h3>⚠️ Important Notes</h3>
+            <p>This process searches for ~150 functional tags and can take 10-20 minutes due to Scryfall's rate limits. It will generate a comprehensive CSV with all cards that have functional oracle tags.</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <button id="startBtn" onclick="startScraping()">🚀 Start Search-Based OTAG Scraping</button>
+            <button id="testBtn" onclick="testSingleTag()" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);">🔍 Test Single Tag (acceleration)</button>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTags">0</div>
+                <div>Tags Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="uniqueCards">0</div>
+                <div>Unique Cards</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="errors">0</div>
+                <div>Errors</div>
+            </div>
+        </div>
+        
+        <div class="progress" id="progressContainer" style="display: none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script src="search-based-otag-scraper.js"></script>
+    <script>
+        const logElement = document.getElementById('log');
+        const startBtn = document.getElementById('startBtn');
+        const testBtn = document.getElementById('testBtn');
+        const statsContainer = document.getElementById('stats');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        
+        let originalConsoleLog = console.log;
+        let originalConsoleError = console.error;
+        
+        function logToPage(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : '📝';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Call original console method
+            if (type === 'error') {
+                originalConsoleError(message);
+            } else {
+                originalConsoleLog(message);
+            }
+        }
+        
+        // Override console methods
+        console.log = (message) => logToPage(message, 'log');
+        console.error = (message) => logToPage(message, 'error');
+        
+        async function startScraping() {
+            startBtn.disabled = true;
+            testBtn.disabled = true;
+            statsContainer.style.display = 'grid';
+            progressContainer.style.display = 'block';
+            
+            logElement.textContent = '';
+            logToPage('🚀 Starting search-based OTAG scraping...', 'log');
+            
+            try {
+                const result = await runSearchBasedOtagScraper();
+                
+                document.getElementById('totalTags').textContent = result.totalTags.toLocaleString();
+                document.getElementById('uniqueCards').textContent = result.uniqueCards.toLocaleString();
+                document.getElementById('errors').textContent = result.errors.toLocaleString();
+                
+                progressBar.style.width = '100%';
+                
+                logToPage('✅ Scraping completed successfully!', 'log');
+                logToPage(`📊 Results: ${result.uniqueCards} cards with functional tags`, 'log');
+                logToPage('💾 CSV file should have downloaded automatically', 'log');
+                
+            } catch (error) {
+                logToPage(`💥 Error: ${error.message}`, 'error');
+            } finally {
+                startBtn.disabled = false;
+                testBtn.disabled = false;
+            }
+        }
+        
+        async function testSingleTag() {
+            logToPage('🔍 Testing single tag search (acceleration)...', 'log');
+            
+            try {
+                const response = await fetch('https://api.scryfall.com/cards/search?q=oracletag:acceleration');
+                if (response.ok) {
+                    const data = await response.json();
+                    logToPage(`✅ Found ${data.total_cards} cards with acceleration tag`, 'log');
+                    
+                    if (data.data && data.data.length > 0) {
+                        logToPage('📄 First 10 cards with acceleration tag:', 'log');
+                        data.data.slice(0, 10).forEach(card => {
+                            logToPage(`  - ${card.name}`, 'log');
+                        });
+                        
+                        // Check if Sol Ring is in the results
+                        const solRing = data.data.find(card => card.name.toLowerCase().includes('sol ring'));
+                        if (solRing) {
+                            logToPage(`🎯 Sol Ring found in acceleration results!`, 'log');
+                        } else {
+                            logToPage(`❌ Sol Ring not found in first page of acceleration results`, 'log');
+                        }
+                    }
+                } else {
+                    logToPage(`❌ Search failed: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                logToPage(`❌ Error testing tag: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initial log message
+        logToPage('🔍 Search-Based OTAG Scraper ready', 'log');
+        logToPage('💡 This scraper searches for each functional tag individually to build the database', 'log');
+    </script>
+</body>
+</html>

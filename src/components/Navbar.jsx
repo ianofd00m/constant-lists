@@ -86,14 +86,10 @@ export default function Navbar() {
           }}
           title="Shopping Cart"
         >
-          <img 
-            src="/SVGs/shopping-cart-outline.svg" 
-            alt="Shopping Cart" 
-            style={{ 
-              width: '20px', 
-              height: '20px', 
-              filter: 'invert(1)' // Makes the SVG white to match navbar text
-            }} 
+                    <img
+            src="/svgs/shopping-cart-outline.svg" 
+            alt="Collections" 
+            style={{ width: '20px', height: '20px', opacity: 0.8 }}
           />
           {cartItemCount > 0 && (
             <span style={{

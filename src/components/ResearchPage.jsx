@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import SimpleCardModal from './SimpleCardModal';
+import TypeIcon from './TypeIcon';
 import './CardActionsModal.css';
 
 // Transform icon component for double-faced cards
@@ -461,7 +462,12 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                   <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 16, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1 }}>
                     <CardPreview card={card} nameStyle={{ fontWeight: 700, color: '#4e8c6c', fontSize: 16, textDecoration: 'none', lineHeight: 1, margin: 0, padding: 0, cursor: 'pointer' }} isDoubleFacedCard={isDoubleFacedCard} />
                   </td>
-                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 15, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1, overflow: 'hidden' }}>{typeDisplay}</td>
+                  <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', fontSize: 15, height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <TypeIcon typeLine={typeDisplay} size={14} />
+                      <span>{typeDisplay}</span>
+                    </div>
+                  </td>
                   <td style={{ padding: '0 0 0 10px', borderBottom: '1px solid #eee', borderRight: '1px solid #eee', height: 20, maxHeight: 20, verticalAlign: 'middle', minHeight: 0, textAlign: 'left', lineHeight: 1, overflow: 'hidden' }}>
                     <span style={{ display: 'inline-flex', gap: 0, lineHeight: 1, alignItems: 'center', margin: 0, padding: 0, height: 20, maxHeight: 20, overflow: 'hidden' }}>
                       {isDoubleFaced && card.card_faces ? (
@@ -900,7 +906,10 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                       {/* Type */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>Type:</span>
-                        <span style={{ fontSize: 14, color: '#334155' }}>{typeDisplay || '—'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <TypeIcon typeLine={typeDisplay} size={14} />
+                          <span style={{ fontSize: 14, color: '#334155' }}>{typeDisplay || '—'}</span>
+                        </div>
                       </div>
                     </div>
                     

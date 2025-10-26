@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foil Effect Verification - Constant Lists</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card-preview-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px;
+        }
+
+        .card-preview-container img {
+            width: 250px;
+            border-radius: 10px;
+            display: block;
+            position: relative;
+            z-index: 0;
+        }
+
+        /* Exact same CSS as in App.css */
+        .card-preview-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 10px;
+            background: linear-gradient(45deg, 
+                rgba(255, 235, 59, 0.1),   /* Yellow */
+                rgba(129, 199, 132, 0.08), /* Light Green */
+                rgba(38, 198, 218, 0.1),   /* Cyan */
+                rgba(33, 150, 243, 0.08),  /* Blue */
+                rgba(156, 39, 176, 0.1),   /* Purple */
+                rgba(233, 30, 99, 0.08),   /* Pink/Magenta */
+                rgba(255, 235, 59, 0.1));   /* Back to Yellow for smooth loop */
+            background-size: 300% 300%;
+            animation: rainbow-wave-shimmer 4s linear infinite paused;
+            opacity: 0;
+            mix-blend-mode: screen;
+            filter: blur(0.3px);
+            z-index: 1;
+            pointer-events: none;
+            will-change: background-position;
+            transform: translateZ(0);
+            transition: opacity 0.3s ease;
+        }
+
+        .card-preview-container.foil-active-border::before {
+            opacity: 0.25 !important;
+            animation-play-state: running !important;
+        }
+
+        @keyframes rainbow-wave-shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .app-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .test-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Foil Effect Verification Tool</h1>
+    
+    <div class="test-container">
+        <h2>Live App Test</h2>
+        <p>This iframe shows the actual app. Use the controls below to test the foil effect.</p>
+        <iframe src="http://localhost:5173" class="app-frame"></iframe>
+        
+        <div class="controls">
+            <button onclick="testAppFoil()">Test App Foil Effect</button>
+            <button onclick="injectAppTest()">Inject Test Script</button>
+            <button onclick="checkAppState()">Check App State</button>
+        </div>
+        
+        <div id="app-status" class="status">
+            Click "Check App State" to see current app status
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Standalone Foil Effect Test</h2>
+        <p>This tests the foil effect with the exact same CSS as the main app.</p>
+        
+        <div class="test-cards">
+            <div class="card-preview-container" id="testCard1">
+                <img src="https://cards.scryfall.io/normal/front/5/8/58a6a37a-4798-4b2c-a5dd-517651c0cd19.jpg?1651655567" alt="Test Card 1">
+            </div>
+            
+            <div class="card-preview-container foil-active-border" id="testCard2">
+                <img src="https://cards.scryfall.io/normal/front/c/f/cf709ef0-55af-4035-b9ec-ba27cc4cd47b.jpg?1562936912" alt="Test Card 2">
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="toggleFoil('testCard1')">Toggle Foil on Card 1</button>
+            <button onclick="toggleFoil('testCard2')">Toggle Foil on Card 2</button>
+            <button onclick="testAnimation()">Test Animation</button>
+        </div>
+        
+        <div id="test-status" class="status">
+            Card 1: No foil effect | Card 2: Foil effect active
+        </div>
+    </div>
+
+    <script>
+        // Standalone test functions
+        function toggleFoil(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.toggle('foil-active-border');
+            updateStatus();
+        }
+
+        function testAnimation() {
+            const card1 = document.getElementById('testCard1');
+            const card2 = document.getElementById('testCard2');
+            
+            card1.classList.add('foil-active-border');
+            card2.classList.add('foil-active-border');
+            updateStatus();
+        }
+
+        function updateStatus() {
+            const card1 = document.getElementById('testCard1');
+            const card2 = document.getElementById('testCard2');
+            
+            const status = `Card 1: ${card1.classList.contains('foil-active-border') ? 'Foil active' : 'No foil'} | Card 2: ${card2.classList.contains('foil-active-border') ? 'Foil active' : 'No foil'}`;
+            document.getElementById('test-status').textContent = status;
+        }
+
+        // App testing functions
+        function testAppFoil() {
+            const iframe = document.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.eval(`
+                    (function() {
+                        const containers = document.querySelectorAll('.card-preview-container');
+                        console.log('Found containers:', containers.length);
+                        
+                        containers.forEach(container => {
+                            container.classList.add('foil-active-border');
+                        });
+                        
+                        if (containers.length === 0) {
+                            const cards = document.querySelectorAll('.card-name, .deck-card-row');
+                            console.log('Found cards:', cards.length);
+                            
+                            if (cards.length > 0) {
+                                const firstCard = cards[0];
+                                firstCard.classList.add('foil');
+                                
+                                const hoverEvent = new MouseEvent('mouseenter', {
+                                    view: window,
+                                    bubbles: true,
+                                    cancelable: true
+                                });
+                                
+                                firstCard.dispatchEvent(hoverEvent);
+                                
+                                setTimeout(() => {
+                                    const preview = document.querySelector('.card-preview-container');
+                                    if (preview) {
+                                        preview.classList.add('foil-active-border');
+                                    }
+                                }, 500);
+                            }
+                        }
+                    })();
+                `);
+            }
+        }
+
+        function injectAppTest() {
+            const iframe = document.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.eval(`
+                    // Create a test card preview
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'card-preview-container foil-active-border';
+                    testDiv.style.position = 'fixed';
+                    testDiv.style.top = '50px';
+                    testDiv.style.right = '50px';
+                    testDiv.style.zIndex = '9999';
+                    
+                    const testImg = document.createElement('img');
+                    testImg.src = 'https://cards.scryfall.io/normal/front/5/8/58a6a37a-4798-4b2c-a5dd-517651c0cd19.jpg?1651655567';
+                    testImg.style.width = '200px';
+                    testImg.style.borderRadius = '10px';
+                    
+                    testDiv.appendChild(testImg);
+                    document.body.appendChild(testDiv);
+                    
+                    console.log('Test card preview injected');
+                `);
+            }
+        }
+
+        function checkAppState() {
+            const iframe = document.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.eval(`
+                    const status = {
+                        containers: document.querySelectorAll('.card-preview-container').length,
+                        cards: document.querySelectorAll('.card-name, .deck-card-row').length,
+                        foilElements: document.querySelectorAll('.foil, .foil-active-border').length,
+                        user: localStorage.getItem('user'),
+                        url: window.location.href
+                    };
+                    
+                    console.log('App Status:', status);
+                    
+                    // Send back to parent
+                    window.parent.postMessage({type: 'appStatus', data: status}, '*');
+                `);
+            }
+        }
+
+        // Listen for messages from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'appStatus') {
+                const status = event.data.data;
+                const statusText = `
+                    Containers: ${status.containers}
+                    Cards: ${status.cards}
+                    Foil Elements: ${status.foilElements}
+                    User: ${status.user ? 'Logged in' : 'Not logged in'}
+                    URL: ${status.url}
+                `;
+                document.getElementById('app-status').textContent = statusText;
+            }
+        });
+
+        // Auto-start test on page load
+        setTimeout(() => {
+            testAnimation();
+            checkAppState();
+        }, 1000);
+    </script>
+</body>
+</html>
