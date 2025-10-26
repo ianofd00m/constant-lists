@@ -14,6 +14,7 @@ const allowedOrigins = [
   'https://admirable-fairy-0fd24b.netlify.app', // Your Netlify deployment (old)
   'https://68fc6f15d22b69b96c1602f5--admirable-fairy-0fd24b.netlify.app', // Current Netlify deployment
   'https://constant-lists.netlify.app', // If you get a custom domain
+  'https://constant-lists.vercel.app', // Current Vercel deployment
   /^https:\/\/constant-lists.*\.vercel\.app$/, // Vercel deployments (regex pattern)
   process.env.CORS_ORIGIN // Production frontend URL from environment
 ].filter(Boolean); // Remove undefined values
