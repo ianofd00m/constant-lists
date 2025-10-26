@@ -3800,11 +3800,11 @@ export default function DeckViewEdit({ isPublic = false }) {
 
     const abortController = new AbortController();
 
-    // Add timeout to prevent hanging requests
+    // Add timeout to prevent hanging requests - increased for Render cold starts
     const timeoutId = setTimeout(() => {
-      console.error("Request timeout for deck ID:", id);
+      console.error("Request timeout for deck ID:", id, "- Server may be cold starting, please try refreshing");
       abortController.abort();
-    }, 10000); // 10 second timeout
+    }, 30000); // 30 second timeout to handle cold starts
 
     // Add cache-busting parameter to force fresh requests
     const cacheBust = `?_cb=${Date.now()}`;
@@ -4293,7 +4293,14 @@ export default function DeckViewEdit({ isPublic = false }) {
       .catch((error) => {
         clearTimeout(timeoutId);
         if (error.name === "AbortError") {
-          // console.log('[DEBUG] Request aborted for deck ID:', id);
+          // This is likely a timeout - show user-friendly message
+          console.error("Deck loading timed out for deck ID:", id);
+          toast.error("Deck loading timed out. The server may be starting up - please try refreshing the page.", {
+            duration: 8000
+          });
+          if (isMounted.current) {
+            setLoading(false);
+          }
           return;
         }
         console.error("Error loading deck:", error);
@@ -4303,6 +4310,10 @@ export default function DeckViewEdit({ isPublic = false }) {
           setTimeout(() => {
             navigate("/");
           }, 2000);
+        } else if (error.message.includes("Failed to fetch")) {
+          toast.error("Network error loading deck. Please check your connection and try again.", {
+            duration: 6000
+          });
         } else {
           toast.error("Failed to load deck: " + error.message);
         }
@@ -9854,8 +9865,47 @@ export default function DeckViewEdit({ isPublic = false }) {
   // Minimal logging for production
   if (loading) {
     return (
-      <div className="container">
-        <div>Loading deck...</div>
+      <div className="container" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '60vh',
+        textAlign: 'center'
+      }}>
+        <div style={{ 
+          fontSize: '18px', 
+          marginBottom: '12px',
+          color: '#333'
+        }}>
+          Loading deck...
+        </div>
+        <div style={{ 
+          fontSize: '14px', 
+          color: '#666',
+          maxWidth: '400px',
+          lineHeight: '1.4'
+        }}>
+          If this is taking longer than expected, the server may be starting up. This can take up to 30 seconds on the first load.
+        </div>
+        <div style={{
+          marginTop: '20px',
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}>
+        </div>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `
+        }} />
       </div>
     );
   }
