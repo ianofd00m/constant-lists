@@ -12,27 +12,56 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
   const [error, setError] = useState(null);
   const [oracleTagsData, setOracleTagsData] = useState(new Map());
 
-  // Use Production OTAG System data instead of loading our own
+  // Wait for Production OTAG System to be ready
   useEffect(() => {
-    // Skip loading our own data - Production OTAG System handles this
-    console.log('[OracleTagsIntegration] Using Production OTAG System data');
-    setLoading(false);
+    const checkOtagReady = () => {
+      if (window.productionOtagSystem && window.productionOtagSystem.isReady) {
+        console.log('[OracleTagsIntegration] Production OTAG System is ready');
+        setLoading(false);
+        return true;
+      }
+      return false;
+    };
+
+    if (checkOtagReady()) {
+      return; // Already ready
+    }
+
+    // Check periodically for OTAG system readiness
+    const interval = setInterval(() => {
+      if (checkOtagReady()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    // Fallback timeout - don't wait forever
+    const timeout = setTimeout(() => {
+      console.log('[OracleTagsIntegration] Timeout waiting for Production OTAG System');
+      clearInterval(interval);
+      setLoading(false);
+    }, 30000); // 30 second timeout
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
 
-  // Update tags when card changes - use Production OTAG System
+  // Update tags when card changes OR when loading state changes - use Production OTAG System
   useEffect(() => {
-    if (card) {
+    if (card && !loading) {
       const cardName = getCardName(card);
-      if (cardName && window.productionOtagSystem) {
+      if (cardName && window.productionOtagSystem && window.productionOtagSystem.isReady) {
         console.log(`[OracleTagsIntegration] Getting tags for: ${cardName}`);
         const tags = window.productionOtagSystem.getTagsForCard(cardName);
         setOracleTags(tags || []);
         console.log(`[OracleTagsIntegration] Found ${(tags || []).length} tags for ${cardName}`);
       } else {
+        console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`);
         setOracleTags([]);
       }
     }
-  }, [card]);
+  }, [card, loading]);
 
   const getCardName = (cardObj) => {
     // Extract card name from various possible structures
@@ -228,9 +257,12 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
       <div className="oracle-tags-integration loading">
         <div className="oracle-tags-header">
           <span className="oracle-tags-icon">🏷️</span>
-          <span className="oracle-tags-title">Loading Oracle Tags...</span>
+          <span className="oracle-tags-title">Waiting for Oracle Tags System...</span>
         </div>
         <div className="loading-spinner"></div>
+        <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', marginTop: '8px' }}>
+          Loading 34,425 cards and 4,288 categories...
+        </div>
       </div>
     );
   }
