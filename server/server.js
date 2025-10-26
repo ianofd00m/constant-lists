@@ -577,6 +577,124 @@ app.get('/api/oracle-tags/:cardName', async (req, res) => {
   }
 });
 
+// One-time setup endpoint to populate Oracle Tags from CSV file
+app.post('/api/setup/populate-oracle-tags', async (req, res) => {
+  try {
+    console.log('🏷️ Starting Oracle Tags database population from server...');
+    
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    // Try to read CSV file from various paths
+    const possiblePaths = [
+      path.join(__dirname, '..', 'public', 'scryfall-COMPLETE-oracle-tags-2025-08-08.csv'),
+      path.join(__dirname, '..', 'public', 'otag-medium-dataset.csv'),
+      path.join(__dirname, '..', 'public', 'test-otag-data.csv'),
+    ];
+    
+    let csvContent;
+    let csvSource;
+    
+    for (const filePath of possiblePaths) {
+      try {
+        csvContent = await fs.readFile(filePath, 'utf8');
+        csvSource = path.basename(filePath);
+        console.log(`✅ Loaded CSV from: ${csvSource} (${csvContent.length} characters)`);
+        
+        // Only use substantial datasets
+        if (csvContent.length > 100000) {
+          break;
+        } else {
+          console.log(`⚠️ File too small (${csvContent.length} chars), trying next source...`);
+          csvContent = null;
+        }
+      } catch (err) {
+        console.log(`⚠️ Could not read ${filePath}: ${err.message}`);
+      }
+    }
+    
+    if (!csvContent) {
+      return res.status(404).json({ 
+        error: 'No suitable CSV file found',
+        message: 'Could not find Oracle Tags CSV file on server'
+      });
+    }
+    
+    // Parse CSV data
+    console.log('🔄 Parsing CSV data...');
+    const lines = csvContent.trim().split('\n');
+    const oracleTagsData = [];
+    
+    // Skip header line
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      try {
+        // Parse CSV line (handle quoted fields)
+        const match = line.match(/^"([^"]+)","(.+)"$/);
+        if (match) {
+          const cardName = match[1];
+          const oracleTags = match[2].split('|').map(tag => tag.trim()).filter(tag => tag);
+          
+          oracleTagsData.push({
+            cardName: cardName,
+            oracleTags: oracleTags,
+            cardNameLower: cardName.toLowerCase(),
+            tagCount: oracleTags.length,
+            lastUpdated: new Date()
+          });
+        }
+      } catch (err) {
+        console.warn(`Warning: Could not parse line ${i}: ${line}`);
+      }
+    }
+    
+    console.log(`📊 Parsed ${oracleTagsData.length} cards with Oracle Tags`);
+    
+    // Clear existing data and insert new data
+    const oracleTagsCollection = db.collection('oracleTags');
+    await oracleTagsCollection.deleteMany({});
+    
+    // Insert new data in batches
+    const BATCH_SIZE = 1000;
+    let insertedCount = 0;
+    
+    for (let i = 0; i < oracleTagsData.length; i += BATCH_SIZE) {
+      const batch = oracleTagsData.slice(i, i + BATCH_SIZE);
+      await oracleTagsCollection.insertMany(batch);
+      insertedCount += batch.length;
+      console.log(`📥 Inserted ${insertedCount}/${oracleTagsData.length} cards...`);
+    }
+    
+    // Create indexes
+    console.log('🔍 Creating database indexes...');
+    await oracleTagsCollection.createIndex({ cardNameLower: 1 });
+    await oracleTagsCollection.createIndex({ cardName: 1 });
+    await oracleTagsCollection.createIndex({ oracleTags: 1 });
+    
+    // Test with Jason Bright
+    const jasonBright = await oracleTagsCollection.findOne({ cardNameLower: 'jason bright, glowing prophet' });
+    
+    console.log(`✅ Successfully populated Oracle Tags database!`);
+    
+    res.json({
+      success: true,
+      totalCards: insertedCount,
+      source: csvSource,
+      jasonBrightTags: jasonBright ? jasonBright.oracleTags.length : 0,
+      sampleTags: jasonBright ? jasonBright.oracleTags.slice(0, 5) : []
+    });
+    
+  } catch (error) {
+    console.error('❌ Error populating Oracle Tags:', error);
+    res.status(500).json({ 
+      error: 'Failed to populate Oracle Tags', 
+      details: error.message 
+    });
+  }
+});
+
 // Decks routes
 app.get('/api/decks', (req, res) => {
   res.json({ message: 'Decks endpoint - ready for implementation' });
