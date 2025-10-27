@@ -227,7 +227,13 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
       alert('Could not find card name information. Please try a different card or refresh the page.');
       return;
     }
-    
+
+    // For basic lands, always force fresh fetch to ensure preferred printing is available
+    if (BASIC_LAND_PRINTINGS[cardName]) {
+      console.log(`🏞️ [MODAL INIT] Force clearing cache for basic land: ${cardName}`);
+      PrintingCache.remove(cardName);
+    }
+
     // INSTANT LOADING: Check global cache first for immediate display
     const cachedData = PrintingCache.get(cardName);
     if (cachedData) {
@@ -283,13 +289,17 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
         // For basic lands, override with preferred printing
         if (BASIC_LAND_PRINTINGS[cardName]) {
           const preferredPrintingId = getUserPreferredPrinting(cardName);
+          console.log(`🏞️ [MODAL CACHE] Checking basic land preference for ${cardName}: ${preferredPrintingId}`);
+          console.log(`🏞️ [MODAL CACHE] Available cached printings: ${cachedData.printings.length} cards`);
+          console.log(`🏞️ [MODAL CACHE] First 3 cached IDs:`, cachedData.printings.slice(0, 3).map(p => p.id));
+          
           if (preferredPrintingId) {
             const preferredPrinting = cachedData.printings.find(p => p.id === preferredPrintingId);
             if (preferredPrinting) {
               selectedPrintingToUse = preferredPrinting;
-              console.log(`🏞️ [MODAL CACHE] Using basic land preference for ${cardName}: ${preferredPrintingId}`);
+              console.log(`🏞️ [MODAL CACHE] ✅ Found basic land preference in cache for ${cardName}: ${preferredPrintingId}`);
             } else {
-              console.log(`🏞️ [MODAL CACHE] Basic land preference ${preferredPrintingId} not in cache, forcing fresh fetch`);
+              console.log(`🏞️ [MODAL CACHE] ❌ Basic land preference ${preferredPrintingId} not in cache, forcing fresh fetch`);
               PrintingCache.remove(cardName);
               shouldUseCachedData = false;
             }
