@@ -232,10 +232,14 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     if (BASIC_LAND_PRINTINGS[cardName]) {
       console.log(`🏞️ [MODAL INIT] Force clearing cache for basic land: ${cardName}`);
       PrintingCache.remove(cardName);
+      console.log(`🏞️ [MODAL INIT] Cache cleared, verifying removal...`);
+      const verifyCache = PrintingCache.get(cardName);
+      console.log(`🏞️ [MODAL INIT] Cache after clearing: ${verifyCache ? 'STILL HAS DATA' : 'SUCCESSFULLY CLEARED'}`);
     }
 
     // INSTANT LOADING: Check global cache first for immediate display
     const cachedData = PrintingCache.get(cardName);
+    console.log(`🏞️ [MODAL INIT] Cache check for ${cardName}: ${cachedData ? `found ${cachedData.printings?.length || 0} printings` : 'no cache found'}`);
     if (cachedData) {
       // console.log(`[CardActionsModal] ⚡ INSTANT LOAD from cache for ${cardName} - ${cachedData.printings?.length || 0} printings cached`);
       
@@ -614,6 +618,15 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
           deckListPrinting = card.printing;
         } else if (card.cardObj?.printing) {
           deckListPrinting = card.cardObj.printing;
+        }
+        
+        // 🏞️ BASIC LAND OVERRIDE: For basic lands, always use preferred printing
+        if (BASIC_LAND_PRINTINGS[cardName]) {
+          const preferredPrinting = getUserPreferredPrinting(cardName);
+          if (preferredPrinting) {
+            console.log(`🏞️ [MODAL SYNC] Overriding deck list printing for ${cardName}: ${deckListPrinting} → ${preferredPrinting}`);
+            deckListPrinting = preferredPrinting;
+          }
         } else if (card.scryfall_json?.id) {
           deckListPrinting = card.scryfall_json.id;
         } else if (card.scryfall_id) {
