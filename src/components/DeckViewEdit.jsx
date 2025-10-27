@@ -2582,36 +2582,40 @@ export default function DeckViewEdit({ isPublic = false }) {
       JSON.stringify(cardData.cardObj || {}),
     );
 
-    // For basic lands, use preferred printing to match preview
+    // For basic lands, use preferred printing to match deck creation consistency
     const isBasicLand = BASIC_LAND_PRINTINGS[cardData.name];
+    const preferredPrintingId = isBasicLand ? BASIC_LAND_PRINTINGS[cardData.name] : null;
     let preferredPrinting = cardData.printing || baseObj.printing;
     
-    if (isBasicLand) {
-      preferredPrinting = BASIC_LAND_PRINTINGS[cardData.name];
+    if (isBasicLand && preferredPrintingId) {
+      preferredPrinting = preferredPrintingId;
+      console.log(`🏞️ [MODAL] Using preferred printing for ${cardData.name}: ${preferredPrintingId}`);
     }
 
-    // Ensure we always have critical properties at the top level
-    // Use the actual foil property, not the extractPrice interpretation
+    // Create enhanced card object with preferred printing for basic lands
     const enrichedCardObj = {
       ...baseObj,
       name: cardData.name, // Ensure name is available at top level
       foil: isExplicitlyFoil, // Use the actual foil property, not extractPrice interpretation
       count: cardData.count || 1, // Ensure count is at top level
       price: price || null, // Include the calculated price
-      // CRITICAL: Use preferred printing for basic lands to match preview
-      printing: preferredPrinting,
-    
-    // Debug: Log card data being passed to modal
-    _debug_cardData: {
-      printing: cardData.printing,
-      name: cardData.name,
-      baseObjPrinting: baseObj.printing,
-      preferredPrinting: preferredPrinting,
-      isBasicLand: !!isBasicLand,
-      cardObjCard: baseObj.card,
-      cardObjCardPrinting: baseObj.card?.printing,
-      cardObjCardScryfallId: baseObj.card?.scryfall_json?.id
-    }
+      printing: preferredPrinting, // Use preferred printing for basic lands
+      
+      // For basic lands, override scryfall data to match preferred printing
+      ...(isBasicLand && preferredPrintingId && {
+        id: preferredPrintingId,
+        scryfall_id: preferredPrintingId,
+        // Clear image URIs to force fresh loading of preferred printing images
+        image_uris: null,
+        card: {
+          ...baseObj.card,
+          printing: preferredPrintingId,
+          scryfall_id: preferredPrintingId,
+          id: preferredPrintingId,
+          // Clear scryfall_json to force fresh data loading
+          scryfall_json: null
+        }
+      })
     };
 
     // Ensure foil status is consistent at all levels of the object
