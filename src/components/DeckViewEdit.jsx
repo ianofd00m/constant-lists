@@ -6350,6 +6350,13 @@ export default function DeckViewEdit({ isPublic = false }) {
           let updatedCards = [];
           let hasFoundMatch = false;
           
+          console.log(`[QUANTITY DEBUG] Looking for card to update: "${cardName}", quantity: ${updates.quantity}`);
+          console.log(`[QUANTITY DEBUG] CardObj data:`, { 
+            name: cardName,
+            foil: cardObj.foil || cardObj.card?.foil || false,
+            printing: cardObj.printing || cardObj.card?.printing || cardObj.cardObj?.printing
+          });
+          
           cards.forEach((c) => {
             const cName = c.card?.name || c.name;
             const cardFoil = cardObj.foil || cardObj.card?.foil || false;
@@ -6361,10 +6368,21 @@ export default function DeckViewEdit({ isPublic = false }) {
             const foilMatches = cardFoil === cFoil;
             const printingMatches = !cardPrinting || !cPrinting || cardPrinting === cPrinting;
             
+            if (cName === cardName) {
+              console.log(`[QUANTITY DEBUG] Found potential match: "${cName}"`, {
+                nameMatches,
+                foilMatches: `${cardFoil} === ${cFoil} = ${foilMatches}`,
+                printingMatches: `${cardPrinting} === ${cPrinting} = ${printingMatches}`,
+                overallMatch: nameMatches && foilMatches && printingMatches,
+                currentCount: c.count
+              });
+            }
+            
             if (nameMatches && foilMatches && printingMatches) {
               if (!hasFoundMatch) {
                 // This is the first match - update it and keep it
                 hasFoundMatch = true;
+                console.log(`[QUANTITY DEBUG] Updating card "${cName}" from quantity ${c.count} to ${updates.quantity}`);
                 // Create a new object with updated quantity at all levels
                 const updated = {
                   ...c,
@@ -6419,6 +6437,15 @@ export default function DeckViewEdit({ isPublic = false }) {
           
           // Force React to detect changes by creating completely new array references
           const newCardsArray = updatedCards.map(card => ({ ...card }));
+          console.log(`[QUANTITY DEBUG] Final result - found match: ${hasFoundMatch}, total cards: ${newCardsArray.length}`);
+          if (hasFoundMatch) {
+            const updatedCard = newCardsArray.find(c => (c.card?.name || c.name) === cardName);
+            console.log(`[QUANTITY DEBUG] Updated card final state:`, {
+              name: updatedCard?.card?.name || updatedCard?.name,
+              count: updatedCard?.count,
+              quantity: updatedCard?.quantity
+            });
+          }
           setCards(newCardsArray);
 
           // Update the deck object to ensure UI reflects changes
