@@ -280,7 +280,21 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
         let selectedPrintingToUse = cachedData.selectedPrinting;
         let shouldUseCachedData = true;
         
-        if (userPreference && userPreference.id) {
+        // For basic lands, override with preferred printing
+        if (BASIC_LAND_PRINTINGS[cardName]) {
+          const preferredPrintingId = getUserPreferredPrinting(cardName);
+          if (preferredPrintingId) {
+            const preferredPrinting = cachedData.printings.find(p => p.id === preferredPrintingId);
+            if (preferredPrinting) {
+              selectedPrintingToUse = preferredPrinting;
+              console.log(`🏞️ [MODAL CACHE] Using basic land preference for ${cardName}: ${preferredPrintingId}`);
+            } else {
+              console.log(`🏞️ [MODAL CACHE] Basic land preference ${preferredPrintingId} not in cache, forcing fresh fetch`);
+              PrintingCache.remove(cardName);
+              shouldUseCachedData = false;
+            }
+          }
+        } else if (userPreference && userPreference.id) {
           // Check if cached selectedPrinting matches user preference
           if (cachedData.selectedPrinting.id === userPreference.id) {
             // console.log(`[CardActionsModal] ✅ Cached data matches user preference: ${userPreference.set?.toUpperCase()} #${userPreference.collector_number}`);
@@ -405,7 +419,15 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
       let printingId = null;
       let selectionReason = '';
       
-      if (userPreference && userPreference.id) {
+      // Priority 0: Basic land preferred printing (highest priority)
+      if (BASIC_LAND_PRINTINGS[cardName]) {
+        const preferredPrintingId = getUserPreferredPrinting(cardName);
+        if (preferredPrintingId) {
+          printingId = preferredPrintingId;
+          selectionReason = `basic land preference: FDN #275 (${preferredPrintingId})`;
+          console.log(`🏞️ [MODAL] Using basic land preference for ${cardName}: ${preferredPrintingId}`);
+        }
+      } else if (userPreference && userPreference.id) {
         // Priority 1: User has explicitly chosen a printing before
         printingId = userPreference.id;
         selectionReason = `user preference: ${userPreference.set?.toUpperCase()} #${userPreference.collector_number}`;
