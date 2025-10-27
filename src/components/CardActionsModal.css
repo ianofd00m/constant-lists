@@ -1403,6 +1403,23 @@ html body div.card-actions-modal div.modal-content div.modal-body div.printings-
     appearance: textfield;
 }
 
+/* Improved quantity input editing state */
+.quantity-input.editing {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    background-color: #f8f9fa;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.quantity-input:hover {
+    border-color: #999;
+}
+
 /* Foil availability indicators */
 .foil-only-indicator {
     color: #1976d2;

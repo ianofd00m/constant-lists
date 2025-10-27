@@ -49,6 +49,8 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
   const [userIsToggling, setUserIsToggling] = useState(false); // Flag to prevent useEffect conflicts
   const [collectionVersion, setCollectionVersion] = useState(0);
   const [priceUpdateTrigger, setPriceUpdateTrigger] = useState(0); // Force price display updates
+  const [tempQuantity, setTempQuantity] = useState(''); // For improved quantity UX
+  const [isEditingQuantity, setIsEditingQuantity] = useState(false); // Track if user is editing
   const PLACEHOLDER_IMG = 'https://via.placeholder.com/120x170?text=No+Image';
   
   // INSTANT LOADING: Replace component-level cache with global cache usage
@@ -1226,11 +1228,17 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
   };
 
   const handleQuantityChange = (e) => {
-    let newQuantity = parseInt(e.target.value, 10);
+    const value = e.target.value;
+    setTempQuantity(value);
+    setIsEditingQuantity(true);
+  };
+
+  const saveQuantityChange = () => {
+    let newQuantity = parseInt(tempQuantity, 10);
     
-    // Handle invalid input - reset to 1
+    // Handle invalid input - revert to current quantity
     if (isNaN(newQuantity) || newQuantity === 0) {
-      newQuantity = 1;
+      newQuantity = quantity;
     }
     
     // Enforce reasonable maximum (999)
@@ -1244,8 +1252,50 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
       return;
     }
     
-    setQuantity(newQuantity);
-    onUpdateCard(card, { quantity: newQuantity });
+    // Update quantity only if it changed
+    if (newQuantity !== quantity) {
+      setQuantity(newQuantity);
+      onUpdateCard(card, { quantity: newQuantity });
+      toast.success(`Updated quantity to ${newQuantity}`, { 
+        position: "top-center", 
+        autoClose: 1000, 
+        hideProgressBar: true 
+      });
+    }
+    
+    setIsEditingQuantity(false);
+    setTempQuantity('');
+  };
+
+  const cancelQuantityEdit = () => {
+    setTempQuantity('');
+    setIsEditingQuantity(false);
+  };
+
+  const handleQuantityKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.target.blur(); // This will trigger onBlur and save
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelQuantityEdit();
+      e.target.blur();
+    }
+  };
+
+  const handleQuantityFocus = (e) => {
+    setTempQuantity(quantity.toString());
+    setIsEditingQuantity(true);
+    // Auto-select all text for easy editing
+    setTimeout(() => {
+      e.target.select();
+    }, 0);
+  };
+
+  const handleQuantityBlur = () => {
+    if (isEditingQuantity) {
+      saveQuantityChange();
+    }
   };
 
   const incrementQuantity = () => {
@@ -1253,6 +1303,11 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     if (newQuantity !== quantity) {
       setQuantity(newQuantity);
       onUpdateCard(card, { quantity: newQuantity });
+      toast.success(`Increased quantity to ${newQuantity}`, { 
+        position: "top-center", 
+        autoClose: 1000, 
+        hideProgressBar: true 
+      });
     }
   };
 
@@ -1262,11 +1317,21 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     // If quantity would go below 1, remove the card instead of updating
     if (newQuantity < 1) {
       onRemoveCard(card); // Remove the card from the deck
+      toast.success('Removed card from deck', { 
+        position: "top-center", 
+        autoClose: 1000, 
+        hideProgressBar: true 
+      });
       return;
     }
     
     setQuantity(newQuantity);
     onUpdateCard(card, { quantity: newQuantity });
+    toast.success(`Decreased quantity to ${newQuantity}`, { 
+      position: "top-center", 
+      autoClose: 1000, 
+      hideProgressBar: true 
+    });
   };
 
   // Monitor collection changes to update status indicators
@@ -1423,31 +1488,142 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
             
             {/* Horizontal quantity controls */}
             <div className="action-row quantity-row">
-              <label className="control-label" style={{ display: 'flex', alignItems: 'center' }}>Quantity:</label>
+              <label className="control-label" style={{ display: 'flex', alignItems: 'center' }}>
+                Quantity:
+                {isEditingQuantity && (
+                  <span style={{ 
+                    fontSize: '10px', 
+                    color: '#666', 
+                    marginLeft: '8px',
+                    fontStyle: 'italic' 
+                  }}>
+                    Press Enter to save, Esc to cancel
+                  </span>
+                )}
+              </label>
               <div className="quantity-controls">
                 <button 
                   className="quantity-btn" 
                   onClick={decrementQuantity}
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 1 || isEditingQuantity}
+                  title={quantity <= 1 ? "Cannot go below 1" : "Decrease quantity"}
                 >−</button>
                 <input 
                   type="number" 
-                  value={quantity} 
+                  value={isEditingQuantity ? tempQuantity : quantity} 
                   onChange={handleQuantityChange}
-                  className="quantity-input"
+                  onFocus={handleQuantityFocus}
+                  onBlur={handleQuantityBlur}
+                  onKeyDown={handleQuantityKeyDown}
+                  className={`quantity-input ${isEditingQuantity ? 'editing' : ''}`}
                   min="1"
                   max="999"
                   step="1"
+                  placeholder="Enter quantity"
+                  title="Click to edit, Enter to save, Esc to cancel"
                 />
                 <button 
                   className="quantity-btn" 
                   onClick={incrementQuantity}
+                  disabled={quantity >= 999 || isEditingQuantity}
+                  title={quantity >= 999 ? "Maximum quantity reached" : "Increase quantity"}
                 >+</button>
               </div>
+              {isEditingQuantity && (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '4px', 
+                  marginLeft: '8px' 
+                }}>
+                  <button
+                    onClick={saveQuantityChange}
+                    style={{
+                      background: '#22c55e',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      padding: '2px 6px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                    title="Save changes"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={cancelQuantityEdit}
+                    style={{
+                      background: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      padding: '2px 6px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                    title="Cancel changes"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
             
             {/* Action buttons */}
             <div className="action-buttons">
+              <button className="action-button" onClick={() => {
+                if (selectedPrinting && card) {
+                  // Create wishlist entry using current modal state
+                  const wishlistCard = {
+                    name: card.name,
+                    printing: selectedPrinting.id,
+                    foil: isFoil,
+                    count: 1,
+                    dateAdded: Date.now(),
+                    cardObj: {
+                      scryfall_id: selectedPrinting.id,
+                      name: selectedPrinting.name,
+                      set: selectedPrinting.set,
+                      set_name: selectedPrinting.set_name,
+                      collector_number: selectedPrinting.collector_number,
+                      image_uris: selectedPrinting.image_uris,
+                      type_line: selectedPrinting.type_line,
+                      mana_cost: selectedPrinting.mana_cost,
+                      cmc: selectedPrinting.cmc,
+                      colors: selectedPrinting.colors,
+                      color_identity: selectedPrinting.color_identity,
+                      prices: selectedPrinting.prices
+                    },
+                    scryfall_json: selectedPrinting
+                  };
+
+                  // Load existing wishlist from localStorage
+                  const existingWishlist = JSON.parse(localStorage.getItem('global-wishlist') || '[]');
+                  
+                  // Check if card already exists in wishlist
+                  const existingCardIndex = existingWishlist.findIndex(item => 
+                    item.name === card.name && item.printing === selectedPrinting.id
+                  );
+                  
+                  if (existingCardIndex !== -1) {
+                    // Card exists, increment quantity
+                    existingWishlist[existingCardIndex].count += 1;
+                    toast.success(`Updated ${card.name} quantity in wishlist (now ${existingWishlist[existingCardIndex].count})`);
+                  } else {
+                    // New card, add to wishlist
+                    existingWishlist.push(wishlistCard);
+                    toast.success(`Added ${card.name} to wishlist`);
+                  }
+                  
+                  // Save updated wishlist to localStorage
+                  localStorage.setItem('global-wishlist', JSON.stringify(existingWishlist));
+                  
+                  // Dispatch custom event to update navbar or other components
+                  window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: existingWishlist }));
+                } else {
+                  toast.error('Unable to add card to wishlist');
+                }
+              }}>Add to Wishlist</button>
               <button className="action-button" onClick={() => onRemoveCard(card)}>Remove from Deck</button>
               <button className="action-button" onClick={() => onMoveToSideboard(card)}>Move to Sideboard</button>
               <button className="action-button" onClick={() => {

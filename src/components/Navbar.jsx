@@ -5,6 +5,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const loggedIn = !!localStorage.getItem('token');
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [wishlistItemCount, setWishlistItemCount] = useState(0);
 
   // Update cart item count from localStorage
   useEffect(() => {
@@ -24,27 +25,52 @@ export default function Navbar() {
       }
     };
 
+    const updateWishlistCount = () => {
+      try {
+        const savedWishlist = localStorage.getItem('global-wishlist');
+        if (savedWishlist) {
+          const parsedWishlist = JSON.parse(savedWishlist);
+          const totalItems = parsedWishlist.reduce((sum, item) => sum + parseInt(item.count || 1), 0);
+          setWishlistItemCount(totalItems);
+        } else {
+          setWishlistItemCount(0);
+        }
+      } catch (error) {
+        console.error('Error reading wishlist from localStorage:', error);
+        setWishlistItemCount(0);
+      }
+    };
+
     // Update count on mount
     updateCartCount();
+    updateWishlistCount();
 
-    // Listen for localStorage changes (when items are added to cart)
+    // Listen for localStorage changes (when items are added to cart/wishlist)
     const handleStorageChange = (e) => {
       if (e.key === 'shoppingCart') {
         updateCartCount();
+      } else if (e.key === 'global-wishlist') {
+        updateWishlistCount();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Also listen for custom cart update events
+    // Also listen for custom update events
     const handleCartUpdate = () => {
       updateCartCount();
     };
+    const handleWishlistUpdate = () => {
+      updateWishlistCount();
+    };
+    
     window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
     };
   }, []);
 
@@ -74,6 +100,45 @@ export default function Navbar() {
         <Link to="/collect" style={{ color: '#fff' }}>Collect</Link>
         <Link to="/trade" style={{ color: '#fff' }}>Trade</Link>
         
+        {/* Wishlist Icon */}
+        <Link 
+          to="/wishlist" 
+          style={{ 
+            color: '#fff', 
+            display: 'flex', 
+            alignItems: 'center', 
+            position: 'relative',
+            textDecoration: 'none'
+          }}
+          title="Wishlist"
+        >
+          <img
+            src="/svgs/heart-outline.svg" 
+            alt="Wishlist" 
+            style={{ width: '20px', height: '20px', opacity: 0.8 }}
+          />
+          {wishlistItemCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              background: '#ef4444',
+              color: 'white',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              fontSize: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              minWidth: '16px'
+            }}>
+              {wishlistItemCount > 99 ? '99+' : wishlistItemCount}
+            </span>
+          )}
+        </Link>
+        
         {/* Shopping Cart Icon */}
         <Link 
           to="/shopping-cart" 
@@ -86,9 +151,9 @@ export default function Navbar() {
           }}
           title="Shopping Cart"
         >
-                    <img
+          <img
             src="/svgs/shopping-cart-outline.svg" 
-            alt="Collections" 
+            alt="Shopping Cart" 
             style={{ width: '20px', height: '20px', opacity: 0.8 }}
           />
           {cartItemCount > 0 && (

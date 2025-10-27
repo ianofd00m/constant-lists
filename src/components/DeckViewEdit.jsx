@@ -6583,34 +6583,91 @@ export default function DeckViewEdit({ isPublic = false }) {
 
             // Define and immediately execute an async function to handle the server update
             (async function updateServer() {
-              const formattedCards = [];
-
-              // Create a proper format for the server based on the updated cards
-              updatedCards.forEach((card) => {
-                // Get the card count/quantity - this is critical for the server to recognize changes
-                const cardCount = parseInt(card.count, 10) || 1;
-
-                // Create the base formatted card object
-                const formattedCard = {
-                  name: card.name || card.card?.name || "",
+              // Use the same robust card cleaning approach as printing updates to prevent 500 errors
+              const cleanCards = updatedCards.map((card) => {
+                // CRITICAL FIX: Validate modalPrice to prevent undefined from being sent to server
+                const validModalPrice = (card.modalPrice !== undefined && card.modalPrice !== null && card.modalPrice !== "undefined") ? card.modalPrice : null;
+                
+                // Basic card info that's always needed - match structure from handleAddCard
+                let cleanCard = {
+                  name: card.card?.name || card.name,
+                  count: card.count || 1,
+                  quantity: card.count || 1, // Add quantity field for server compatibility
                   printing: card.printing || null,
-                  foil: card.foil === true, // Make sure it's boolean
-                  count: cardCount, // Include count for proper server handling
+                  isCommander: card.isCommander || false, // Ensure isCommander field
+                  ...(card.foil !== undefined ? { foil: card.foil } : {}),
+                  // Include all essential card properties for server validation
+                  set: card.set || card.card?.set || card.scryfall_json?.set,
+                  collector_number: card.collector_number || card.card?.collector_number || card.scryfall_json?.collector_number,
+                  finishes: card.finishes || card.scryfall_json?.finishes || ["nonfoil"],
+                  prices: card.prices || card.card?.prices || card.scryfall_json?.prices || {},
+                  mana_cost: card.mana_cost || card.card?.mana_cost || card.scryfall_json?.mana_cost,
+                  color_identity: card.color_identity || card.card?.color_identity || card.scryfall_json?.color_identity,
+                  cmc: card.cmc || card.card?.cmc || card.scryfall_json?.cmc,
+                  type_line: card.type_line || card.card?.type_line || card.scryfall_json?.type_line,
+                  scryfall_id: card.scryfall_id || card.card?.scryfall_id || card.scryfall_json?.id,
+                  // CRITICAL FIX: Include modalPrice to persist synchronized pricing - only if not null
+                  ...(validModalPrice !== null ? { modalPrice: validModalPrice } : {}),
                 };
 
-                // Add card ID if available (important for server-side lookup)
-                if (card.card && card.card._id) {
-                  formattedCard.card = {
-                    _id: card.card._id,
-                    name: card.card.name,
-                  };
-                } else if (card._id) {
-                  formattedCard._id = card._id;
+                // Handle MongoID references properly
+                if (card._id && isValidObjectId(card._id)) {
+                  cleanCard._id = card._id;
                 }
 
-                // Add this formatted card to our array
-                formattedCards.push(formattedCard);
+                // CRITICAL FIX: Properly structure the card field for server compatibility
+                // The server expects either a MongoDB ObjectId string OR a complete card object
+                if (card.card) {
+                  if (typeof card.card === "object" && card.card !== null) {
+                    if (card.card._id && isValidObjectId(card.card._id)) {
+                      // Use MongoDB ObjectId reference
+                      cleanCard.card = card.card._id;
+                    } else {
+                      // Include essential card data structure for server
+                      cleanCard.card = {
+                        name: card.card.name || card.name,
+                        set: card.card.set || card.set || card.scryfall_json?.set,
+                        collector_number: card.card.collector_number || card.collector_number || card.scryfall_json?.collector_number,
+                        mana_cost: card.card.mana_cost || card.mana_cost || card.scryfall_json?.mana_cost,
+                        color_identity: card.card.color_identity || card.color_identity || card.scryfall_json?.color_identity,
+                        cmc: card.card.cmc || card.cmc || card.scryfall_json?.cmc,
+                        type_line: card.card.type_line || card.type_line || card.scryfall_json?.type_line,
+                        ...(card.card._id && isValidObjectId(card.card._id) ? { _id: card.card._id } : {}),
+                      };
+                    }
+                  } else if (typeof card.card === "string") {
+                    if (isValidObjectId(card.card)) {
+                      cleanCard.card = card.card;
+                    } else {
+                      // Create card object with available data
+                      cleanCard.card = {
+                        name: card.name,
+                        set: card.set || card.scryfall_json?.set,
+                        collector_number: card.collector_number || card.scryfall_json?.collector_number,
+                        mana_cost: card.mana_cost || card.scryfall_json?.mana_cost,
+                        color_identity: card.color_identity || card.scryfall_json?.color_identity,
+                        cmc: card.cmc || card.scryfall_json?.cmc,
+                        type_line: card.type_line || card.scryfall_json?.type_line,
+                      };
+                    }
+                  }
+                } else {
+                  // No card reference - create one from available data
+                  cleanCard.card = {
+                    name: card.name,
+                    set: card.set || card.scryfall_json?.set,
+                    collector_number: card.collector_number || card.scryfall_json?.collector_number,
+                    mana_cost: card.mana_cost || card.scryfall_json?.mana_cost,
+                    color_identity: card.color_identity || card.scryfall_json?.color_identity,
+                    cmc: card.cmc || card.scryfall_json?.cmc,
+                    type_line: card.type_line || card.scryfall_json?.type_line,
+                  };
+                }
+
+                return cleanCard;
               });
+
+              console.log('[QUANTITY UPDATE] Sending cleaned cards to server:', cleanCards);
 
               const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -6628,7 +6685,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                 },
                 credentials: "include", // Include cookies for sessions
                 body: JSON.stringify({
-                  cards: formattedCards,
+                  cards: cleanCards,
                   name: name || deck.name,
                   // Preserve commander data in server update
                   commander: deck.commander,
@@ -11524,38 +11581,8 @@ export default function DeckViewEdit({ isPublic = false }) {
                           return;
                         }
 
-                        try {
-                          const token = localStorage.getItem("token");
-                          const apiUrl = import.meta.env.VITE_API_URL;
-                          
-                          // Create wishlist entry
-                          const wishlistData = {
-                            cardName: cardObj.name,
-                            printing: cardObj.printing || null,
-                            foil: cardObj.foil || false,
-                            quantity: 1
-                          };
-
-                          const response = await fetch(`${apiUrl}/api/wishlist`, {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify(wishlistData),
-                            credentials: "include",
-                          });
-
-                          if (response.ok) {
-                            toast.success(`Added "${cardObj.name}" to wishlist!`);
-                          } else {
-                            const errorData = await response.json();
-                            toast.error(errorData.error || "Failed to add card to wishlist");
-                          }
-                        } catch (error) {
-                          console.error("Error adding to wishlist:", error);
-                          toast.error("Failed to add card to wishlist");
-                        }
+                        // Use the localStorage-based wishlist function
+                        await handleAddToWishlist(cardObj);
                       }}
                       onAddToCollection={async () => {
                         const cardObj = contextMenu.cardObj;

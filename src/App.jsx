@@ -34,6 +34,7 @@ import ResetPassword from './components/ResetPassword';
 import TradePage from './components/TradePage';
 import TradeManagementPage from './components/TradeManagementPage';
 import ShoppingCart from './components/ShoppingCart';
+import WishlistPage from './components/WishlistPage';
 
 function HomePage() {
   return (
@@ -120,6 +121,7 @@ function App() {
           <Route path="/trade" element={<TradePage />} />
           <Route path="/trades/:tradeId" element={<TradeManagementPage />} />
           <Route path="/shopping-cart" element={<ShoppingCart />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/search" element={<CardSearch />} />
           <Route path="/login" element={<AuthForm mode="login" />} />
           <Route path="/register" element={<AuthForm mode="register" />} />
