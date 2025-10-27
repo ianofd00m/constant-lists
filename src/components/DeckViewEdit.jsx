@@ -13440,4 +13440,35 @@ if (typeof window !== 'undefined') {
     }
     return [];
   };
+  
+  // Add quantity update test function for debugging Island persistence issue
+  window.testQuantityUpdate = (cardName = 'Island', newQuantity = null) => {
+    console.log(`[QUANTITY TEST] Testing quantity update for "${cardName}"`);
+    
+    const currentCards = cards || [];
+    const targetCard = currentCards.find(card => {
+      const name = card.card?.name || card.name;
+      return name === cardName;
+    });
+    
+    if (!targetCard) {
+      console.log(`[QUANTITY TEST] Card "${cardName}" not found in deck`);
+      return null;
+    }
+    
+    const currentQuantity = targetCard.count || 1;
+    const testQuantity = newQuantity !== null ? newQuantity : currentQuantity + 1;
+    
+    console.log(`[QUANTITY TEST] Found "${cardName}" with quantity ${currentQuantity}, updating to ${testQuantity}`);
+    
+    // Call handleUpdateCard directly with the target card
+    try {
+      handleUpdateCard(targetCard, { quantity: testQuantity });
+      console.log(`[QUANTITY TEST] Called handleUpdateCard for "${cardName}" with quantity ${testQuantity}`);
+      return { cardName, oldQuantity: currentQuantity, newQuantity: testQuantity };
+    } catch (error) {
+      console.error('[QUANTITY TEST] Error calling handleUpdateCard:', error);
+      return null;
+    }
+  };
 }
