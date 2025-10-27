@@ -13313,6 +13313,7 @@ export default function DeckViewEdit({ isPublic = false }) {
               });
             }}
             card={modalState.cardObj}
+            onAddCard={handleAddCard}
             onUpdateCard={handleUpdateCard}
             onRemoveCard={handleRemoveCard}
             onMoveToSideboard={handleMoveToSideboard}
