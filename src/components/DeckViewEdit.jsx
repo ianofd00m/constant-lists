@@ -13445,7 +13445,10 @@ if (typeof window !== 'undefined') {
   window.testQuantityUpdate = (cardName = 'Island', newQuantity = null) => {
     console.log(`[QUANTITY TEST] Testing quantity update for "${cardName}"`);
     
-    const currentCards = cards || [];
+    // Access current cards from deck state
+    const currentCards = deck?.cards || [];
+    console.log(`[QUANTITY TEST] Found ${currentCards.length} cards in deck`);
+    
     const targetCard = currentCards.find(card => {
       const name = card.card?.name || card.name;
       return name === cardName;
@@ -13453,6 +13456,7 @@ if (typeof window !== 'undefined') {
     
     if (!targetCard) {
       console.log(`[QUANTITY TEST] Card "${cardName}" not found in deck`);
+      console.log(`[QUANTITY TEST] Available card names:`, currentCards.map(c => c.card?.name || c.name));
       return null;
     }
     
@@ -13460,6 +13464,12 @@ if (typeof window !== 'undefined') {
     const testQuantity = newQuantity !== null ? newQuantity : currentQuantity + 1;
     
     console.log(`[QUANTITY TEST] Found "${cardName}" with quantity ${currentQuantity}, updating to ${testQuantity}`);
+    console.log(`[QUANTITY TEST] Target card data:`, {
+      name: targetCard.card?.name || targetCard.name,
+      count: targetCard.count,
+      foil: targetCard.foil || targetCard.card?.foil,
+      printing: targetCard.printing || targetCard.card?.printing
+    });
     
     // Call handleUpdateCard directly with the target card
     try {
