@@ -228,18 +228,9 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
       return;
     }
 
-    // For basic lands, always force fresh fetch to ensure preferred printing is available
-    if (BASIC_LAND_PRINTINGS[cardName]) {
-      console.log(`🏞️ [MODAL INIT] Force clearing cache for basic land: ${cardName}`);
-      PrintingCache.remove(cardName);
-      console.log(`🏞️ [MODAL INIT] Cache cleared, verifying removal...`);
-      const verifyCache = PrintingCache.get(cardName);
-      console.log(`🏞️ [MODAL INIT] Cache after clearing: ${verifyCache ? 'STILL HAS DATA' : 'SUCCESSFULLY CLEARED'}`);
-    }
-
     // INSTANT LOADING: Check global cache first for immediate display
     const cachedData = PrintingCache.get(cardName);
-    console.log(`🏞️ [MODAL INIT] Cache check for ${cardName}: ${cachedData ? `found ${cachedData.printings?.length || 0} printings` : 'no cache found'}`);
+    console.log(`🏞️ [FETCH PRINTINGS] Cache check for ${cardName}: ${cachedData ? `found ${cachedData.printings?.length || 0} printings` : 'no cache found'}`);
     if (cachedData) {
       // console.log(`[CardActionsModal] ⚡ INSTANT LOAD from cache for ${cardName} - ${cachedData.printings?.length || 0} printings cached`);
       
@@ -600,6 +591,15 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     if (isOpen && card) {
       // Extract current card name for comparison
       const cardName = card.name || card.cardObj?.name || card.cardObj?.card?.name;
+      
+      // 🏞️ BASIC LAND CACHE CLEAR: For basic lands, always force fresh fetch to ensure preferred printing is available
+      if (BASIC_LAND_PRINTINGS[cardName]) {
+        console.log(`🏞️ [MODAL INIT] Force clearing cache for basic land: ${cardName}`);
+        PrintingCache.remove(cardName);
+        console.log(`🏞️ [MODAL INIT] Cache cleared, verifying removal...`);
+        const verifyCache = PrintingCache.get(cardName);
+        console.log(`🏞️ [MODAL INIT] Cache after clearing: ${verifyCache ? 'STILL HAS DATA' : 'SUCCESSFULLY CLEARED'}`);
+      }
       
       // INSTANT LOADING: Check cache first before any async operations
       const cachedData = PrintingCache.get(cardName);
