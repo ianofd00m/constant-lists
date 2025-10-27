@@ -2727,55 +2727,7 @@ export default function DeckViewEdit({ isPublic = false }) {
     lastHoveredCardRef.current = null; // Reset hover tracking
   }, [searchResults, showDropdown]);
 
-  // PERSISTENCE TEST: Add to window for console testing
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && deck) {
-      window.testCardPersistence = async (cardName = 'Island') => {
-        console.log(`🧪 [PERSISTENCE TEST] Starting test with card: ${cardName}`);
-        console.log(`🧪 [PERSISTENCE TEST] Current deck cards before:`, deck.cards?.length);
-        
-        // Try to add a test card
-        const testCard = {
-          name: cardName,
-          scryfall_id: '23635e40-d040-40b7-8b98-90ed362aa028', // FDN Island
-          id: '23635e40-d040-40b7-8b98-90ed362aa028',
-          set: 'fdn',
-          collector_number: '275'
-        };
-        
-        try {
-          await handleAddCard(testCard);
-          console.log(`🧪 [PERSISTENCE TEST] Add completed, waiting 2 seconds...`);
-          
-          // Wait and then test if it persists
-          setTimeout(async () => {
-            console.log(`🧪 [PERSISTENCE TEST] Testing persistence by refetching deck...`);
-            
-            const apiUrl = import.meta.env.VITE_API_URL;
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${apiUrl}/api/decks/${deck._id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            if (response.ok) {
-              const freshDeck = await response.json();
-              const hasCard = freshDeck.cards?.some(c => (c.card?.name || c.name) === cardName);
-              console.log(`🧪 [PERSISTENCE TEST] Card found in fresh fetch:`, hasCard);
-              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards count:`, freshDeck.cards?.length);
-              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards:`, freshDeck.cards?.map(c => c.card?.name || c.name).sort());
-            } else {
-              console.error(`🧪 [PERSISTENCE TEST] Failed to refetch deck:`, response.status);
-            }
-          }, 2000);
-          
-        } catch (error) {
-          console.error(`🧪 [PERSISTENCE TEST] Error:`, error);
-        }
-      };
-      
-      console.log('🧪 Persistence test available: window.testCardPersistence()');
-    }
-  }, [deck, handleAddCard]);
+
 
   // Handle adding a card to the deck
   const handleAddCard = useCallback(async (cardToAdd) => {
@@ -3344,6 +3296,56 @@ export default function DeckViewEdit({ isPublic = false }) {
       toast.error(`Error adding card to deck: ${error.message}. Please try again.`);
     }
   }, [deck, setDeck, ensureCommanderInCards]); // Add dependencies to prevent recreation
+
+  // PERSISTENCE TEST: Add to window for console testing (after handleAddCard is defined)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && deck && handleAddCard) {
+      window.testCardPersistence = async (cardName = 'Island') => {
+        console.log(`🧪 [PERSISTENCE TEST] Starting test with card: ${cardName}`);
+        console.log(`🧪 [PERSISTENCE TEST] Current deck cards before:`, deck.cards?.length);
+        
+        // Try to add a test card
+        const testCard = {
+          name: cardName,
+          scryfall_id: '23635e40-d040-40b7-8b98-90ed362aa028', // FDN Island
+          id: '23635e40-d040-40b7-8b98-90ed362aa028',
+          set: 'fdn',
+          collector_number: '275'
+        };
+        
+        try {
+          await handleAddCard(testCard);
+          console.log(`🧪 [PERSISTENCE TEST] Add completed, waiting 2 seconds...`);
+          
+          // Wait and then test if it persists
+          setTimeout(async () => {
+            console.log(`🧪 [PERSISTENCE TEST] Testing persistence by refetching deck...`);
+            
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${apiUrl}/api/decks/${deck._id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+              const freshDeck = await response.json();
+              const hasCard = freshDeck.cards?.some(c => (c.card?.name || c.name) === cardName);
+              console.log(`🧪 [PERSISTENCE TEST] Card found in fresh fetch:`, hasCard);
+              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards count:`, freshDeck.cards?.length);
+              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards:`, freshDeck.cards?.map(c => c.card?.name || c.name).sort());
+            } else {
+              console.error(`🧪 [PERSISTENCE TEST] Failed to refetch deck:`, response.status);
+            }
+          }, 2000);
+          
+        } catch (error) {
+          console.error(`🧪 [PERSISTENCE TEST] Error:`, error);
+        }
+      };
+      
+      console.log('🧪 Persistence test available: window.testCardPersistence()');
+    }
+  }, [deck, handleAddCard]);
 
   // Get deck ID from URL params (for loading a specific deck)
   // ...existing code...
