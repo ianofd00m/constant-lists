@@ -6583,6 +6583,11 @@ export default function DeckViewEdit({ isPublic = false }) {
 
             // Define and immediately execute an async function to handle the server update
             (async function updateServer() {
+              // Define ObjectId validation function
+              const isValidObjectId = (id) => {
+                return id && typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+              };
+
               // Use the same robust card cleaning approach as printing updates to prevent 500 errors
               const cleanCards = updatedCards.map((card) => {
                 // CRITICAL FIX: Validate modalPrice to prevent undefined from being sent to server
