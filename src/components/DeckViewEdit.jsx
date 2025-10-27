@@ -12541,7 +12541,20 @@ export default function DeckViewEdit({ isPublic = false }) {
                                 imageUrl = card.image_uris?.normal || card.image_uris?.small;
                               }
                             } else {
-                              imageUrl = card.image_uris?.normal || card.image_uris?.small;
+                              // 🏞️ BASIC LAND PREFERENCE: Check if this is a basic land and apply user preference
+                              if (BASIC_LAND_PRINTINGS[cardName]) {
+                                const preferredPrintingId = getUserPreferredPrinting(cardName);
+                                if (preferredPrintingId && preferredPrintingId !== (card.scryfall_id || card.id)) {
+                                  console.log(`🏞️ [SEARCH MODAL] Using preferred printing for ${cardName}: ${preferredPrintingId} (was ${card.scryfall_id || card.id})`);
+                                  // Construct the correct Scryfall image URL for the preferred printing
+                                  imageUrl = `https://cards.scryfall.io/normal/front/${preferredPrintingId.substring(0,1)}/${preferredPrintingId.substring(1,2)}/${preferredPrintingId}.jpg`;
+                                  console.log(`🏞️ [SEARCH MODAL] Set image URL: ${imageUrl}`);
+                                } else {
+                                  imageUrl = card.image_uris?.normal || card.image_uris?.small;
+                                }
+                              } else {
+                                imageUrl = card.image_uris?.normal || card.image_uris?.small;
+                              }
                             }
                             
                             // Use proxied URL to avoid CORS issues
