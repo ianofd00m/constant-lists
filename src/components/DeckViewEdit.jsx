@@ -2794,10 +2794,10 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       // CRITICAL: For basic lands, override with preferred printing for consistency
       const isBasicLand = BASIC_LAND_PRINTINGS[cardToAdd.name];
+      const preferredPrintingId = isBasicLand ? BASIC_LAND_PRINTINGS[cardToAdd.name] : null;
       let finalCardToAdd = cardToAdd;
       
       if (isBasicLand) {
-        const preferredPrintingId = BASIC_LAND_PRINTINGS[cardToAdd.name];
         console.log(`[BASIC LAND] Using preferred printing for ${cardToAdd.name}: ${preferredPrintingId}`);
         
         // Override the cardToAdd with preferred printing data
