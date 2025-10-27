@@ -6853,6 +6853,16 @@ export default function DeckViewEdit({ isPublic = false }) {
                 // CRITICAL FIX: Validate modalPrice to prevent undefined from being sent to server
                 const validModalPrice = (card.modalPrice !== undefined && card.modalPrice !== null && card.modalPrice !== "undefined") ? card.modalPrice : null;
                 
+                // DEBUG: Log card data before cleaning for Island
+                if ((card.card?.name || card.name) === 'Island') {
+                  console.log(`[CARD CLEANING DEBUG] Island before cleaning:`, {
+                    name: card.card?.name || card.name,
+                    originalCount: card.count,
+                    countExists: 'count' in card,
+                    cardStructure: Object.keys(card)
+                  });
+                }
+                
                 // Basic card info that's always needed - match structure from handleAddCard
                 let cleanCard = {
                   name: card.card?.name || card.name,
@@ -6932,6 +6942,22 @@ export default function DeckViewEdit({ isPublic = false }) {
                 return cleanCard;
               });
 
+              // CRITICAL DEBUG: Log the Island data being sent to server
+              const islandInCleanCards = cleanCards.find(card => (card.name || card.card?.name) === cardName);
+              if (cardName === 'Island' || islandInCleanCards) {
+                console.log(`[QUANTITY DEBUG] Island data being sent to server:`, {
+                  found: !!islandInCleanCards,
+                  cardName: cardName,
+                  islandData: islandInCleanCards,
+                  originalCardCount: targetCard?.count,
+                  updatesQuantity: updates.quantity,
+                  cleanedCount: islandInCleanCards?.count,
+                  cleanedQuantity: islandInCleanCards?.quantity,
+                  hasCountField: islandInCleanCards ? ('count' in islandInCleanCards) : false,
+                  hasQuantityField: islandInCleanCards ? ('quantity' in islandInCleanCards) : false
+                });
+              }
+              
               console.log('[QUANTITY UPDATE] Sending cleaned cards to server:', cleanCards);
 
               const apiUrl = import.meta.env.VITE_API_URL;
@@ -13445,9 +13471,36 @@ if (typeof window !== 'undefined') {
   window.testQuantityUpdate = (cardName = 'Island', newQuantity = null) => {
     console.log(`[QUANTITY TEST] Testing quantity update for "${cardName}"`);
     
-    // Access current cards from deck state
-    const currentCards = deck?.cards || [];
-    console.log(`[QUANTITY TEST] Found ${currentCards.length} cards in deck`);
+    // Access current cards from deck state - with multiple fallback methods
+    let currentCards = [];
+    let deckSource = 'unknown';
+    
+    if (typeof deck !== 'undefined' && deck?.cards) {
+      currentCards = deck.cards;
+      deckSource = 'deck variable';
+    } else if (window.deck?.cards) {
+      currentCards = window.deck.cards;
+      deckSource = 'window.deck';
+    } else {
+      // Try to access through React DevTools or component instance
+      const deckElement = document.querySelector('[data-testid="deck-view-edit"]') || document.querySelector('main');
+      if (deckElement && deckElement._reactInternalFiber) {
+        try {
+          // This is a hack to access React state
+          const component = deckElement._reactInternalFiber;
+          console.log('[QUANTITY TEST] Found React component, trying to access state...');
+        } catch (e) {
+          console.log('[QUANTITY TEST] Could not access React state');
+        }
+      }
+    }
+    
+    console.log(`[QUANTITY TEST] Found ${currentCards.length} cards in deck (source: ${deckSource})`);
+    
+    if (currentCards.length === 0) {
+      console.log(`[QUANTITY TEST] No cards found. Available globals:`, Object.keys(window).filter(k => k.toLowerCase().includes('deck') || k.toLowerCase().includes('card')));
+      return null;
+    }
     
     const targetCard = currentCards.find(card => {
       const name = card.card?.name || card.name;
@@ -13456,7 +13509,7 @@ if (typeof window !== 'undefined') {
     
     if (!targetCard) {
       console.log(`[QUANTITY TEST] Card "${cardName}" not found in deck`);
-      console.log(`[QUANTITY TEST] Available card names:`, currentCards.map(c => c.card?.name || c.name));
+      console.log(`[QUANTITY TEST] Available card names:`, currentCards.slice(0, 10).map(c => c.card?.name || c.name));
       return null;
     }
     
@@ -13473,8 +13526,13 @@ if (typeof window !== 'undefined') {
     
     // Call handleUpdateCard directly with the target card
     try {
-      handleUpdateCard(targetCard, { quantity: testQuantity });
-      console.log(`[QUANTITY TEST] Called handleUpdateCard for "${cardName}" with quantity ${testQuantity}`);
+      if (typeof handleUpdateCard !== 'undefined') {
+        handleUpdateCard(targetCard, { quantity: testQuantity });
+        console.log(`[QUANTITY TEST] Called handleUpdateCard for "${cardName}" with quantity ${testQuantity}`);
+      } else {
+        console.log(`[QUANTITY TEST] handleUpdateCard function not accessible`);
+        return null;
+      }
       return { cardName, oldQuantity: currentQuantity, newQuantity: testQuantity };
     } catch (error) {
       console.error('[QUANTITY TEST] Error calling handleUpdateCard:', error);
