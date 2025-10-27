@@ -34,6 +34,32 @@ const BASIC_LAND_PRINTINGS = {
   "Basic Swamp": "6b28e7a6-e0ed-4c45-85dd-7c1bbfe6b3e5"
 };
 
+// User preference system for basic land printings (shared with DeckViewEdit)
+const BASIC_LAND_PREFERENCES_KEY = 'basic-land-printing-preferences';
+
+// Get user's preferred printing for a basic land (falls back to default if not set)
+const getUserPreferredPrinting = (cardName) => {
+  try {
+    const preferences = JSON.parse(localStorage.getItem(BASIC_LAND_PREFERENCES_KEY) || '{}');
+    return preferences[cardName] || BASIC_LAND_PRINTINGS[cardName];
+  } catch (error) {
+    console.warn('[BASIC LAND PREFS] Error reading preferences:', error);
+    return BASIC_LAND_PRINTINGS[cardName];
+  }
+};
+
+// Set user's preferred printing for a basic land
+const setUserPreferredPrinting = (cardName, printingId) => {
+  try {
+    const preferences = JSON.parse(localStorage.getItem(BASIC_LAND_PREFERENCES_KEY) || '{}');
+    preferences[cardName] = printingId;
+    localStorage.setItem(BASIC_LAND_PREFERENCES_KEY, JSON.stringify(preferences));
+    console.log(`🏞️ [USER PREFS] Updated ${cardName} preferred printing to: ${printingId}`);
+  } catch (error) {
+    console.error('[BASIC LAND PREFS] Error saving preferences:', error);
+  }
+};
+
 const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, onMoveToSideboard, onMoveToTechIdeas, onAddToCollection, updatingPrinting, cardPrice, onPreviewUpdate, onOracleTagSearch, onNavigateToPrevious, onNavigateToNext }) => {
   const modalRef = useRef(null); // Add ref for OTAG integration
   const cardActionsRef = useRef(null); // Add ref for left-hand side scrolling
@@ -920,6 +946,16 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     // Check if this is already the selected printing
     if (selectedPrinting && selectedPrinting.id === printing.id) {
       return; // No need to update if it's the same printing
+    }
+    
+    // For basic lands, update user's preferred printing when they manually select a different one
+    const cardName = card?.name || card?.card?.name;
+    if (cardName && BASIC_LAND_PRINTINGS[cardName]) {
+      const currentPreferred = getUserPreferredPrinting(cardName);
+      if (currentPreferred !== printing.id) {
+        setUserPreferredPrinting(cardName, printing.id);
+        console.log(`🏞️ [MODAL] User changed preferred printing for ${cardName}: ${currentPreferred} -> ${printing.id}`);
+      }
     }
     
     // Update local state first for immediate UI feedback

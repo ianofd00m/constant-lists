@@ -96,6 +96,58 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// User preference system for basic land printings
+const BASIC_LAND_PREFERENCES_KEY = 'basic-land-printing-preferences';
+
+// Get user's preferred printing for a basic land (falls back to default if not set)
+const getUserPreferredPrinting = (cardName) => {
+  try {
+    const preferences = JSON.parse(localStorage.getItem(BASIC_LAND_PREFERENCES_KEY) || '{}');
+    return preferences[cardName] || BASIC_LAND_PRINTINGS[cardName];
+  } catch (error) {
+    console.warn('[BASIC LAND PREFS] Error reading preferences:', error);
+    return BASIC_LAND_PRINTINGS[cardName];
+  }
+};
+
+// Set user's preferred printing for a basic land
+const setUserPreferredPrinting = (cardName, printingId) => {
+  try {
+    const preferences = JSON.parse(localStorage.getItem(BASIC_LAND_PREFERENCES_KEY) || '{}');
+    preferences[cardName] = printingId;
+    localStorage.setItem(BASIC_LAND_PREFERENCES_KEY, JSON.stringify(preferences));
+    console.log(`🏞️ [USER PREFS] Updated ${cardName} preferred printing to: ${printingId}`);
+  } catch (error) {
+    console.error('[BASIC LAND PREFS] Error saving preferences:', error);
+  }
+};
+
+// Get all user preferences (useful for debugging)
+const getAllUserPreferences = () => {
+  try {
+    return JSON.parse(localStorage.getItem(BASIC_LAND_PREFERENCES_KEY) || '{}');
+  } catch (error) {
+    console.warn('[BASIC LAND PREFS] Error reading all preferences:', error);
+    return {};
+  }
+};
+
+// Reset preferences to defaults (useful for testing)
+const resetBasicLandPreferences = () => {
+  localStorage.removeItem(BASIC_LAND_PREFERENCES_KEY);
+  console.log('🏞️ [USER PREFS] Reset all basic land preferences to defaults');
+};
+
+// Make functions available for debugging
+if (typeof window !== 'undefined') {
+  window.basicLandPrefs = {
+    get: getUserPreferredPrinting,
+    set: setUserPreferredPrinting,
+    getAll: getAllUserPreferences,
+    reset: resetBasicLandPreferences
+  };
+}
+
 // Set information for preferred basic land printings
 const BASIC_LAND_SET_INFO = {
   "d232fcc2-12f6-401a-b1aa-ddff11cb9378": {
@@ -2582,14 +2634,14 @@ export default function DeckViewEdit({ isPublic = false }) {
       JSON.stringify(cardData.cardObj || {}),
     );
 
-    // For basic lands, use preferred printing to match deck creation consistency
+    // For basic lands, use user's preferred printing to match deck creation consistency
     const isBasicLand = BASIC_LAND_PRINTINGS[cardData.name];
-    const preferredPrintingId = isBasicLand ? BASIC_LAND_PRINTINGS[cardData.name] : null;
+    const preferredPrintingId = isBasicLand ? getUserPreferredPrinting(cardData.name) : null;
     let preferredPrinting = cardData.printing || baseObj.printing;
     
     if (isBasicLand && preferredPrintingId) {
       preferredPrinting = preferredPrintingId;
-      console.log(`🏞️ [MODAL] Using preferred printing for ${cardData.name}: ${preferredPrintingId}`);
+      console.log(`🏞️ [MODAL] Using user preferred printing for ${cardData.name}: ${preferredPrintingId}`);
     }
 
     // Create enhanced card object with preferred printing for basic lands
@@ -2796,13 +2848,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       
       const finalUrl = isDev ? `http://localhost:3001${url}` : `${apiUrl}${url}`;
 
-      // CRITICAL: For basic lands, override with preferred printing for consistency
+      // CRITICAL: For basic lands, override with user's preferred printing for consistency
       const isBasicLand = BASIC_LAND_PRINTINGS[cardToAdd.name];
-      const preferredPrintingId = isBasicLand ? BASIC_LAND_PRINTINGS[cardToAdd.name] : null;
+      const preferredPrintingId = isBasicLand ? getUserPreferredPrinting(cardToAdd.name) : null;
       let finalCardToAdd = cardToAdd;
       
       if (isBasicLand) {
-        console.log(`[BASIC LAND] Using preferred printing for ${cardToAdd.name}: ${preferredPrintingId}`);
+        console.log(`🏞️ [ADD CARD] Using user preferred printing for ${cardToAdd.name}: ${preferredPrintingId}`);
         
         // Override the cardToAdd with preferred printing data
         finalCardToAdd = {
@@ -5534,8 +5586,26 @@ export default function DeckViewEdit({ isPublic = false }) {
       //   used_scryfall_fallback: isSpecialCardQuery && results.length > 0 && !data.data
       // });
       
-      // console.log('🔄 Setting allSearchResults state with', results.length, 'results');
-      setAllSearchResults(Array.isArray(results) ? results : []);
+      // Apply basic land preferences to search results
+      const processedResults = Array.isArray(results) ? results.map(card => {
+        const isBasicLand = BASIC_LAND_PRINTINGS[card.name];
+        if (isBasicLand) {
+          const preferredPrintingId = getUserPreferredPrinting(card.name);
+          // If this result's ID matches the user's preferred printing, prioritize it
+          if (card.id === preferredPrintingId || card.scryfall_id === preferredPrintingId) {
+            return { ...card, _isPreferredPrinting: true };
+          }
+        }
+        return card;
+      }).sort((a, b) => {
+        // Sort preferred printings first for basic lands
+        if (a._isPreferredPrinting && !b._isPreferredPrinting) return -1;
+        if (!a._isPreferredPrinting && b._isPreferredPrinting) return 1;
+        return 0;
+      }) : [];
+      
+      console.log(`🏞️ [SEARCH MODAL] Processed ${processedResults.length} results with basic land preferences`);
+      setAllSearchResults(processedResults);
       setModalSearchTerm(query.trim()); // Store the original search term that opened the modal
       setModalSearch(""); // Clear modal search input so users can search freely
       // console.log('🔄 Opening search modal and closing dropdown');
@@ -5608,9 +5678,24 @@ export default function DeckViewEdit({ isPublic = false }) {
       
       const results = data.data || data || [];
       
-      // console.log('📦 Modal search results:', results.length, 'cards');
+      // Apply basic land preferences to modal search results
+      const processedResults = Array.isArray(results) ? results.map(card => {
+        const isBasicLand = BASIC_LAND_PRINTINGS[card.name];
+        if (isBasicLand) {
+          const preferredPrintingId = getUserPreferredPrinting(card.name);
+          if (card.id === preferredPrintingId || card.scryfall_id === preferredPrintingId) {
+            return { ...card, _isPreferredPrinting: true };
+          }
+        }
+        return card;
+      }).sort((a, b) => {
+        if (a._isPreferredPrinting && !b._isPreferredPrinting) return -1;
+        if (!a._isPreferredPrinting && b._isPreferredPrinting) return 1;
+        return 0;
+      }) : [];
       
-      setAllSearchResults(Array.isArray(results) ? results : []);
+      console.log(`🏞️ [MODAL SEARCH] Processed ${processedResults.length} results with basic land preferences`);
+      setAllSearchResults(processedResults);
       setModalSearchTerm(query.trim()); // Update the displayed search term
       
       // Clear flip states when searching for new results
@@ -5735,9 +5820,24 @@ export default function DeckViewEdit({ isPublic = false }) {
       const data = await response.json();
       const results = data.data || data || [];
       
-      // Found cards with oracle tag within commander color identity
+      // Apply basic land preferences to oracle tag search results
+      const processedResults = Array.isArray(results) ? results.map(card => {
+        const isBasicLand = BASIC_LAND_PRINTINGS[card.name];
+        if (isBasicLand) {
+          const preferredPrintingId = getUserPreferredPrinting(card.name);
+          if (card.id === preferredPrintingId || card.scryfall_id === preferredPrintingId) {
+            return { ...card, _isPreferredPrinting: true };
+          }
+        }
+        return card;
+      }).sort((a, b) => {
+        if (a._isPreferredPrinting && !b._isPreferredPrinting) return -1;
+        if (!a._isPreferredPrinting && b._isPreferredPrinting) return 1;
+        return 0;
+      }) : [];
       
-      setAllSearchResults(Array.isArray(results) ? results : []);
+      console.log(`🏞️ [ORACLE TAG] Processed ${processedResults.length} results with basic land preferences`);
+      setAllSearchResults(processedResults);
       
     } catch (error) {
       console.error('Error in oracle tag search modal:', error);
@@ -10924,26 +11024,46 @@ export default function DeckViewEdit({ isPublic = false }) {
                             // No need to cancel since resetSelection is immediate
                             setSelectedSearchIndex(index);
                             
-                            // Simplified hover - directly set the preview without complex processing
+                            // For basic lands, use user's preferred printing in preview
+                            const isBasicLand = BASIC_LAND_PRINTINGS[card.name];
+                            const shouldUsePreferredPrinting = isBasicLand;
+                            
+                            let previewCard = card;
+                            if (shouldUsePreferredPrinting) {
+                              const preferredPrintingId = getUserPreferredPrinting(card.name);
+                              console.log(`🏞️ [SEARCH PREVIEW] Using preferred printing for ${card.name}: ${preferredPrintingId}`);
+                              
+                              // Override with preferred printing data for basic lands
+                              previewCard = {
+                                ...card,
+                                id: preferredPrintingId,
+                                scryfall_id: preferredPrintingId,
+                                // Clear image URIs to force loading of preferred printing
+                                image_uris: null,
+                                scryfall_json: null
+                              };
+                            }
+                            
+                            // Simplified hover - directly set the preview
                             setFixedPreview({
                               card: {
-                                name: card.name,
+                                name: previewCard.name,
                                 card: {
-                                  name: card.name,
-                                  image_uris: card.image_uris,
-                                  scryfall_json: card.scryfall_json,
-                                  mana_cost: card.mana_cost,
-                                  type_line: card.type_line,
-                                  oracle_text: card.oracle_text,
-                                  power: card.power,
-                                  toughness: card.toughness,
-                                  loyalty: card.loyalty,
+                                  name: previewCard.name,
+                                  image_uris: previewCard.image_uris,
+                                  scryfall_json: previewCard.scryfall_json,
+                                  mana_cost: previewCard.mana_cost,
+                                  type_line: previewCard.type_line,
+                                  oracle_text: previewCard.oracle_text,
+                                  power: previewCard.power,
+                                  toughness: previewCard.toughness,
+                                  loyalty: previewCard.loyalty,
                                 },
                                 forceEnglish: true,
                                 forceHighRes: true,
-                                printing: card.set || card.set_name || null,
-                                set: card.set || card.set_name || null,
-                                collector_number: card.collector_number || null,
+                                printing: previewCard.set || previewCard.set_name || null,
+                                set: previewCard.set || previewCard.set_name || null,
+                                collector_number: previewCard.collector_number || null,
                               },
                               top: 0,
                               left: 0
