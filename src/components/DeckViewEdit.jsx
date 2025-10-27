@@ -2792,39 +2792,69 @@ export default function DeckViewEdit({ isPublic = false }) {
       
       const finalUrl = isDev ? `http://localhost:3001${url}` : `${apiUrl}${url}`;
 
+      // CRITICAL: For basic lands, override with preferred printing for consistency
+      const isBasicLand = BASIC_LAND_PRINTINGS[cardToAdd.name];
+      let finalCardToAdd = cardToAdd;
+      
+      if (isBasicLand) {
+        const preferredPrintingId = BASIC_LAND_PRINTINGS[cardToAdd.name];
+        console.log(`[BASIC LAND] Using preferred printing for ${cardToAdd.name}: ${preferredPrintingId}`);
+        
+        // Override the cardToAdd with preferred printing data
+        finalCardToAdd = {
+          ...cardToAdd,
+          id: preferredPrintingId,
+          scryfall_id: preferredPrintingId,
+          printing: preferredPrintingId,
+          // Clear image data to force fetch of preferred printing
+          image_uris: null
+        };
+      }
+
       // OPTIMISTIC UPDATE: Immediately add the card to the UI
       const optimisticCard = {
-        name: cardToAdd.name,
+        name: finalCardToAdd.name,
         quantity: 1,
         count: 1,
         isCommander: false,
-        set: cardToAdd.set,
-        collector_number: cardToAdd.collector_number,
-        finishes: cardToAdd.finishes || ["nonfoil"],
-        prices: cardToAdd.prices,
-        mana_cost: cardToAdd.mana_cost,
-        color_identity: cardToAdd.color_identity,
-        cmc: cardToAdd.cmc,
-        type_line: cardToAdd.type_line,
+        set: finalCardToAdd.set,
+        collector_number: finalCardToAdd.collector_number,
+        finishes: finalCardToAdd.finishes || ["nonfoil"],
+        prices: finalCardToAdd.prices,
+        mana_cost: finalCardToAdd.mana_cost,
+        color_identity: finalCardToAdd.color_identity,
+        cmc: finalCardToAdd.cmc,
+        type_line: finalCardToAdd.type_line,
+        printing: finalCardToAdd.printing || finalCardToAdd.scryfall_id || finalCardToAdd.id,
         // CRITICAL: Preserve complete card data structure
         card: {
-          name: cardToAdd.name,
-          mana_cost: cardToAdd.mana_cost,
-          color_identity: cardToAdd.color_identity,
-          cmc: cardToAdd.cmc,
-          type_line: cardToAdd.type_line,
-          set: cardToAdd.set,
-          collector_number: cardToAdd.collector_number,
-          prices: cardToAdd.prices,
-          scryfall_json: cardToAdd,
+          name: finalCardToAdd.name,
+          mana_cost: finalCardToAdd.mana_cost,
+          color_identity: finalCardToAdd.color_identity,
+          cmc: finalCardToAdd.cmc,
+          type_line: finalCardToAdd.type_line,
+          set: finalCardToAdd.set,
+          collector_number: finalCardToAdd.collector_number,
+          prices: finalCardToAdd.prices,
+          printing: finalCardToAdd.printing || finalCardToAdd.scryfall_id || finalCardToAdd.id,
+          scryfall_json: finalCardToAdd,
           // Ensure all essential Scryfall data is preserved
-          ...cardToAdd
+          ...finalCardToAdd
         },
-        scryfallCard: cardToAdd,
-        scryfall_json: cardToAdd,
+        scryfallCard: finalCardToAdd,
+        scryfall_json: finalCardToAdd,
         // Mark as pending to show loading state
         _optimistic: true
       };
+
+      console.log("🏞️ BASIC LAND PRINTING FIX:", {
+        cardName: cardToAdd.name,
+        isBasicLand,
+        originalPrinting: cardToAdd.printing || cardToAdd.scryfall_id || cardToAdd.id,
+        preferredPrinting: preferredPrintingId,
+        finalPrinting: finalCardToAdd.printing || finalCardToAdd.scryfall_id || finalCardToAdd.id,
+        usingPreferred: isBasicLand && preferredPrintingId !== (cardToAdd.printing || cardToAdd.scryfall_id || cardToAdd.id)
+      });
 
       // Update deck state immediately for better UX
       setDeck(prevDeck => {
@@ -2846,29 +2876,31 @@ export default function DeckViewEdit({ isPublic = false }) {
       // FIXED: Create minimal card object for server to avoid payload size issues
       // Only include essential data for server validation and storage
       const newCard = {
-        name: cardToAdd.name,
+        name: finalCardToAdd.name,
         quantity: 1,
         count: 1,
         isCommander: false,
-        set: cardToAdd.set,
-        collector_number: cardToAdd.collector_number,
-        finishes: cardToAdd.finishes || ["nonfoil"],
-        prices: cardToAdd.prices || {},
-        mana_cost: cardToAdd.mana_cost,
-        color_identity: cardToAdd.color_identity,
-        cmc: cardToAdd.cmc,
-        type_line: cardToAdd.type_line,
-        scryfall_id: cardToAdd.id || cardToAdd.scryfall_id,
+        set: finalCardToAdd.set,
+        collector_number: finalCardToAdd.collector_number,
+        finishes: finalCardToAdd.finishes || ["nonfoil"],
+        prices: finalCardToAdd.prices || {},
+        mana_cost: finalCardToAdd.mana_cost,
+        color_identity: finalCardToAdd.color_identity,
+        cmc: finalCardToAdd.cmc,
+        type_line: finalCardToAdd.type_line,
+        printing: finalCardToAdd.printing || finalCardToAdd.scryfall_id || finalCardToAdd.id,
+        scryfall_id: finalCardToAdd.id || finalCardToAdd.scryfall_id,
         // Minimal card object for type detection
         card: {
-          name: cardToAdd.name,
-          mana_cost: cardToAdd.mana_cost,
-          color_identity: cardToAdd.color_identity,
-          cmc: cardToAdd.cmc,
-          type_line: cardToAdd.type_line,
-          set: cardToAdd.set,
-          collector_number: cardToAdd.collector_number,
-          scryfall_id: cardToAdd.id || cardToAdd.scryfall_id
+          name: finalCardToAdd.name,
+          mana_cost: finalCardToAdd.mana_cost,
+          color_identity: finalCardToAdd.color_identity,
+          cmc: finalCardToAdd.cmc,
+          type_line: finalCardToAdd.type_line,
+          set: finalCardToAdd.set,
+          collector_number: finalCardToAdd.collector_number,
+          printing: finalCardToAdd.printing || finalCardToAdd.scryfall_id || finalCardToAdd.id,
+          scryfall_id: finalCardToAdd.id || finalCardToAdd.scryfall_id
           // Removed large scryfall_json to reduce payload size
         }
       };
@@ -6366,13 +6398,25 @@ export default function DeckViewEdit({ isPublic = false }) {
             
             const nameMatches = cName === cardName;
             const foilMatches = cardFoil === cFoil;
-            const printingMatches = !cardPrinting || !cPrinting || cardPrinting === cPrinting;
+            
+            // CRITICAL FIX: Flexible printing matching to handle modal/deck mismatches
+            // Priority 1: Exact printing match
+            const exactPrintingMatch = cardPrinting && cPrinting && cardPrinting === cPrinting;
+            // Priority 2: Basic land flexibility (any printing)
+            const isBasicLand = cardName && ['Island', 'Plains', 'Swamp', 'Mountain', 'Forest', 'Wastes'].includes(cardName);
+            // Priority 3: Fall back to name+foil match if no printing info available
+            const noPrintingInfo = !cardPrinting || !cPrinting;
+            
+            const printingMatches = exactPrintingMatch || isBasicLand || noPrintingInfo;
             
             if (cName === cardName) {
               console.log(`[QUANTITY DEBUG] Found potential match: "${cName}"`, {
                 nameMatches,
                 foilMatches: `${cardFoil} === ${cFoil} = ${foilMatches}`,
-                printingMatches: `${cardPrinting} === ${cPrinting} = ${printingMatches}`,
+                exactPrintingMatch: `${cardPrinting} === ${cPrinting} = ${exactPrintingMatch}`,
+                isBasicLand,
+                noPrintingInfo,
+                printingMatches,
                 overallMatch: nameMatches && foilMatches && printingMatches,
                 currentCount: c.count
               });
