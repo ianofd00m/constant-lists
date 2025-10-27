@@ -51,7 +51,7 @@ const getProxiedImageUrl = (originalUrl) => {
 const BASIC_LAND_PRINTINGS = {
   // Regular basic lands (using specific FDN collector numbers as requested)
   "Forest": "d232fcc2-12f6-401a-b1aa-ddff11cb9378",      // FDN Forest #280
-  "Island": "a2e22347-f52d-4541-bd2b-7ca82b3de118",      // FDN Island #275
+  "Island": "23635e40-d040-40b7-8b98-90ed362aa028",      // FDN Island #275
   "Mountain": "1edc5050-69bd-416d-b04c-7f82de2a1901",    // FDN Mountain #279
   "Plains": "4ef17ed4-a9b5-4b8e-b4cb-2ecb7e5898c3",     // FDN Plains #272
   "Swamp": "13505c15-14e0-4200-82bd-fb9bce949e68",      // FDN Swamp #277
@@ -107,9 +107,7 @@ const getUserPreferredPrinting = (cardName) => {
     const defaultPref = BASIC_LAND_PRINTINGS[cardName];
     const result = userPref || defaultPref;
     
-    if (cardName === 'Island') {
-      console.log(`🏞️ [GET PREF] ${cardName}: user=${userPref}, default=${defaultPref}, result=${result}`);
-    }
+    console.log(`🏞️ [GET PREF] ${cardName}: user=${userPref}, default=${defaultPref}, result=${result}`);
     
     return result;
   } catch (error) {
