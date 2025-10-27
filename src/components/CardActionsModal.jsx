@@ -592,13 +592,22 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
       // Extract current card name for comparison
       const cardName = card.name || card.cardObj?.name || card.cardObj?.card?.name;
       
-      // 🏞️ BASIC LAND CACHE CLEAR: For basic lands, always force fresh fetch to ensure preferred printing is available
+      // 🏞️ BASIC LAND PREFERENCE CHECK: For basic lands, check if cache has preferred printing
       if (BASIC_LAND_PRINTINGS[cardName]) {
-        console.log(`🏞️ [MODAL INIT] Force clearing cache for basic land: ${cardName}`);
-        PrintingCache.remove(cardName);
-        console.log(`🏞️ [MODAL INIT] Cache cleared, verifying removal...`);
-        const verifyCache = PrintingCache.get(cardName);
-        console.log(`🏞️ [MODAL INIT] Cache after clearing: ${verifyCache ? 'STILL HAS DATA' : 'SUCCESSFULLY CLEARED'}`);
+        const preferredPrintingId = getUserPreferredPrinting(cardName);
+        const existingCache = PrintingCache.get(cardName);
+        
+        if (existingCache && existingCache.printings) {
+          const hasPreferredPrinting = existingCache.printings.some(p => p.id === preferredPrintingId);
+          if (!hasPreferredPrinting) {
+            console.log(`🏞️ [MODAL INIT] Cache missing preferred printing ${preferredPrintingId} for ${cardName}, clearing cache`);
+            PrintingCache.remove(cardName);
+          } else {
+            console.log(`🏞️ [MODAL INIT] Cache has preferred printing ${preferredPrintingId} for ${cardName}`);
+          }
+        } else {
+          console.log(`🏞️ [MODAL INIT] No cache found for basic land: ${cardName}`);
+        }
       }
       
       // INSTANT LOADING: Check cache first before any async operations
