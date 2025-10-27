@@ -6949,7 +6949,6 @@ export default function DeckViewEdit({ isPublic = false }) {
                   found: !!islandInCleanCards,
                   cardName: cardName,
                   islandData: islandInCleanCards,
-                  originalCardCount: targetCard?.count,
                   updatesQuantity: updates.quantity,
                   cleanedCount: islandInCleanCards?.count,
                   cleanedQuantity: islandInCleanCards?.quantity,
