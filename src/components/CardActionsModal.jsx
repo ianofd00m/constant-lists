@@ -1652,6 +1652,53 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
             
             {/* Action buttons */}
             <div className="action-buttons">
+              {/* Row 1: Add to Main Board - Remove from Deck */}
+              <button className="action-button" onClick={() => {
+                if (onAddCard && selectedPrinting) {
+                  // Create card object for adding to deck
+                  const cardToAdd = {
+                    name: card.name,
+                    printing: selectedPrinting.id,
+                    foil: isFoil,
+                    quantity: quantity || 1,
+                    cardObj: {
+                      scryfall_id: selectedPrinting.id,
+                      name: selectedPrinting.name,
+                      set: selectedPrinting.set,
+                      set_name: selectedPrinting.set_name,
+                      collector_number: selectedPrinting.collector_number,
+                      image_uris: selectedPrinting.image_uris,
+                      type_line: selectedPrinting.type_line,
+                      mana_cost: selectedPrinting.mana_cost,
+                      cmc: selectedPrinting.cmc,
+                      colors: selectedPrinting.colors,
+                      color_identity: selectedPrinting.color_identity,
+                      prices: selectedPrinting.prices
+                    },
+                    scryfall_json: selectedPrinting
+                  };
+                  onAddCard(cardToAdd);
+                  toast.success(`Added ${cardToAdd.name} to deck`);
+                  onClose();
+                } else {
+                  toast.error('Unable to add card to deck');
+                }
+              }}>Add to Main Board</button>
+              <button className="action-button" onClick={() => onRemoveCard(card)}>Remove from Deck</button>
+              
+              {/* Row 2: Move to Sideboard - Move to Tech Ideas */}
+              <button className="action-button" onClick={() => onMoveToSideboard(card)}>Move to Sideboard</button>
+              <button className="action-button" onClick={() => {
+                if (onMoveToTechIdeas) {
+                  onMoveToTechIdeas(card);
+                  onClose();
+                } else {
+                  console.error('onMoveToTechIdeas function not provided');
+                }
+              }}>Move to Tech Ideas</button>
+              
+              {/* Row 3: Add to My Collection - Add to Wishlist */}
+              <button className="action-button" onClick={() => handleAddToCollection(card, { ...selectedPrinting, foil: isFoil })}>Add to My Collection</button>
               <button className="action-button" onClick={() => {
                 if (selectedPrinting && card) {
                   // Create wishlist entry using current modal state
@@ -1705,17 +1752,6 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
                   toast.error('Unable to add card to wishlist');
                 }
               }}>Add to Wishlist</button>
-              <button className="action-button" onClick={() => onRemoveCard(card)}>Remove from Deck</button>
-              <button className="action-button" onClick={() => onMoveToSideboard(card)}>Move to Sideboard</button>
-              <button className="action-button" onClick={() => {
-                if (onMoveToTechIdeas) {
-                  onMoveToTechIdeas(card);
-                  onClose();
-                } else {
-                  console.error('onMoveToTechIdeas function not provided');
-                }
-              }}>Move to Tech Ideas</button>
-              <button className="action-button" onClick={() => handleAddToCollection(card, { ...selectedPrinting, foil: isFoil })}>Add to My Collection</button>
             </div>
             
             {/* Printings section moved below action buttons */}
