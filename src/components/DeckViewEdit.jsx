@@ -3043,6 +3043,14 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       if (response.ok) {
         const serverResponse = await response.json();
+        
+        // DEBUG: Log server response to track card persistence
+        console.log('[DEBUG] Server response after card addition:', {
+          commander: serverResponse.commander,
+          commanderNames: serverResponse.commanderNames,
+          cardsCount: serverResponse.cards?.length
+        });
+        console.log('[DEBUG] Full server response:', serverResponse);
 
         // CRITICAL FIX: Merge server response with local data to preserve card details
         const mergedAddCards = (serverResponse.cards || []).map(serverCard => {
@@ -4351,6 +4359,9 @@ export default function DeckViewEdit({ isPublic = false }) {
           const finalDeckData = { ...deckWithCommander, cards: finalCardsWithCommander };
 
           console.log(`[DEBUG] Final deck card count: ${finalDeckData.cards.length}`);
+          
+          // DEBUG: Log all card names in the loaded deck for tracking persistence
+          console.log('[DEBUG] Loaded deck card names:', finalDeckData.cards.map(c => c.card?.name || c.name).sort());
           
           // DEBUG: Check if commander properties are preserved in final deck data
           console.log('[DEBUG] Final deck data commander properties:', {
