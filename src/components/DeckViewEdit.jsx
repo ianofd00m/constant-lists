@@ -4396,9 +4396,13 @@ export default function DeckViewEdit({ isPublic = false }) {
             // Extract the correct price based on the foil status
             const priceData = extractPrice(cardWithConsistentFoil);
 
-            // Create a new card object with the correct price and foil status
+            // CRITICAL FIX: Ensure count field exists - fall back to quantity if count is undefined
+            const finalCount = card.count !== undefined ? card.count : (card.quantity || 1);
+            
+            // Create a new card object with the correct price, foil status, and count
             return {
               ...cardWithConsistentFoil,
+              count: finalCount, // CRITICAL: Ensure count field is always present
               price: priceData.price, // Set the price at the top level
               lastUpdated: Date.now(), // Add timestamp to force React to detect the change
               // Also update price in the nested card object
@@ -4406,6 +4410,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                 ? {
                     card: {
                       ...cardWithConsistentFoil.card,
+                      count: finalCount, // Also ensure count in nested card
                       price: priceData.price,
                       lastUpdated: Date.now(),
                     },
