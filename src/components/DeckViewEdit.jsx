@@ -11039,15 +11039,32 @@ export default function DeckViewEdit({ isPublic = false }) {
                               const preferredPrintingId = getUserPreferredPrinting(card.name);
                               console.log(`🏞️ [SEARCH PREVIEW] Using preferred printing for ${card.name}: ${preferredPrintingId} (was ${card.id})`);
                               
+                              // Construct the correct image URL for the preferred printing
+                              const preferredImageUrl = `https://cards.scryfall.io/normal/front/${preferredPrintingId.charAt(0)}/${preferredPrintingId.charAt(1)}/${preferredPrintingId}.jpg`;
+                              
                               // Override with preferred printing data for basic lands
                               previewCard = {
                                 ...card,
                                 id: preferredPrintingId,
                                 scryfall_id: preferredPrintingId,
-                                // Clear image URIs to force loading of preferred printing
-                                image_uris: null,
-                                scryfall_json: null
+                                // Set correct image URLs for preferred printing
+                                image_uris: {
+                                  small: preferredImageUrl.replace('/normal/', '/small/'),
+                                  normal: preferredImageUrl,
+                                  large: preferredImageUrl.replace('/normal/', '/large/'),
+                                },
+                                scryfall_json: {
+                                  ...card.scryfall_json,
+                                  id: preferredPrintingId,
+                                  image_uris: {
+                                    small: preferredImageUrl.replace('/normal/', '/small/'),
+                                    normal: preferredImageUrl,
+                                    large: preferredImageUrl.replace('/normal/', '/large/'),
+                                  }
+                                }
                               };
+                              
+                              console.log(`🏞️ [SEARCH PREVIEW] Set image URL: ${preferredImageUrl}`);
                             }
                             
                             // Simplified hover - directly set the preview
