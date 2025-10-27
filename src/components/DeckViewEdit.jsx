@@ -2727,6 +2727,56 @@ export default function DeckViewEdit({ isPublic = false }) {
     lastHoveredCardRef.current = null; // Reset hover tracking
   }, [searchResults, showDropdown]);
 
+  // PERSISTENCE TEST: Add to window for console testing
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && deck) {
+      window.testCardPersistence = async (cardName = 'Island') => {
+        console.log(`🧪 [PERSISTENCE TEST] Starting test with card: ${cardName}`);
+        console.log(`🧪 [PERSISTENCE TEST] Current deck cards before:`, deck.cards?.length);
+        
+        // Try to add a test card
+        const testCard = {
+          name: cardName,
+          scryfall_id: '23635e40-d040-40b7-8b98-90ed362aa028', // FDN Island
+          id: '23635e40-d040-40b7-8b98-90ed362aa028',
+          set: 'fdn',
+          collector_number: '275'
+        };
+        
+        try {
+          await handleAddCard(testCard);
+          console.log(`🧪 [PERSISTENCE TEST] Add completed, waiting 2 seconds...`);
+          
+          // Wait and then test if it persists
+          setTimeout(async () => {
+            console.log(`🧪 [PERSISTENCE TEST] Testing persistence by refetching deck...`);
+            
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${apiUrl}/api/decks/${deck._id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+              const freshDeck = await response.json();
+              const hasCard = freshDeck.cards?.some(c => (c.card?.name || c.name) === cardName);
+              console.log(`🧪 [PERSISTENCE TEST] Card found in fresh fetch:`, hasCard);
+              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards count:`, freshDeck.cards?.length);
+              console.log(`🧪 [PERSISTENCE TEST] Fresh deck cards:`, freshDeck.cards?.map(c => c.card?.name || c.name).sort());
+            } else {
+              console.error(`🧪 [PERSISTENCE TEST] Failed to refetch deck:`, response.status);
+            }
+          }, 2000);
+          
+        } catch (error) {
+          console.error(`🧪 [PERSISTENCE TEST] Error:`, error);
+        }
+      };
+      
+      console.log('🧪 Persistence test available: window.testCardPersistence()');
+    }
+  }, [deck, handleAddCard]);
+
   // Handle adding a card to the deck
   const handleAddCard = useCallback(async (cardToAdd) => {
     if (!deck || !cardToAdd) {
@@ -3022,7 +3072,9 @@ export default function DeckViewEdit({ isPublic = false }) {
         requestSize: serializedDeck.length,
         hasNestedScryfall: newCard.scryfall_json ? 'YES' : 'NO',
         cardObjectKeys: Object.keys(newCard),
-        sampleCardSize: JSON.stringify(newCard).length
+        sampleCardSize: JSON.stringify(newCard).length,
+        serverEnvironment: isDev ? 'DEVELOPMENT' : 'PRODUCTION',
+        timestamp: new Date().toISOString()
       });
       
       // Check for potential circular references or overly nested data
@@ -3048,9 +3100,22 @@ export default function DeckViewEdit({ isPublic = false }) {
         console.log('[DEBUG] Server response after card addition:', {
           commander: serverResponse.commander,
           commanderNames: serverResponse.commanderNames,
-          cardsCount: serverResponse.cards?.length
+          cardsCount: serverResponse.cards?.length,
+          timestamp: new Date().toISOString(),
+          deckId: serverResponse._id
         });
-        console.log('[DEBUG] Full server response:', serverResponse);
+        
+        // DEBUG: Log specific card that was added
+        const addedCard = serverResponse.cards?.find(c => (c.card?.name || c.name) === cardToAdd.name);
+        console.log('[DEBUG] Added card verification:', {
+          cardName: cardToAdd.name,
+          foundInResponse: !!addedCard,
+          cardDetails: addedCard,
+          totalCardsAfterAdd: serverResponse.cards?.length
+        });
+        
+        // DEBUG: Log all card names in server response for comparison
+        console.log('[DEBUG] All card names in server response:', serverResponse.cards?.map(c => c.card?.name || c.name).sort());
 
         // CRITICAL FIX: Merge server response with local data to preserve card details
         const mergedAddCards = (serverResponse.cards || []).map(serverCard => {
@@ -4362,6 +4427,7 @@ export default function DeckViewEdit({ isPublic = false }) {
           
           // DEBUG: Log all card names in the loaded deck for tracking persistence
           console.log('[DEBUG] Loaded deck card names:', finalDeckData.cards.map(c => c.card?.name || c.name).sort());
+          console.log('[DEBUG] Deck load timestamp:', new Date().toISOString(), 'Total cards:', finalDeckData.cards.length);
           
           // DEBUG: Check if commander properties are preserved in final deck data
           console.log('[DEBUG] Final deck data commander properties:', {
