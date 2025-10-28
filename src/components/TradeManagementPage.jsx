@@ -444,75 +444,78 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [isNew, tradeId]);
 
-  // Debounced search function (identical to DeckViewEdit pattern)
-  const debouncedSearch = debounce(async (q) => {
-    const now = Date.now();
-    if (now - lastSearchTimeRef.current < MIN_SEARCH_INTERVAL) {
-      return;
-    }
-    lastSearchTimeRef.current = now;
-    
-    if (!q.trim()) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setNoResultsMsg('');
-      setSearchLoading(false);
-      return;
-    }
-    
-    // Cancel previous request
-    if (searchAbortControllerRef.current) {
-      searchAbortControllerRef.current.abort();
-    }
-    
-    searchAbortControllerRef.current = new AbortController();
-    const signal = searchAbortControllerRef.current.signal;
-    
-    setSearchLoading(true);
-    
-    try {
-      const query = q.trim();
-      const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const isDev = import.meta.env.DEV;
-      const finalUrl = isDev ? url : `${apiUrl}${url}`;
+  // Debounced search function (stable reference to prevent re-creation)
+  const debouncedSearch = useCallback(
+    debounce(async (q) => {
+      const now = Date.now();
+      if (now - lastSearchTimeRef.current < MIN_SEARCH_INTERVAL) {
+        return;
+      }
+      lastSearchTimeRef.current = now;
       
-      const res = await fetch(finalUrl, { signal });
-      
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+      if (!q.trim()) {
+        setSearchResults([]);
+        setShowDropdown(false);
+        setNoResultsMsg('');
+        setSearchLoading(false);
+        return;
       }
       
-      const data = await res.json();
-      let results = data.data || data || [];
+      // Cancel previous request
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
       
-      // Remove duplicates by name
-      const uniqueResults = [];
-      const seenNames = new Set();
+      searchAbortControllerRef.current = new AbortController();
+      const signal = searchAbortControllerRef.current.signal;
       
-      for (const result of results) {
-        if (!seenNames.has(result.name)) {
-          seenNames.add(result.name);
-          uniqueResults.push(result);
+      setSearchLoading(true);
+      
+      try {
+        const query = q.trim();
+        const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const isDev = import.meta.env.DEV;
+        const finalUrl = isDev ? url : `${apiUrl}${url}`;
+        
+        const res = await fetch(finalUrl, { signal });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        let results = data.data || data || [];
+        
+        // Remove duplicates by name
+        const uniqueResults = [];
+        const seenNames = new Set();
+        
+        for (const result of results) {
+          if (!seenNames.has(result.name)) {
+            seenNames.add(result.name);
+            uniqueResults.push(result);
+          }
+        }
+        
+        setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
+        setShowDropdown(uniqueResults.length > 0);
+        setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
+        setSelectedSearchIndex(-1);
+        
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Search error:', error);
+          setSearchResults([]);
+          setShowDropdown(false);
+          setNoResultsMsg('Search failed');
         }
       }
       
-      setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
-      setShowDropdown(uniqueResults.length > 0);
-      setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
-      setSelectedSearchIndex(-1);
-      
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Search error:', error);
-        setSearchResults([]);
-        setShowDropdown(false);
-        setNoResultsMsg('Search failed');
-      }
-    }
-    
-    setSearchLoading(false);
-  }, 500);
+      setSearchLoading(false);
+    }, 500),
+    [] // Empty dependency array - function is stable
+  );
 
   // Handle search input changes
   useEffect(() => {
@@ -526,7 +529,10 @@ const TradeManagementPage = ({ isNew }) => {
       setNoResultsMsg('');
       setSearchLoading(false);
     }
-  }, [search, debouncedSearch]);
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [search]);
 
   // Close search dropdown when clicking outside or pressing Escape (mirrors DeckViewEdit)
   useEffect(() => {
@@ -643,10 +649,7 @@ const TradeManagementPage = ({ isNew }) => {
       {/* Subtle back navigation */}
       <div style={{ marginBottom: '10px' }}>
         <span 
-          onClick={() => {
-            console.log('🧭 Navigating back to /trade');
-            navigate('/trade');
-          }} 
+          onClick={() => navigate('/trade')} 
           style={{
             color: '#6c757d',
             fontSize: '14px',
@@ -712,12 +715,10 @@ const TradeManagementPage = ({ isNew }) => {
               value={search}
               data-trade-search="true"
               onChange={(e) => {
-                console.log('🔍 Trade search input changed:', e.target.value);
                 setSearch(e.target.value);
                 // Don't call debouncedSearch directly - let useEffect handle it to avoid double triggers
               }}
               onBlur={(e) => {
-                console.log('🔍 Trade search input onBlur triggered');
                 // Capture references before setTimeout to avoid stale references
                 const searchInput = e.currentTarget;
                 const searchContainer = searchInput.closest('.search-container');
@@ -733,7 +734,6 @@ const TradeManagementPage = ({ isNew }) => {
                   
                   // Don't close if focus is still within the search container or dropdown
                   if (!focusedOnDropdown && !searchContainer?.contains(activeElement)) {
-                    console.log('🔍 Trade search losing focus - will close dropdown');
                     setShowDropdown(false);
                     // Don't clear search on blur - preserve user's search term
                   }
@@ -792,7 +792,6 @@ const TradeManagementPage = ({ isNew }) => {
                     }
                     
                     if (cardToSelect) {
-                      console.log('🔍 Trade search selecting card:', cardToSelect.name);
                       handleSearchCardClick(cardToSelect);
                     }
                     return;
