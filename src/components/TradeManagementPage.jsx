@@ -568,6 +568,22 @@ const TradeManagementPage = ({ isNew }) => {
     };
   }, [search]);
 
+  // Handle Escape key to close search modal
+  useEffect(() => {
+    if (!showSearchModal) return;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowSearchModal(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showSearchModal]);
+
   // Function to fetch all search results for the modal (triggered by Enter key)
   const fetchAllSearchResults = async (query) => {
     if (!query.trim()) return;
@@ -1451,11 +1467,6 @@ const TradeManagementPage = ({ isNew }) => {
               setShowSearchModal(false);
             }
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowSearchModal(false);
-            }
-          }}
           tabIndex={-1}
         >
           <div
@@ -1553,8 +1564,8 @@ const TradeManagementPage = ({ isNew }) => {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 220px))",
-                      gap: "16px",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(240px, 240px))",
+                      gap: "20px",
                       justifyContent: "center",
                     }}
                   >
@@ -1592,11 +1603,11 @@ const TradeManagementPage = ({ isNew }) => {
                         <div
                           style={{
                             width: "100%",
-                            height: "160px",
+                            height: "240px",
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
-                            marginBottom: "8px",
+                            marginBottom: "12px",
                           }}
                         >
                           <img
@@ -1605,7 +1616,7 @@ const TradeManagementPage = ({ isNew }) => {
                             style={{
                               maxWidth: "100%",
                               maxHeight: "100%",
-                              borderRadius: "6px",
+                              borderRadius: "8px",
                               objectFit: "contain",
                             }}
                             onError={(e) => {
@@ -1624,31 +1635,15 @@ const TradeManagementPage = ({ isNew }) => {
                         <div
                           style={{
                             fontWeight: "bold",
-                            fontSize: "14px",
+                            fontSize: "16px",
                             textAlign: "center",
                             color: "#333",
-                            lineHeight: "1.2",
-                            marginBottom: "4px",
+                            lineHeight: "1.3",
+                            marginBottom: "8px",
+                            padding: "0 8px",
                           }}
                         >
                           {card.name}
-                        </div>
-
-                        {/* Card Details */}
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            color: "#666",
-                            textAlign: "center",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {card.set_name && (
-                            <div>{card.set_name}</div>
-                          )}
-                          {card.type_line && (
-                            <div>{card.type_line}</div>
-                          )}
                         </div>
                       </div>
                     ))}
