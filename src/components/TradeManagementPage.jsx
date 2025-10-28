@@ -7,19 +7,34 @@ import { getUnifiedCardPrice, formatPrice } from '../utils/UnifiedPricing';
 import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
-const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
+const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isFoil, setIsFoil] = useState(false);
   const [assignTo, setAssignTo] = useState('user1'); // 'user1' or 'user2'
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (isOpen && card) {
-      setQuantity(1);
-      setIsFoil(false);
-      setAssignTo('user1');
+      // Check if we're editing an existing card
+      const editing = card.editing || false;
+      setIsEditing(editing);
+      
+      if (editing) {
+        // Pre-populate with existing values
+        setQuantity(card.quantity || 1);
+        setIsFoil(card.foil || false);
+        setAssignTo(card.assignedTo || card.originalAssignment || 'user1');
+        setSelectedPrinting(card.card || card.scryfall_json || card);
+      } else {
+        // New card - use defaults
+        setQuantity(1);
+        setIsFoil(false);
+        setAssignTo('user1');
+      }
+      
       fetchPrintings();
     }
   }, [isOpen, card]);
@@ -59,7 +74,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
     if (!selectedPrinting) return;
     
     const tradeCard = {
-      id: `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
+      id: isEditing ? card.id : `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
       name: selectedPrinting.name,
       card: selectedPrinting,
       printing: selectedPrinting.id,
@@ -70,7 +85,11 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
       scryfall_json: selectedPrinting
     };
 
-    onAddCard(tradeCard);
+    if (isEditing && onUpdateCard) {
+      onUpdateCard(tradeCard, card.originalAssignment);
+    } else {
+      onAddCard(tradeCard);
+    }
     onClose();
   };
 
@@ -80,72 +99,144 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content trade-card-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add Card to Trade</h2>
+          <h2>{isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}</h2>
           <button className="close-button" onClick={onClose}>&times;</button>
         </div>
         
-        <div className="modal-body" style={{ display: 'flex', gap: '20px' }}>
+        <div className="modal-body" style={{ display: 'flex', gap: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
           {/* Card Image and Info */}
-          <div className="card-info" style={{ flex: '0 0 250px' }}>
+          <div className="card-info" style={{ flex: '0 0 280px' }}>
             {selectedPrinting && (
-              <img 
-                src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
-                alt={selectedPrinting.name}
-                style={{ width: '100%', maxWidth: '250px', borderRadius: '8px' }}
-              />
-            )}
-            <h3>{card?.name}</h3>
-            {getCurrentPrice() && (
-              <p><strong>Price:</strong> {formatPrice(getCurrentPrice())}</p>
+              <>
+                <img 
+                  src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
+                  alt={selectedPrinting.name}
+                  style={{ 
+                    width: '100%', 
+                    maxWidth: '280px', 
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    marginBottom: '15px'
+                  }}
+                />
+                <div style={{ padding: '10px 0' }}>
+                  <h3 style={{ margin: '0 0 10px 0', fontSize: '20px' }}>{card?.name}</h3>
+                  {getCurrentPrice() && (
+                    <div style={{ 
+                      backgroundColor: '#f8f9fa', 
+                      padding: '8px 12px', 
+                      borderRadius: '6px',
+                      marginBottom: '10px'
+                    }}>
+                      <strong>Price:</strong> {formatPrice(getCurrentPrice())}
+                    </div>
+                  )}
+                  {selectedPrinting.type_line && (
+                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                      {selectedPrinting.type_line}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
           {/* Options */}
-          <div className="card-options" style={{ flex: 1 }}>
-            {/* Quantity */}
-            <div className="form-group">
-              <label htmlFor="quantity">Quantity:</label>
-              <input
-                type="number"
-                id="quantity"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                min="1"
-                style={{ width: '80px', padding: '5px' }}
-              />
-            </div>
-
-            {/* Foil Toggle */}
-            <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isFoil}
-                  onChange={(e) => setIsFoil(e.target.checked)}
-                />
-                Foil
+          <div className="card-options" style={{ flex: 1, padding: '0 10px' }}>
+            {/* Trader Assignment - Most Important */}
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label htmlFor="assign-to" style={{ 
+                display: 'block', 
+                fontWeight: 'bold', 
+                marginBottom: '8px',
+                fontSize: '16px'
+              }}>
+                Assign to:
               </label>
-            </div>
-
-            {/* Trader Assignment */}
-            <div className="form-group">
-              <label htmlFor="assign-to">Assign to:</label>
               <select 
                 id="assign-to"
                 value={assignTo} 
                 onChange={(e) => setAssignTo(e.target.value)}
-                style={{ padding: '5px', minWidth: '120px' }}
+                style={{ 
+                  padding: '10px', 
+                  width: '100%',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px'
+                }}
               >
                 <option value="user1">Me</option>
                 <option value="user2">Trading Partner</option>
               </select>
             </div>
 
+            {/* Quantity and Foil in a row */}
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label htmlFor="quantity" style={{ 
+                  display: 'block', 
+                  fontWeight: 'bold', 
+                  marginBottom: '8px'
+                }}>
+                  Quantity:
+                </label>
+                <input
+                  type="number"
+                  id="quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  min="1"
+                  style={{ 
+                    width: '100%', 
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+              </div>
+
+              <div className="form-group" style={{ flex: 1, display: 'flex', alignItems: 'end' }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '8px 12px',
+                  backgroundColor: isFoil ? '#fff3cd' : '#f8f9fa',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={isFoil}
+                    onChange={(e) => setIsFoil(e.target.checked)}
+                    style={{ margin: 0 }}
+                  />
+                  <span style={{ fontWeight: 'bold' }}>Foil ✨</span>
+                </label>
+              </div>
+            </div>
+
             {/* Printings Selection */}
-            <div className="form-group">
-              <label htmlFor="printing">Printing:</label>
+            <div className="form-group" style={{ marginBottom: '25px' }}>
+              <label htmlFor="printing" style={{ 
+                display: 'block', 
+                fontWeight: 'bold', 
+                marginBottom: '8px'
+              }}>
+                Printing:
+              </label>
               {loading ? (
-                <p>Loading printings...</p>
+                <div style={{ 
+                  padding: '20px', 
+                  textAlign: 'center', 
+                  color: '#666',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '6px'
+                }}>
+                  Loading printings...
+                </div>
               ) : (
                 <select
                   id="printing"
@@ -154,7 +245,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
                     const printing = printings.find(p => p.id === e.target.value);
                     setSelectedPrinting(printing);
                   }}
-                  style={{ padding: '5px', width: '100%' }}
+                  style={{ 
+                    padding: '10px', 
+                    width: '100%',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px'
+                  }}
                 >
                   {printings.map(printing => (
                     <option key={printing.id} value={printing.id}>
@@ -165,14 +262,34 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard }) => {
               )}
             </div>
 
-            <button 
-              className="btn btn-primary" 
-              onClick={handleAddCard}
-              disabled={!selectedPrinting}
-              style={{ marginTop: '20px' }}
-            >
-              Add to Trade
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleAddCard}
+                disabled={!selectedPrinting}
+                style={{ 
+                  flex: 1,
+                  padding: '12px 20px',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                {isEditing ? 'Update Card' : 'Add to Trade'}
+              </button>
+              
+              {isEditing && (
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={onClose}
+                  style={{ 
+                    padding: '12px 20px',
+                    fontSize: '16px'
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -351,6 +468,25 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Update existing card in trade
+  const handleUpdateCard = (updatedCard, originalAssignment) => {
+    const newAssignment = updatedCard.assignedTo;
+    
+    // Remove from original location
+    if (originalAssignment === 'user1') {
+      setUser1Cards(prev => prev.filter(card => card.id !== updatedCard.id));
+    } else {
+      setUser2Cards(prev => prev.filter(card => card.id !== updatedCard.id));
+    }
+    
+    // Add to new location
+    if (newAssignment === 'user1') {
+      setUser1Cards(prev => [...prev, updatedCard]);
+    } else {
+      setUser2Cards(prev => [...prev, updatedCard]);
+    }
+  };
+
   // Remove card from trade
   const handleRemoveCard = (cardId, fromUser) => {
     if (fromUser === 'user1') {
@@ -436,6 +572,67 @@ const TradeManagementPage = ({ isNew }) => {
               placeholder="Search for cards to add..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                // Handle keyboard navigation for search dropdown
+                if (showDropdown && searchResults.length > 0) {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setSelectedSearchIndex(prev => {
+                      const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
+                      // Show preview for the selected card
+                      if (searchResults[newIndex]) {
+                        handleCardHover(searchResults[newIndex]);
+                      }
+                      return newIndex;
+                    });
+                    return;
+                  }
+                  
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setSelectedSearchIndex(prev => {
+                      const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
+                      // Show preview for the selected card
+                      if (searchResults[newIndex]) {
+                        handleCardHover(searchResults[newIndex]);
+                      }
+                      return newIndex;
+                    });
+                    return;
+                  }
+                  
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
+                      const selectedCard = searchResults[selectedSearchIndex];
+                      handleSearchCardClick(selectedCard);
+                      return;
+                    }
+                  }
+                }
+                
+                // Handle Escape key to close dropdown
+                if (e.key === "Escape") {
+                  setSearch("");
+                  setShowDropdown(false);
+                  setSearchResults([]);
+                  setSelectedSearchIndex(-1);
+                }
+              }}
+              onBlur={(e) => {
+                // Prevent immediate hiding - allow clicks on dropdown items
+                setTimeout(() => {
+                  const activeElement = document.activeElement;
+                  const searchContainer = e.currentTarget.closest('.search-container');
+                  const dropdown = searchContainer?.querySelector('[data-search-dropdown]');
+                  
+                  // Only hide if not focused on dropdown
+                  if (!dropdown || !dropdown.contains(activeElement)) {
+                    setShowDropdown(false);
+                    setSelectedSearchIndex(-1);
+                  }
+                }, 150);
+              }}
               style={{
                 width: '100%',
                 padding: '10px',
@@ -447,20 +644,27 @@ const TradeManagementPage = ({ isNew }) => {
             
             {/* Search Dropdown */}
             {showDropdown && (searchResults.length > 0 || noResultsMsg) && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #ddd',
-                borderTop: 'none',
-                borderRadius: '0 0 4px 4px',
-                maxHeight: '300px',
-                overflowY: 'auto',
-                zIndex: 1000,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
+              <div 
+                data-search-dropdown="true"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderTop: 'none',
+                  borderRadius: '0 0 4px 4px',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                onMouseDown={(e) => {
+                  // Prevent input blur when clicking in dropdown
+                  e.preventDefault();
+                }}
+              >
                 {searchLoading && (
                   <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
                     Searching...
@@ -482,7 +686,14 @@ const TradeManagementPage = ({ isNew }) => {
                       borderBottom: index < searchResults.length - 1 ? '1px solid #eee' : 'none',
                       backgroundColor: index === selectedSearchIndex ? '#f0f0f0' : 'transparent'
                     }}
-                    onMouseEnter={() => handleCardHover(card)}
+                    onMouseEnter={() => {
+                      setSelectedSearchIndex(index);
+                      handleCardHover(card);
+                    }}
+                    onMouseDown={(e) => {
+                      // Prevent input blur
+                      e.preventDefault();
+                    }}
                     onClick={() => handleSearchCardClick(card)}
                   >
                     <div style={{ fontWeight: 'bold' }}>{card.name}</div>
@@ -497,7 +708,38 @@ const TradeManagementPage = ({ isNew }) => {
         </div>
 
         {/* Center Column - User 1 (Me) */}
-        <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}>
+        <div 
+          style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#007bff';
+            e.currentTarget.style.backgroundColor = '#f8f9ff';
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.backgroundColor = 'transparent';
+            
+            try {
+              const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+              const { card, sourceUser } = dragData;
+              
+              // Don't move if dropping on same column
+              if (sourceUser === 'user1') return;
+              
+              // Move card from user2 to user1
+              const updatedCard = { ...card, assignedTo: 'user1' };
+              handleUpdateCard(updatedCard, 'user2');
+            } catch (error) {
+              console.error('Error handling drop:', error);
+            }
+          }}
+        >
           {/* Editable User Name */}
           <div style={{ marginBottom: '15px' }}>
             {editingUser1 ? (
@@ -533,6 +775,7 @@ const TradeManagementPage = ({ isNew }) => {
               user1Cards.map(card => (
                 <div 
                   key={card.id}
+                  draggable
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -541,9 +784,52 @@ const TradeManagementPage = ({ isNew }) => {
                     marginBottom: '5px',
                     backgroundColor: '#f9f9f9',
                     borderRadius: '4px',
-                    cursor: 'pointer'
+                    cursor: 'grab',
+                    transition: 'all 0.2s ease',
+                    border: '1px solid transparent'
                   }}
-                  onMouseEnter={() => handleCardHover(card)}
+                  onMouseEnter={() => {
+                    // Create proper card object for preview
+                    const previewCard = {
+                      name: card.name,
+                      card: card.card || {
+                        name: card.name,
+                        image_uris: card.scryfall_json?.image_uris,
+                        mana_cost: card.scryfall_json?.mana_cost,
+                        type_line: card.scryfall_json?.type_line,
+                        oracle_text: card.scryfall_json?.oracle_text,
+                        power: card.scryfall_json?.power,
+                        toughness: card.scryfall_json?.toughness
+                      },
+                      scryfall_json: card.scryfall_json,
+                      image_uris: card.scryfall_json?.image_uris,
+                      foil: card.foil
+                    };
+                    handleCardHover(previewCard);
+                  }}
+                  onClick={(e) => {
+                    // Don't open modal if clicking remove button
+                    if (e.target.closest('button')) return;
+                    // Open edit modal for this card
+                    setModalCard({
+                      ...card,
+                      editing: true,
+                      originalAssignment: 'user1'
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify({
+                      card: card,
+                      sourceUser: 'user1'
+                    }));
+                    e.currentTarget.style.cursor = 'grabbing';
+                    e.currentTarget.style.opacity = '0.5';
+                  }}
+                  onDragEnd={(e) => {
+                    e.currentTarget.style.cursor = 'grab';
+                    e.currentTarget.style.opacity = '1';
+                  }}
                 >
                   <div>
                     <div style={{ fontWeight: 'bold' }}>
@@ -554,13 +840,24 @@ const TradeManagementPage = ({ isNew }) => {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleRemoveCard(card.id, 'user1')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveCard(card.id, 'user1');
+                    }}
                     style={{
                       background: 'none',
                       border: 'none',
                       color: '#dc3545',
                       cursor: 'pointer',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      padding: '4px',
+                      borderRadius: '4px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
                     }}
                   >
                     ✕
@@ -583,7 +880,38 @@ const TradeManagementPage = ({ isNew }) => {
         </div>
 
         {/* Right Column - User 2 (Trading Partner) */}
-        <div style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}>
+        <div 
+          style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#28a745';
+            e.currentTarget.style.backgroundColor = '#f8fff9';
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '#ddd';
+            e.currentTarget.style.backgroundColor = 'transparent';
+            
+            try {
+              const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+              const { card, sourceUser } = dragData;
+              
+              // Don't move if dropping on same column
+              if (sourceUser === 'user2') return;
+              
+              // Move card from user1 to user2
+              const updatedCard = { ...card, assignedTo: 'user2' };
+              handleUpdateCard(updatedCard, 'user1');
+            } catch (error) {
+              console.error('Error handling drop:', error);
+            }
+          }}
+        >
           {/* Editable User Name */}
           <div style={{ marginBottom: '15px' }}>
             {editingUser2 ? (
@@ -619,6 +947,7 @@ const TradeManagementPage = ({ isNew }) => {
               user2Cards.map(card => (
                 <div 
                   key={card.id}
+                  draggable
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -627,9 +956,52 @@ const TradeManagementPage = ({ isNew }) => {
                     marginBottom: '5px',
                     backgroundColor: '#f9f9f9',
                     borderRadius: '4px',
-                    cursor: 'pointer'
+                    cursor: 'grab',
+                    transition: 'all 0.2s ease',
+                    border: '1px solid transparent'
                   }}
-                  onMouseEnter={() => handleCardHover(card)}
+                  onMouseEnter={() => {
+                    // Create proper card object for preview
+                    const previewCard = {
+                      name: card.name,
+                      card: card.card || {
+                        name: card.name,
+                        image_uris: card.scryfall_json?.image_uris,
+                        mana_cost: card.scryfall_json?.mana_cost,
+                        type_line: card.scryfall_json?.type_line,
+                        oracle_text: card.scryfall_json?.oracle_text,
+                        power: card.scryfall_json?.power,
+                        toughness: card.scryfall_json?.toughness
+                      },
+                      scryfall_json: card.scryfall_json,
+                      image_uris: card.scryfall_json?.image_uris,
+                      foil: card.foil
+                    };
+                    handleCardHover(previewCard);
+                  }}
+                  onClick={(e) => {
+                    // Don't open modal if clicking remove button
+                    if (e.target.closest('button')) return;
+                    // Open edit modal for this card
+                    setModalCard({
+                      ...card,
+                      editing: true,
+                      originalAssignment: 'user2'
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify({
+                      card: card,
+                      sourceUser: 'user2'
+                    }));
+                    e.currentTarget.style.cursor = 'grabbing';
+                    e.currentTarget.style.opacity = '0.5';
+                  }}
+                  onDragEnd={(e) => {
+                    e.currentTarget.style.cursor = 'grab';
+                    e.currentTarget.style.opacity = '1';
+                  }}
                 >
                   <div>
                     <div style={{ fontWeight: 'bold' }}>
@@ -640,13 +1012,24 @@ const TradeManagementPage = ({ isNew }) => {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleRemoveCard(card.id, 'user2')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveCard(card.id, 'user2');
+                    }}
                     style={{
                       background: 'none',
                       border: 'none',
                       color: '#dc3545',
                       cursor: 'pointer',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      padding: '4px',
+                      borderRadius: '4px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
                     }}
                   >
                     ✕
@@ -675,6 +1058,7 @@ const TradeManagementPage = ({ isNew }) => {
         onClose={() => setIsModalOpen(false)}
         card={modalCard}
         onAddCard={handleAddCard}
+        onUpdateCard={handleUpdateCard}
       />
       
       {/* Bottom Actions */}
