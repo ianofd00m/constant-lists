@@ -217,8 +217,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                 </div>
               </>
             )}
-          </div>
-
             {/* Printings Selection */}
             <div className="action-row">
               <label className="control-label">Printing:</label>
@@ -248,6 +246,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                 </select>
               )}
             </div>
+          </div>
+
           </div>
         </div>
       </div>
