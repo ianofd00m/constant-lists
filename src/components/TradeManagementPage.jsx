@@ -517,10 +517,6 @@ const TradeManagementPage = ({ isNew }) => {
   // Handle search input changes
   useEffect(() => {
     if (search.trim()) {
-      // Set loading immediately when user types
-      if (search.length > 0 && !searchLoading) {
-        setSearchLoading(true);
-      }
       debouncedSearch(search);
     } else {
       // Clear everything when search is empty
@@ -530,7 +526,7 @@ const TradeManagementPage = ({ isNew }) => {
       setNoResultsMsg('');
       setSearchLoading(false);
     }
-  }, [search, debouncedSearch, searchLoading]);
+  }, [search, debouncedSearch]);
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
@@ -638,7 +634,7 @@ const TradeManagementPage = ({ isNew }) => {
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <h3>Card Preview</h3>
+
             {previewCard ? (
               <CardPreview preview={previewCard} isFixed={true} showPreview={true} />
             ) : (
@@ -707,10 +703,18 @@ const TradeManagementPage = ({ isNew }) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     e.stopPropagation(); // Prevent global event handlers from firing
+                    
+                    // If no specific result is selected but there are results, select the first one
+                    let cardToSelect = null;
                     if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
-                      const selectedCard = searchResults[selectedSearchIndex];
-                      console.log('⏎ Enter pressed for card:', selectedCard.name);
-                      handleSearchCardClick(selectedCard);
+                      cardToSelect = searchResults[selectedSearchIndex];
+                    } else if (searchResults.length > 0) {
+                      cardToSelect = searchResults[0]; // Default to first result
+                    }
+                    
+                    if (cardToSelect) {
+                      console.log('⏎ Enter pressed for card:', cardToSelect.name);
+                      handleSearchCardClick(cardToSelect);
                     }
                     return;
                   }
@@ -870,6 +874,7 @@ const TradeManagementPage = ({ isNew }) => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
+                    e.stopPropagation();
                     setEditingUser1(false);
                   }
                 }}
@@ -998,16 +1003,7 @@ const TradeManagementPage = ({ isNew }) => {
             )}
           </div>
 
-          {/* Total */}
-          <div style={{
-            borderTop: '2px solid #ddd',
-            paddingTop: '10px',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '18px'
-          }}>
-            Total: {formatPrice(user1Total)}
-          </div>
+
         </div>
 
         {/* Right Column - User 2 (Trading Partner) */}
@@ -1054,6 +1050,7 @@ const TradeManagementPage = ({ isNew }) => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
+                    e.stopPropagation();
                     setEditingUser2(false);
                   }
                 }}
@@ -1182,16 +1179,7 @@ const TradeManagementPage = ({ isNew }) => {
             )}
           </div>
 
-          {/* Total */}
-          <div style={{
-            borderTop: '2px solid #ddd',
-            paddingTop: '10px',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            fontSize: '18px'
-          }}>
-            Total: {formatPrice(user2Total)}
-          </div>
+
         </div>
       </div>
 
@@ -1207,11 +1195,36 @@ const TradeManagementPage = ({ isNew }) => {
       {/* Trade Summary */}
       <div style={{ 
         marginTop: '15px', 
-        textAlign: 'center',
-        borderTop: '1px solid #ddd',
-        paddingTop: '15px'
+        padding: '20px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        border: '1px solid #ddd'
       }}>
-        <div style={{ fontSize: '16px' }}>
+        {/* Individual Totals */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          marginBottom: '15px',
+          fontSize: '18px',
+          fontWeight: 'bold'
+        }}>
+          <div>
+            <span style={{ color: '#666' }}>{user1Name} Total:</span>{' '}
+            <span style={{ color: '#28a745' }}>{formatPrice(user1Total)}</span>
+          </div>
+          <div>
+            <span style={{ color: '#666' }}>{user2Name} Total:</span>{' '}
+            <span style={{ color: '#dc3545' }}>{formatPrice(user2Total)}</span>
+          </div>
+        </div>
+        
+        {/* Trade Difference */}
+        <div style={{ 
+          textAlign: 'center',
+          paddingTop: '15px',
+          borderTop: '1px solid #ddd',
+          fontSize: '16px'
+        }}>
           <strong>Trade Difference: </strong>
           <span style={{ 
             color: user1Total > user2Total ? '#28a745' : user1Total < user2Total ? '#dc3545' : '#6c757d',
