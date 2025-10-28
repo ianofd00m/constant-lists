@@ -13,7 +13,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isFoil, setIsFoil] = useState(false);
-  const [assignTo, setAssignTo] = useState('user1'); // 'user1' or 'user2'
+  const [assignTo, setAssignTo] = useState(null); // 'user1' or 'user2' - no default selection
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -26,13 +26,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         // Pre-populate with existing values
         setQuantity(card.quantity || 1);
         setIsFoil(card.foil || false);
-        setAssignTo(card.assignedTo || card.originalAssignment || 'user1');
+        setAssignTo(card.assignedTo || card.originalAssignment || null);
         setSelectedPrinting(card.card || card.scryfall_json || card);
       } else {
         // New card - use defaults
         setQuantity(1);
         setIsFoil(false);
-        setAssignTo('user1');
+        setAssignTo(null); // No default selection
       }
       
       fetchPrintings();
@@ -40,18 +40,41 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   }, [isOpen, card]);
 
   const fetchPrintings = async () => {
-    if (!card) return;
+    if (!card) {
+      console.log('🚫 No card provided to fetchPrintings');
+      return;
+    }
     
+    console.log('📚 Fetching printings for:', card.name);
     setLoading(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/cards/printings?name=${encodeURIComponent(card.name)}`);
-      const data = await response.json();
+      const url = `${apiUrl}/api/cards/printings?name=${encodeURIComponent(card.name)}`;
+      console.log('🔗 Printings URL:', url);
       
-      setPrintings(data.data || []);
-      setSelectedPrinting(data.data?.[0] || card);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Printings response:', data);
+      
+      const printingsData = data.data || [];
+      console.log(`📦 Found ${printingsData.length} printings for "${card.name}"`);
+      
+      setPrintings(printingsData);
+      
+      // Auto-select first printing if available
+      if (printingsData.length > 0) {
+        setSelectedPrinting(printingsData[0]);
+        console.log('🎯 Auto-selected first printing:', printingsData[0].set_name);
+      } else {
+        setSelectedPrinting(card);
+        console.log('🎯 Fallback to original card');
+      }
     } catch (error) {
-      console.error('Error fetching printings:', error);
+      console.error('❌ Error fetching printings:', error);
       setPrintings([]);
       setSelectedPrinting(card);
     }
@@ -71,7 +94,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   };
 
   const handleAddCard = () => {
-    if (!selectedPrinting) return;
+    if (!selectedPrinting || !assignTo) return;
     
     const tradeCard = {
       id: isEditing ? card.id : `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
@@ -96,7 +119,16 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop card-actions-modal" onClick={onClose}>
+    <div 
+      className="modal-backdrop card-actions-modal" 
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      }}
+      tabIndex={-1}
+    >
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
         maxWidth: '800px',
         width: '90%',
@@ -126,24 +158,45 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               {isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}
             </h3>
             
-            {/* Trader Assignment - Most Important */}
-            <div className="action-row">
-              <label className="control-label">Assign to:</label>
-              <select 
-                value={assignTo} 
-                onChange={(e) => setAssignTo(e.target.value)}
-                className="assignment-select"
-                style={{ 
-                  padding: '8px 12px', 
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px',
-                  width: '100%'
-                }}
-              >
-                <option value="user1">Me</option>
-                <option value="user2">Trading Partner</option>
-              </select>
+            {/* Trader Assignment - Toggle Buttons */}
+            <div className="action-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <label className="control-label" style={{ marginBottom: '8px', textAlign: 'left', minWidth: 'auto', width: 'auto' }}>Assign to:</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setAssignTo('user1')}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: '6px',
+                    border: assignTo === 'user1' ? '2px solid #1976d2' : '1px solid #ddd',
+                    backgroundColor: assignTo === 'user1' ? '#e3f2fd' : 'white',
+                    color: assignTo === 'user1' ? '#1976d2' : '#666',
+                    fontSize: '14px',
+                    fontWeight: assignTo === 'user1' ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Me
+                </button>
+                <button
+                  onClick={() => setAssignTo('user2')}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: '6px',
+                    border: assignTo === 'user2' ? '2px solid #1976d2' : '1px solid #ddd',
+                    backgroundColor: assignTo === 'user2' ? '#e3f2fd' : 'white',
+                    color: assignTo === 'user2' ? '#1976d2' : '#666',
+                    fontSize: '14px',
+                    fontWeight: assignTo === 'user2' ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Trading Partner
+                </button>
+              </div>
             </div>
 
             {/* Quantity controls */}
@@ -197,7 +250,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               <button 
                 className="btn btn-primary modal-btn-primary" 
                 onClick={handleAddCard}
-                disabled={!selectedPrinting}
+                disabled={!selectedPrinting || !assignTo}
               >
                 {isEditing ? 'Update Card' : 'Add to Trade'}
               </button>

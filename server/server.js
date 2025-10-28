@@ -511,6 +511,46 @@ app.get('/api/cards/image-proxy', (req, res) => {
   res.redirect(imageUrl);
 });
 
+// Printings endpoint - fetches all printings of a card by name
+app.get('/api/cards/printings', async (req, res) => {
+  const { name } = req.query;
+  console.log(`📚 Printings request for: "${name}"`);
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Card name is required' });
+  }
+  
+  try {
+    // Use exact name search to get all printings
+    const scryfallUrl = `https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(name)}"&unique=prints&order=released&dir=desc`;
+    const response = await fetch(scryfallUrl);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log(`🔍 No printings found for: "${name}"`);
+        return res.json({ data: [] });
+      }
+      throw new Error(`Scryfall API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Found ${data.data?.length || 0} printings for "${name}"`);
+    
+    res.json({
+      data: data.data || [],
+      total_cards: data.total_cards || 0,
+      has_more: data.has_more || false
+    });
+    
+  } catch (error) {
+    console.error('❌ Printings fetch error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch printings',
+      message: error.message 
+    });
+  }
+});
+
 // OTAG (Oracle Tags) data endpoint - serves full CSV from filesystem
 app.get('/api/otag-data', async (req, res) => {
   try {
