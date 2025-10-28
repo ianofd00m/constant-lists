@@ -607,15 +607,34 @@ const TradeManagementPage = ({ isNew }) => {
   return (
     <div className="container" style={{ maxWidth: '100%', padding: '10px 20px', margin: 0 }}>
       {/* Header */}
-      <div style={{ marginBottom: '15px', marginTop: 0 }}>
-        <h1 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>{isNew ? 'Create New Trade' : `Trade ${trade?.id}`}</h1>
-        <button 
+      {/* Subtle back navigation */}
+      <div style={{ marginBottom: '10px' }}>
+        <span 
           onClick={() => navigate('/trade')} 
-          className="btn btn-secondary"
-          style={{ marginBottom: '0' }}
+          style={{
+            color: '#6c757d',
+            fontSize: '14px',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            borderBottom: '1px dotted transparent',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.color = '#007bff';
+            e.target.style.borderBottomColor = '#007bff';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = '#6c757d';
+            e.target.style.borderBottomColor = 'transparent';
+          }}
         >
           ← Back to Trades
-        </button>
+        </span>
+      </div>
+      
+      {/* Main header */}
+      <div style={{ marginBottom: '15px' }}>
+        <h1 style={{ margin: '0', fontSize: '24px' }}>{isNew ? 'Create New Trade' : `Trade ${trade?.id}`}</h1>
       </div>
 
       {/* Three-column layout */}
@@ -626,7 +645,6 @@ const TradeManagementPage = ({ isNew }) => {
           {/* Card Preview */}
           <div style={{ 
             marginBottom: '20px', 
-            height: '450px', 
             border: '1px solid #ddd', 
             borderRadius: '8px', 
             padding: '10px',
@@ -656,6 +674,7 @@ const TradeManagementPage = ({ isNew }) => {
               type="text"
               placeholder="Search for cards to add..."
               value={search}
+              data-trade-search="true"
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%',
@@ -667,8 +686,6 @@ const TradeManagementPage = ({ isNew }) => {
                 fontSize: '14px'
               }}
               onKeyDown={(e) => {
-                // Debug logging for arrow key navigation
-                console.log('🔍 KeyDown:', e.key, 'showDropdown:', showDropdown, 'results:', searchResults.length);
                 
                 // Handle keyboard navigation for search dropdown - make condition more permissive
                 if ((showDropdown || searchResults.length > 0) && searchResults.length > 0) {
@@ -676,7 +693,6 @@ const TradeManagementPage = ({ isNew }) => {
                     e.preventDefault();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
-                      console.log('🔽 Arrow down to index:', newIndex);
                       // Show preview for the selected card
                       if (searchResults[newIndex]) {
                         handleCardHover(searchResults[newIndex]);
@@ -690,7 +706,6 @@ const TradeManagementPage = ({ isNew }) => {
                     e.preventDefault();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
-                      console.log('🔼 Arrow up to index:', newIndex);
                       // Show preview for the selected card
                       if (searchResults[newIndex]) {
                         handleCardHover(searchResults[newIndex]);
@@ -713,7 +728,6 @@ const TradeManagementPage = ({ isNew }) => {
                     }
                     
                     if (cardToSelect) {
-                      console.log('⏎ Enter pressed for card:', cardToSelect.name);
                       handleSearchCardClick(cardToSelect);
                     }
                     return;
@@ -865,6 +879,7 @@ const TradeManagementPage = ({ isNew }) => {
             {editingUser1 ? (
               <input
                 type="text"
+                data-name-input="user1"
                 value={user1Name}
                 onChange={(e) => setUser1Name(e.target.value)}
                 onBlur={() => setEditingUser1(false)}
@@ -1063,6 +1078,7 @@ const TradeManagementPage = ({ isNew }) => {
             {editingUser2 ? (
               <input
                 type="text"
+                data-name-input="user2"
                 value={user2Name}
                 onChange={(e) => setUser2Name(e.target.value)}
                 onBlur={() => setEditingUser2(false)}
@@ -1232,52 +1248,6 @@ const TradeManagementPage = ({ isNew }) => {
         onAddCard={handleAddCard}
         onUpdateCard={handleUpdateCard}
       />
-      
-      {/* Trade Summary */}
-      <div style={{ 
-        marginTop: '15px', 
-        padding: '20px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        border: '1px solid #ddd'
-      }}>
-        {/* Individual Totals */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          marginBottom: '15px',
-          fontSize: '18px',
-          fontWeight: 'bold'
-        }}>
-          <div>
-            <span style={{ color: '#666' }}>{user1Name} Total:</span>{' '}
-            <span style={{ color: '#28a745' }}>{formatPrice(user1Total)}</span>
-          </div>
-          <div>
-            <span style={{ color: '#666' }}>{user2Name} Total:</span>{' '}
-            <span style={{ color: '#dc3545' }}>{formatPrice(user2Total)}</span>
-          </div>
-        </div>
-        
-        {/* Trade Difference */}
-        <div style={{ 
-          textAlign: 'center',
-          paddingTop: '15px',
-          borderTop: '1px solid #ddd',
-          fontSize: '16px'
-        }}>
-          <strong>Trade Difference: </strong>
-          <span style={{ 
-            color: user1Total > user2Total ? '#28a745' : user1Total < user2Total ? '#dc3545' : '#6c757d',
-            fontWeight: 'bold'
-          }}>
-            {formatPrice(Math.abs(user1Total - user2Total))} 
-            {user1Total > user2Total && ` in ${user1Name}'s favor`}
-            {user1Total < user2Total && ` in ${user2Name}'s favor`}
-            {user1Total === user2Total && ' (balanced)'}
-          </span>
-        </div>
-      </div>
     </div>
   );
 };
