@@ -622,10 +622,10 @@ const TradeManagementPage = ({ isNew }) => {
         card = { ...cardObj.card, ...cardObj };
       }
       
-      // Ensure required fields exist
-      if (!card.name) {
-        console.warn('Card hover attempted with invalid card object:', cardObj);
-        return;
+      // Ensure required fields exist for CardPreview
+      if (!card.name || (!card.id && !card.scryfall_id && !card.scryfall_json)) {
+        console.warn('Card hover attempted with invalid card object - missing name or id:', cardObj);
+        return; // Don't update preview with invalid card
       }
       
       setPreviewCard(card);
@@ -746,7 +746,7 @@ const TradeManagementPage = ({ isNew }) => {
             flexDirection: 'column'
           }}>
 
-            {previewCard ? (
+            {previewCard && previewCard.name && (previewCard.id || previewCard.scryfall_id) ? (
               <CardPreview preview={previewCard} isFixed={true} showPreview={true} />
             ) : (
               <div style={{ 

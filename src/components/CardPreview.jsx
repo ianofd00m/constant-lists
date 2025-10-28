@@ -29,7 +29,13 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
   const card = preview?.card || preview;
   const cardName = card?.name || card?.scryfall_json?.name || card?.card?.name || card?.card?.scryfall_json?.name || "Unknown Card";
   
-  if (!showPreview || !preview) {
+  if (!showPreview || !preview || !card) {
+    return null;
+  }
+  
+  // Additional safety check for malformed card objects
+  if (typeof card !== 'object' || (card.id === null && card.scryfall_id === null && !card.scryfall_json)) {
+    console.warn('[CardPreview] Invalid or incomplete card object:', card);
     return null;
   }
 
