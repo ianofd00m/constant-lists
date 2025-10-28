@@ -512,7 +512,7 @@ const TradeManagementPage = ({ isNew }) => {
     }
     
     setSearchLoading(false);
-  }, 300);
+  }, 500);
 
   // Handle search input changes
   useEffect(() => {
@@ -626,7 +626,7 @@ const TradeManagementPage = ({ isNew }) => {
           {/* Card Preview */}
           <div style={{ 
             marginBottom: '20px', 
-            height: '520px', 
+            height: '450px', 
             border: '1px solid #ddd', 
             borderRadius: '8px', 
             padding: '10px',
@@ -810,9 +810,6 @@ const TradeManagementPage = ({ isNew }) => {
                     }}
                   >
                     <div style={{ fontWeight: 'bold' }}>{card.name}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {card.set_name} ({card.set}) • {card.type_line}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -967,8 +964,13 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ 
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
                       {card.name} {card.foil && '✨'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
@@ -985,9 +987,14 @@ const TradeManagementPage = ({ isNew }) => {
                       border: 'none',
                       color: '#dc3545',
                       cursor: 'pointer',
-                      fontSize: '16px',
-                      padding: '4px',
-                      borderRadius: '4px'
+                      fontSize: '12px',
+                      padding: '2px 4px',
+                      borderRadius: '3px',
+                      minWidth: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
@@ -1003,7 +1010,19 @@ const TradeManagementPage = ({ isNew }) => {
             )}
           </div>
 
-
+          {/* Total for User 1 */}
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            borderTop: '2px solid #28a745'
+          }}>
+            Total: {formatPrice(user1Total)}
+          </div>
         </div>
 
         {/* Right Column - User 2 (Trading Partner) */}
@@ -1143,8 +1162,13 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ 
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
                       {card.name} {card.foil && '✨'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
@@ -1161,9 +1185,14 @@ const TradeManagementPage = ({ isNew }) => {
                       border: 'none',
                       color: '#dc3545',
                       cursor: 'pointer',
-                      fontSize: '16px',
-                      padding: '4px',
-                      borderRadius: '4px'
+                      fontSize: '12px',
+                      padding: '2px 4px',
+                      borderRadius: '3px',
+                      minWidth: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
@@ -1179,7 +1208,19 @@ const TradeManagementPage = ({ isNew }) => {
             )}
           </div>
 
-
+          {/* Total for User 2 */}
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            borderTop: '2px solid #dc3545'
+          }}>
+            Total: {formatPrice(user2Total)}
+          </div>
         </div>
       </div>
 
