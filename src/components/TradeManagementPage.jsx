@@ -525,7 +525,7 @@ const TradeManagementPage = ({ isNew }) => {
           }
         }
         
-        setSearchResults(uniqueResults.slice(0, 5)); // Limit to 5 results for compact dropdown
+        setSearchResults(uniqueResults.slice(0, 20)); // Show more results with scrolling
         setShowDropdown(uniqueResults.length > 0);
         setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
         setSelectedSearchIndex(-1);
