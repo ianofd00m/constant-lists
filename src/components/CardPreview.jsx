@@ -17,27 +17,29 @@ function getFastImageUrl(cardId, imageUris = null) {
 }
 
 export default function CardPreview({ preview, isFixed, showPreview, externalFlipState }) {
-  const [showBackFace, setShowBackFace] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [hasEverLoaded, setHasEverLoaded] = useState(false);
-  
-  // Use external flip state if provided, otherwise use internal state
-  const currentFlipState = externalFlipState !== undefined ? externalFlipState : showBackFace;
-  
-  // Debug logging for flip state
-  const card = preview?.card || preview;
-  const cardName = card?.name || card?.scryfall_json?.name || card?.card?.name || card?.card?.scryfall_json?.name || "Unknown Card";
-  
-  if (!showPreview || !preview || !card) {
-    return null;
-  }
-  
-  // Additional safety check for malformed card objects
-  if (typeof card !== 'object' || (card.id === null && card.scryfall_id === null && !card.scryfall_json)) {
-    console.warn('[CardPreview] Invalid or incomplete card object:', card);
-    return null;
-  }
+  // Comprehensive error handling wrapper to prevent crashes
+  try {
+    const [showBackFace, setShowBackFace] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+    const [hasEverLoaded, setHasEverLoaded] = useState(false);
+    
+    // Use external flip state if provided, otherwise use internal state
+    const currentFlipState = externalFlipState !== undefined ? externalFlipState : showBackFace;
+    
+    // Debug logging for flip state
+    const card = preview?.card || preview;
+    const cardName = card?.name || card?.scryfall_json?.name || card?.card?.name || card?.card?.scryfall_json?.name || "Unknown Card";
+    
+    if (!showPreview || !preview || !card) {
+      return null;
+    }
+    
+    // Additional safety check for malformed card objects
+    if (typeof card !== 'object' || (card?.id === null && card?.scryfall_id === null && !card?.scryfall_json)) {
+      console.warn('[CardPreview] Invalid or incomplete card object:', card);
+      return null;
+    }
 
   // Reset error state when card changes, but be smarter about loading state
   useEffect(() => {
@@ -411,4 +413,24 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
       )}
     </div>
   );
+  } catch (error) {
+    console.error('[CardPreview] Caught error to prevent crash:', error);
+    console.error('[CardPreview] Error details:', { preview, card: preview?.card || preview, error: error.message });
+    // Return fallback UI instead of crashing
+    return (
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        color: '#666',
+        border: '1px solid #ddd',
+        borderRadius: '8px',
+        backgroundColor: '#f9f9f9'
+      }}>
+        <div>Preview Error</div>
+        <div style={{ fontSize: '12px', marginTop: '5px' }}>
+          Card data unavailable
+        </div>
+      </div>
+    );
+  }
 }
