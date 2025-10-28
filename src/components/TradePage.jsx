@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import CreateTradeModal from './CreateTradeModal';
+import { Link, useNavigate } from 'react-router-dom';
 
 function TradePage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [trades, setTrades] = useState([]);
 
-  const addTrade = (newTrade) => {
-    setTrades(prevTrades => [...prevTrades, newTrade]);
+  const handleCreateNewTrade = () => {
+    navigate('/trade/new');
   };
 
   const pendingTrades = trades.filter(t => t.status === 'pending');
@@ -16,12 +15,7 @@ function TradePage() {
   return (
     <div className="container">
       <h1>Trades</h1>
-      <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">Create New Trade</button>
-      <CreateTradeModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onTradeCreated={addTrade}
-      />
+      <button onClick={handleCreateNewTrade} className="btn btn-primary">Create New Trade</button>
       
       <div className="trade-list">
         <h2>Pending Trades</h2>
