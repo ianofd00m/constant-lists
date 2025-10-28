@@ -97,7 +97,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   return (
     <div className="modal-backdrop card-actions-modal" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
+        maxWidth: '1000px',
+        width: '95%',
+        maxHeight: 'calc(90vh + 100px)',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         <div className="modal-header">
           <button onClick={onClose} className="close-button">&times;</button>
         </div>
@@ -507,7 +513,7 @@ const TradeManagementPage = ({ isNew }) => {
           }}>
             <h3>Card Preview</h3>
             {previewCard ? (
-              <CardPreview card={previewCard} />
+              <CardPreview preview={previewCard} isFixed={true} showPreview={true} />
             ) : (
               <div style={{ 
                 display: 'flex', 
@@ -528,6 +534,15 @@ const TradeManagementPage = ({ isNew }) => {
               placeholder="Search for cards to add..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: 'white',
+                color: 'black',
+                fontSize: '14px'
+              }}
               onKeyDown={(e) => {
                 // Debug logging for arrow key navigation
                 console.log('🔍 KeyDown:', e.key, 'showDropdown:', showDropdown, 'results:', searchResults.length);
@@ -595,13 +610,6 @@ const TradeManagementPage = ({ isNew }) => {
                   }
                 }, 150);
               }}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #ddd',
-                fontSize: '14px'
-              }}
             />
             
             {/* Search Dropdown */}
@@ -626,6 +634,7 @@ const TradeManagementPage = ({ isNew }) => {
                   // Prevent input blur when clicking in dropdown
                   e.preventDefault();
                 }}
+                tabIndex={-1}
               >
                 {searchLoading && (
                   <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
@@ -656,7 +665,10 @@ const TradeManagementPage = ({ isNew }) => {
                       // Prevent input blur
                       e.preventDefault();
                     }}
-                    onClick={() => handleSearchCardClick(card)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSearchCardClick(card);
+                    }}
                   >
                     <div style={{ fontWeight: 'bold' }}>{card.name}</div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
@@ -721,10 +733,22 @@ const TradeManagementPage = ({ isNew }) => {
                 onChange={(e) => setUser1Name(e.target.value)}
                 onBlur={() => setEditingUser1(false)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') setEditingUser1(false);
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setEditingUser1(false);
+                  }
                 }}
+                onFocus={(e) => e.target.select()}
                 autoFocus
-                style={{ fontSize: '18px', fontWeight: 'bold', border: '1px solid #ddd', padding: '5px' }}
+                style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 'bold', 
+                  border: '1px solid #ddd', 
+                  padding: '5px',
+                  backgroundColor: 'white',
+                  color: 'black',
+                  borderRadius: '4px'
+                }}
               />
             ) : (
               <h2 
@@ -893,10 +917,22 @@ const TradeManagementPage = ({ isNew }) => {
                 onChange={(e) => setUser2Name(e.target.value)}
                 onBlur={() => setEditingUser2(false)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') setEditingUser2(false);
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setEditingUser2(false);
+                  }
                 }}
+                onFocus={(e) => e.target.select()}
                 autoFocus
-                style={{ fontSize: '18px', fontWeight: 'bold', border: '1px solid #ddd', padding: '5px' }}
+                style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 'bold', 
+                  border: '1px solid #ddd', 
+                  padding: '5px',
+                  backgroundColor: 'white',
+                  color: 'black',
+                  borderRadius: '4px'
+                }}
               />
             ) : (
               <h2 
