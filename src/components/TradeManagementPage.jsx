@@ -98,9 +98,9 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   return (
     <div className="modal-backdrop card-actions-modal" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
-        maxWidth: '1000px',
-        width: '95%',
-        maxHeight: 'calc(90vh + 100px)',
+        maxWidth: '800px',
+        width: '90%',
+        maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -108,10 +108,21 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
           <button onClick={onClose} className="close-button">&times;</button>
         </div>
         
-        <div className="modal-body">
+        <div className="modal-body" style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: '15px',
+          height: '100%',
+          overflow: 'hidden'
+        }}>
           {/* Left side controls */}
-          <div className="card-actions">
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#333' }}>
+          <div className="card-actions" style={{
+            flex: '0 0 280px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#333' }}>
               {isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}
             </h3>
             
@@ -203,22 +214,36 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
           </div>
 
           {/* Right side - Card image and details */}
-          <div className="card-display">
+          <div className="card-display" style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '10px'
+          }}>
             {selectedPrinting && (
               <>
                 <img 
                   src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
                   alt={selectedPrinting.name}
-                  className="card-image"
+                  style={{
+                    maxWidth: '200px',
+                    height: 'auto',
+                    borderRadius: '8px',
+                    marginBottom: '10px'
+                  }}
                 />
                 
-                <div className="card-details">
-                  <h4>{card?.name}</h4>
+                <div className="card-details" style={{
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{card?.name}</h4>
                   {selectedPrinting.type_line && (
-                    <p className="type-line">{selectedPrinting.type_line}</p>
+                    <p className="type-line" style={{ margin: '4px 0', color: '#666' }}>{selectedPrinting.type_line}</p>
                   )}
                   {selectedPrinting.mana_cost && (
-                    <p className="mana-cost">{selectedPrinting.mana_cost}</p>
+                    <p className="mana-cost" style={{ margin: '4px 0', color: '#333' }}>{selectedPrinting.mana_cost}</p>
                   )}
                 </div>
               </>
@@ -505,11 +530,13 @@ const TradeManagementPage = ({ isNew }) => {
           {/* Card Preview */}
           <div style={{ 
             marginBottom: '20px', 
-            minHeight: '300px', 
+            height: '400px', 
             border: '1px solid #ddd', 
             borderRadius: '8px', 
             padding: '10px',
-            backgroundColor: '#f9f9f9'
+            backgroundColor: '#f9f9f9',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <h3>Card Preview</h3>
             {previewCard ? (
@@ -519,7 +546,7 @@ const TradeManagementPage = ({ isNew }) => {
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                height: '200px',
+                flex: 1,
                 color: '#666'
               }}>
                 Hover over cards to preview
@@ -583,9 +610,15 @@ const TradeManagementPage = ({ isNew }) => {
                       const selectedCard = searchResults[selectedSearchIndex];
                       console.log('⏎ Enter pressed for card:', selectedCard.name);
                       handleSearchCardClick(selectedCard);
-                      return;
                     }
+                    return;
                   }
+                }
+                
+                // Always prevent Enter key to avoid unwanted form submissions
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  return;
                 }
                 
                 // Handle Escape key to close dropdown

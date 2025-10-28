@@ -100,11 +100,11 @@ import './production-otag-system.js';
     
     // Create working modal with captured data
     const modalHTML = `
-      <div id="show-all-modal" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.9) !important; z-index: 9999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 20px !important;">
-        <div style="background: white !important; border-radius: 12px !important; width: 95vw !important; height: 95vh !important; display: flex !important; flex-direction: column !important; overflow: hidden !important;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white !important; padding: 20px !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
-            <h2 style="margin: 0 !important; font-size: 24px !important;">🔍 All Results: "${query}" (${results.length} cards)</h2>
-            <button onclick="document.getElementById('show-all-modal').remove();" style="background: rgba(255,255,255,0.2) !important; color: white !important; border: none !important; border-radius: 8px !important; padding: 10px 15px !important; cursor: pointer !important;">✕ Close</button>
+      <div id="show-all-modal" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0,0,0,0.5) !important; z-index: 9999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 20px !important;">
+        <div style="background: white !important; border-radius: 8px !important; width: 90% !important; max-width: 1200px !important; height: 80% !important; max-height: 800px !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;">
+          <div style="background: white !important; color: #333 !important; padding: 20px !important; border-bottom: 1px solid #eee !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+            <h2 style="margin: 0 !important; font-size: 20px !important; color: #333 !important;">🔍 All Results: "${query}" (${results.length} cards)</h2>
+            <button onclick="document.getElementById('show-all-modal').remove();" style="background: #f8f9fa !important; color: #333 !important; border: 1px solid #ddd !important; border-radius: 4px !important; padding: 8px 12px !important; cursor: pointer !important; font-size: 18px !important;">✕</button>
           </div>
           <div style="flex: 1 !important; overflow-y: auto !important; padding: 20px !important;">
             <div style="display: grid !important; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important; gap: 20px !important;">
@@ -557,9 +557,10 @@ function implementShowAllResultsFix() {
         ">
           <!-- Header -->
           <div style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white !important;
+            background: white !important;
+            color: #333 !important;
             padding: 20px !important;
+            border-bottom: 1px solid #eee !important;
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
@@ -568,34 +569,19 @@ function implementShowAllResultsFix() {
           ">
             <h2 style="
               margin: 0 !important;
-              font-size: 24px !important;
+              font-size: 20px !important;
               font-weight: 600 !important;
-              color: white !important;
-              text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
-            ">🔍 All Results: "${query}"</h2>
-            <div style="display: flex !important; gap: 15px !important; align-items: center !important;">
-              <span style="
-                background: rgba(255,255,255,0.2) !important;
-                color: white !important;
-                padding: 8px 15px !important;
-                border-radius: 20px !important;
-                font-size: 14px !important;
-                font-weight: 600 !important;
-                backdrop-filter: blur(10px) !important;
-              ">${results.length} cards found</span>
-              <button onclick="document.getElementById('show-all-modal').remove(); console.log('✅ Modal closed');" style="
-                background: rgba(255,255,255,0.2) !important;
-                color: white !important;
-                border: 2px solid rgba(255,255,255,0.3) !important;
-                border-radius: 8px !important;
-                padding: 10px 15px !important;
-                cursor: pointer !important;
-                font-size: 16px !important;
-                font-weight: 600 !important;
-                backdrop-filter: blur(10px) !important;
-                transition: all 0.2s ease !important;
-              " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">✕ Close</button>
-            </div>
+              color: #333 !important;
+            ">🔍 All Results: "${query}" (${results.length} cards)</h2>
+            <button onclick="document.getElementById('show-all-modal').remove(); console.log('✅ Modal closed');" style="
+              background: #f8f9fa !important;
+              color: #333 !important;
+              border: 1px solid #ddd !important;
+              border-radius: 4px !important;
+              padding: 8px 12px !important;
+              cursor: pointer !important;
+              font-size: 18px !important;
+            ">✕</button>
           </div>
           
           <!-- Cards Container -->
