@@ -247,8 +247,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               )}
             </div>
           </div>
-
-          </div>
         </div>
       </div>
     </div>
