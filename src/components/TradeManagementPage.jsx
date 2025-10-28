@@ -389,6 +389,7 @@ const TradeManagementPage = ({ isNew }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
+  const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
   const [noResultsMsg, setNoResultsMsg] = useState('');
   
   // Trading Post placeholder card to prevent sidebar layout jumps
@@ -492,6 +493,7 @@ const TradeManagementPage = ({ isNew }) => {
         setShowDropdown(false);
         setNoResultsMsg('');
         setSearchLoading(false);
+        setIsKeyboardNavigation(false); // Reset keyboard navigation when search is cleared
         return;
       }
       
@@ -536,6 +538,7 @@ const TradeManagementPage = ({ isNew }) => {
         setShowDropdown(uniqueResults.length > 0);
         setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
         setSelectedSearchIndex(-1);
+        setIsKeyboardNavigation(false); // Reset keyboard navigation on new search results
         
       } catch (error) {
         if (error.name !== 'AbortError') {
@@ -654,6 +657,7 @@ const TradeManagementPage = ({ isNew }) => {
         setSearch(''); // Clear the search input when clicking outside
         setSearchResults([]);
         setSelectedSearchIndex(-1);
+        setIsKeyboardNavigation(false); // Reset keyboard navigation when clicking outside
       }
     };
 
@@ -891,6 +895,7 @@ const TradeManagementPage = ({ isNew }) => {
                   if (e.key === "ArrowDown") {
                     e.preventDefault();
                     e.stopPropagation();
+                    setIsKeyboardNavigation(true); // Mark as keyboard navigation
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
                       // Show preview for the selected card (with safety check)
@@ -906,6 +911,7 @@ const TradeManagementPage = ({ isNew }) => {
                   if (e.key === "ArrowUp") {
                     e.preventDefault();
                     e.stopPropagation();
+                    setIsKeyboardNavigation(true); // Mark as keyboard navigation
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
                       // Show preview for the selected card (with safety check)
@@ -922,16 +928,18 @@ const TradeManagementPage = ({ isNew }) => {
                     e.preventDefault();
                     e.stopPropagation(); // Prevent global event handlers from firing
                     
-                    // If no specific result is selected but there are results, select the first one
-                    let cardToSelect = null;
-                    if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
-                      cardToSelect = searchResults[selectedSearchIndex];
-                    } else if (searchResults.length > 0) {
-                      cardToSelect = searchResults[0]; // Default to first result
+                    // Only select card if user navigated with keyboard AND has a valid selection
+                    if (isKeyboardNavigation && selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
+                      const cardToSelect = searchResults[selectedSearchIndex];
+                      if (cardToSelect) {
+                        handleSearchCardClick(cardToSelect);
+                        return;
+                      }
                     }
                     
-                    if (cardToSelect) {
-                      handleSearchCardClick(cardToSelect);
+                    // If no keyboard navigation occurred, open search modal with all results
+                    if (search.trim()) {
+                      fetchAllSearchResults(search.trim());
                     }
                     return;
                   }
@@ -957,6 +965,7 @@ const TradeManagementPage = ({ isNew }) => {
                   setShowDropdown(false);
                   setSearchResults([]);
                   setSelectedSearchIndex(-1);
+                  setIsKeyboardNavigation(false); // Reset keyboard navigation on escape
                 }
               }}
             />
@@ -1011,6 +1020,7 @@ const TradeManagementPage = ({ isNew }) => {
                       }}
                       onMouseEnter={() => {
                         setSelectedSearchIndex(index);
+                        setIsKeyboardNavigation(false); // Reset keyboard navigation flag on mouse hover
                         // Safety check before hovering
                         if (card && card.name) {
                           handleCardHover(card);
