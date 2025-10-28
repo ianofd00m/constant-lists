@@ -568,12 +568,24 @@ const TradeManagementPage = ({ isNew }) => {
     };
   }, [search]);
 
-  // Handle Escape key to close search modal
+  // Handle modal focus and escape key functionality
   useEffect(() => {
     if (!showSearchModal) return;
 
+    // Focus the modal immediately when it opens
+    const focusModal = () => {
+      const modalElement = document.querySelector('[data-search-modal="true"]');
+      if (modalElement) {
+        modalElement.focus();
+      }
+    };
+
+    // Use setTimeout to ensure the modal is in the DOM
+    setTimeout(focusModal, 0);
+
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
+        event.preventDefault();
         setShowSearchModal(false);
       }
     };
@@ -1449,6 +1461,7 @@ const TradeManagementPage = ({ isNew }) => {
       {/* Search Results Modal (triggered by Enter key) */}
       {showSearchModal && (
         <div
+          data-search-modal="true"
           style={{
             position: "fixed",
             top: 0,
@@ -1461,13 +1474,19 @@ const TradeManagementPage = ({ isNew }) => {
             justifyContent: "center",
             alignItems: "center",
             padding: "20px",
+            outline: "none",
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowSearchModal(false);
             }
           }}
-          tabIndex={-1}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowSearchModal(false);
+            }
+          }}
+          tabIndex={0}
         >
           <div
             style={{
