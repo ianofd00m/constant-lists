@@ -421,9 +421,16 @@ const TradeManagementPage = ({ isNew }) => {
   // Card preview - initialize with Trading Post to prevent layout jumps
   const [previewCard, setPreviewCard] = useState(tradingPostPlaceholder);
   
-  // Modal state
+  // Modal states
   const [modalCard, setModalCard] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Search modal states (for Enter key functionality)
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [allSearchResults, setAllSearchResults] = useState([]);
+  const [modalSearchTerm, setModalSearchTerm] = useState('');
+  const [modalSearch, setModalSearch] = useState('');
+  const [searchModalLoading, setSearchModalLoading] = useState(false);
   
   // User names (editable)
   const [user1Name, setUser1Name] = useState('Me');
@@ -560,6 +567,52 @@ const TradeManagementPage = ({ isNew }) => {
       debouncedSearch.cancel();
     };
   }, [search]);
+
+  // Function to fetch all search results for the modal (triggered by Enter key)
+  const fetchAllSearchResults = async (query) => {
+    if (!query.trim()) return;
+    
+    setSearchModalLoading(true);
+    
+    try {
+      // Fetch all results with a high limit for the modal
+      const url = `/api/cards/typesense-search?q=${encodeURIComponent(query.trim())}&limit=1000`;
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const isDev = import.meta.env.DEV;
+      const finalUrl = isDev ? url : `${apiUrl}${url}`;
+      
+      const res = await fetch(finalUrl);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      let results = data.data || data || [];
+      
+      // Remove duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      for (const result of results) {
+        if (!seenNames.has(result.name)) {
+          seenNames.add(result.name);
+          uniqueResults.push(result);
+        }
+      }
+      
+      setAllSearchResults(uniqueResults);
+      setModalSearchTerm(query.trim()); // Store the original search term that opened the modal
+      setModalSearch(""); // Clear modal search input so users can search freely
+      setShowSearchModal(true);
+      setShowDropdown(false); // Close the dropdown only after successful fetch
+      
+    } catch (error) {
+      console.error('Error fetching all search results:', error);
+      setAllSearchResults([]);
+    } finally {
+      setSearchModalLoading(false);
+    }
+  };
 
   // Close search dropdown when clicking outside or pressing Escape (mirrors DeckViewEdit)
   useEffect(() => {
@@ -856,10 +909,15 @@ const TradeManagementPage = ({ isNew }) => {
                   }
                 }
                 
-                // Always prevent Enter key to avoid unwanted form submissions
-                if (e.key === "Enter") {
+                // Handle Enter key - open search modal if no specific result selected
+                if (e.key === "Enter" && search.trim()) {
                   e.preventDefault();
-                  e.stopPropagation(); // Prevent global event handlers from firing
+                  e.stopPropagation();
+                  
+                  // If no result is specifically selected, open the search modal
+                  if (selectedSearchIndex < 0) {
+                    fetchAllSearchResults(search.trim());
+                  }
                   return;
                 }
                 
@@ -1371,6 +1429,249 @@ const TradeManagementPage = ({ isNew }) => {
         onAddCard={handleAddCard}
         onUpdateCard={handleUpdateCard}
       />
+
+      {/* Search Results Modal (triggered by Enter key) */}
+      {showSearchModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 10000,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSearchModal(false);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowSearchModal(false);
+            }
+          }}
+          tabIndex={-1}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "8px",
+              width: "90%",
+              maxWidth: "1200px",
+              height: "80%",
+              maxHeight: "800px",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "20px",
+                borderBottom: "1px solid #eee",
+                position: "relative",
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowSearchModal(false)}
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  width: "30px",
+                  height: "30px",
+                  borderRadius: "50%",
+                  border: "none",
+                  backgroundColor: "#f5f5f5",
+                  color: "#666",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#e0e0e0";
+                  e.target.style.color = "#333";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "#f5f5f5";
+                  e.target.style.color = "#666";
+                }}
+              >
+                ×
+              </button>
+
+              <h3 style={{ margin: 0, marginBottom: "10px", color: "#333" }}>
+                Search Results for "{modalSearchTerm}"
+              </h3>
+            </div>
+
+            {/* Modal Content */}
+            <div
+              style={{
+                flex: 1,
+                padding: "20px",
+                overflowY: "auto",
+              }}
+            >
+              {searchModalLoading ? (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "200px",
+                    fontSize: "16px",
+                    color: "#666",
+                  }}
+                >
+                  Loading search results...
+                </div>
+              ) : allSearchResults.length > 0 ? (
+                <>
+                  <div
+                    style={{
+                      marginBottom: "16px",
+                      fontSize: "14px",
+                      color: "#666",
+                    }}
+                  >
+                    Found {allSearchResults.length} result{allSearchResults.length !== 1 ? 's' : ''}
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 220px))",
+                      gap: "16px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {allSearchResults.map((card, index) => (
+                      <div
+                        key={`${card.scryfall_id || card.id}-${index}`}
+                        style={{
+                          border: "1px solid #ddd",
+                          borderRadius: "8px",
+                          padding: "12px",
+                          backgroundColor: "#fafafa",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "#1976d2";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.15)";
+                          e.currentTarget.style.backgroundColor = "#f8fbff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "#ddd";
+                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.backgroundColor = "#fafafa";
+                        }}
+                        onClick={() => {
+                          setModalCard(card);
+                          setIsModalOpen(true);
+                          setShowSearchModal(false);
+                        }}
+                      >
+                        {/* Card Image */}
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "160px",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <img
+                            src={`https://cards.scryfall.io/normal/front/${(card.id || card.scryfall_id)[0]}/${(card.id || card.scryfall_id)[1]}/${card.id || card.scryfall_id}.jpg`}
+                            alt={card.name}
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "100%",
+                              borderRadius: "6px",
+                              objectFit: "contain",
+                            }}
+                            onError={(e) => {
+                              // Fallback to direct image URL if available
+                              const directUrl = card.image_uris?.normal || card.image_uris?.small;
+                              if (directUrl && e.target.src !== directUrl) {
+                                e.target.src = directUrl;
+                              } else {
+                                e.target.style.display = 'none';
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {/* Card Name */}
+                        <div
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                            textAlign: "center",
+                            color: "#333",
+                            lineHeight: "1.2",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {card.name}
+                        </div>
+
+                        {/* Card Details */}
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#666",
+                            textAlign: "center",
+                            lineHeight: "1.2",
+                          }}
+                        >
+                          {card.set_name && (
+                            <div>{card.set_name}</div>
+                          )}
+                          {card.type_line && (
+                            <div>{card.type_line}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "200px",
+                    fontSize: "16px",
+                    color: "#666",
+                  }}
+                >
+                  No cards found for "{modalSearchTerm}"
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
