@@ -35,9 +35,18 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
       return null;
     }
     
-    // Additional safety check for malformed card objects
-    if (typeof card !== 'object' || (card?.id === null && card?.scryfall_id === null && !card?.scryfall_json)) {
-      console.warn('[CardPreview] Invalid or incomplete card object:', card);
+    // Enhanced safety check for dual-faced cards and malformed card objects
+    if (typeof card !== 'object') {
+      console.warn('[CardPreview] Invalid card object type:', typeof card, card);
+      return null;
+    }
+    
+    // Quick check for basic card data before proceeding
+    const hasBasicCardData = card?.id || card?.scryfall_id || card?.scryfall_json?.id || card?.card?.id ||
+                            card?.card_faces || card?.scryfall_json?.card_faces || card?.card?.scryfall_json?.card_faces;
+    
+    if (!hasBasicCardData) {
+      console.warn('[CardPreview] Card missing all basic data fields:', card);
       return null;
     }
 
@@ -191,44 +200,41 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
       }
     }
   }
-  // PRIORITY 2: User's learned preference (but only when NOT actively flipping)
-  else if (userPreference && userPreference.id) {
-    // Use the user's learned preference (this will become the most common path over time)
+  // PRIORITY 2: User's learned preference (but only when NOT actively flipping and NOT dual-faced)
+  else if (userPreference && userPreference.id && !isDoubleFaced) {
+    // Use the user's learned preference for single-faced cards
     imageUrl = getFastImageUrl(userPreference.id);
     if (cardName === "Arcane Signet") {
       console.log(`[CardPreview] 🧠 Using learned preference for ${cardName}: ${userPreference.set.toUpperCase()} #${userPreference.collector_number} (${userPreference.id})`);
     }
   }
-  // PRIORITY 3: For double-faced cards without external flip state, choose the appropriate face 
+  // PRIORITY 3: For double-faced cards, choose the appropriate face (MUST come before specific printing ID)
   else if (isDoubleFaced) {
-    // Use the user's learned preference (this will become the most common path over time)
-    imageUrl = getFastImageUrl(userPreference.id);
-    if (cardName.includes('Miles') || cardName.includes('Spider-Man') || cardName === "Arcane Signet") {
-      console.log(`[CardPreview] 🧠 Using learned preference for ${cardName}: ${userPreference.set.toUpperCase()} #${userPreference.collector_number} (${userPreference.id})`);
-    }
-  }
-  // PRIORITY 2: For double-faced cards, choose the appropriate face (MUST come before specific printing ID)
-  else if (isDoubleFaced) {
-    const faceIndex = currentFlipState ? 1 : 0;
-    const selectedFace = cardFaces[faceIndex];
-    const cardId = card.id || card.scryfall_json?.id || card.card?.id || card.card?.scryfall_json?.id;
-    
-    // Debug logging for Miles Morales specifically
-    if (cardName.includes('Miles') || cardName.includes('Spider-Man')) {
-      console.log('🔄 FLIP DEBUG - Double-faced card image logic:', {
-        cardName,
-        currentFlipState,
-        faceIndex,
-        cardFaces: cardFaces?.length || 0,
-        selectedFace: selectedFace ? {
-          name: selectedFace.name,
-          hasImageUris: !!selectedFace.image_uris,
-          imageUris: selectedFace.image_uris
-        } : null,
-        cardId,
-        fullCardFacesArray: cardFaces
-      });
-    }
+    // Ensure we have valid cardFaces array
+    if (!cardFaces || !Array.isArray(cardFaces) || cardFaces.length === 0) {
+      console.warn('[CardPreview] Dual-faced card detected but no valid cardFaces array:', { cardName, cardFaces });
+      // Fall back to regular card logic below
+    } else {
+      const faceIndex = currentFlipState ? 1 : 0;
+      const selectedFace = cardFaces[faceIndex] || cardFaces[0]; // Fallback to front face if back face missing
+      const cardId = card.id || card.scryfall_json?.id || card.card?.id || card.card?.scryfall_json?.id;
+      
+      // Debug logging for dual-faced cards
+      if (cardName.includes('Miles') || cardName.includes('Spider-Man') || cardName.includes('Accursed') || cardName.includes('Infectious')) {
+        console.log('🔄 FLIP DEBUG - Double-faced card image logic:', {
+          cardName,
+          currentFlipState,
+          faceIndex,
+          cardFaces: cardFaces?.length || 0,
+          selectedFace: selectedFace ? {
+            name: selectedFace.name,
+            hasImageUris: !!selectedFace.image_uris,
+            imageUris: selectedFace.image_uris
+          } : null,
+          cardId,
+          fullCardFacesArray: cardFaces
+        });
+      }
     
     if (selectedFace?.image_uris) {
       // Use the direct URL from the selected face - this is the correct URL for the specific face
@@ -262,6 +268,7 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
         console.log('Fallback to cardId for double-faced card:', imageUrl);
       }
     }
+    } // end of else block for valid cardFaces
   }
   // PRIORITY 4: Specific printing ID (from modal selection)
   else if (specificPrintingId && specificPrintingId.length >= 36) {
