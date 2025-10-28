@@ -525,7 +525,7 @@ const TradeManagementPage = ({ isNew }) => {
           }
         }
         
-        setSearchResults(uniqueResults.slice(0, 10)); // Limit to 10 results
+        setSearchResults(uniqueResults.slice(0, 5)); // Limit to 5 results for compact dropdown
         setShowDropdown(uniqueResults.length > 0);
         setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
         setSelectedSearchIndex(-1);
@@ -570,16 +570,18 @@ const TradeManagementPage = ({ isNew }) => {
       const searchContainer = event.target.closest(".search-container");
       if (!searchContainer) {
         setShowDropdown(false);
-        // Don't clear the search input when clicking outside - preserve user's search term
-        // setSearch("");
+        setSearch(''); // Clear the search input when clicking outside
+        setSearchResults([]);
+        setSelectedSearchIndex(-1);
       }
     };
 
     const handleEscapeKey = (event) => {
       if (event.key === "Escape") {
         setShowDropdown(false);
-        // Don't clear the search input when pressing Escape - preserve user's search term
-        // setSearch("");
+        setSearch(''); // Clear the search input when pressing Escape
+        setSearchResults([]);
+        setSelectedSearchIndex(-1);
       }
     };
 
@@ -762,7 +764,9 @@ const TradeManagementPage = ({ isNew }) => {
                   // Don't close if focus is still within the search container or dropdown
                   if (!focusedOnDropdown && !searchContainer?.contains(activeElement)) {
                     setShowDropdown(false);
-                    // Don't clear search on blur - preserve user's search term
+                    setSearch(''); // Clear search when losing focus
+                    setSearchResults([]);
+                    setSelectedSearchIndex(-1);
                   }
                 }, 150);
               }}
@@ -832,14 +836,14 @@ const TradeManagementPage = ({ isNew }) => {
                   return;
                 }
                 
-                // Handle Escape key to close dropdown
+                // Handle Escape key to clear search and close dropdown
                 if (e.key === "Escape") {
                   e.preventDefault();
                   e.stopPropagation();
+                  setSearch(''); // Clear the search text
                   setShowDropdown(false);
                   setSearchResults([]);
                   setSelectedSearchIndex(-1);
-                  // Don't clear search on escape - preserve user's search term like DeckViewEdit
                 }
               }}
             />
@@ -853,14 +857,14 @@ const TradeManagementPage = ({ isNew }) => {
                   top: '100%',
                   left: 0,
                   right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ddd',
-                  borderTop: 'none',
-                  borderRadius: '0 0 4px 4px',
-                  maxHeight: '300px',
+                  backgroundColor: '#f9f9f9',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  marginTop: '2px',
+                  maxHeight: '200px', // Smaller for 5 results
                   overflowY: 'auto',
                   zIndex: 1000,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                 }}
                 onMouseDown={(e) => {
                   // Prevent input blur when clicking in dropdown
@@ -869,42 +873,52 @@ const TradeManagementPage = ({ isNew }) => {
                 tabIndex={-1}
               >
                 {searchLoading && (
-                  <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                  <div style={{ padding: '6px 8px', textAlign: 'center', color: '#666', fontSize: '12px' }}>
                     Searching...
                   </div>
                 )}
                 
                 {!searchLoading && noResultsMsg && (
-                  <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                  <div style={{ padding: '6px 8px', textAlign: 'center', color: '#666', fontSize: '12px' }}>
                     {noResultsMsg}
                   </div>
                 )}
                 
-                {!searchLoading && searchResults.map((card, index) => (
-                  <div
-                    key={`${card.id || card.name}_${index}`}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: index < searchResults.length - 1 ? '1px solid #eee' : 'none',
-                      backgroundColor: index === selectedSearchIndex ? '#f0f0f0' : 'transparent'
-                    }}
-                    onMouseEnter={() => {
-                      setSelectedSearchIndex(index);
-                      handleCardHover(card);
-                    }}
-                    onMouseDown={(e) => {
-                      // Prevent input blur
-                      e.preventDefault();
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSearchCardClick(card);
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold' }}>{card.name}</div>
-                  </div>
-                ))}
+                {!searchLoading && searchResults.map((card, index) => {
+                  const isSelected = index === selectedSearchIndex;
+                  return (
+                    <div
+                      key={`${card.id || card.name}_${index}`}
+                      style={{
+                        padding: '6px 8px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s ease',
+                        borderBottom: index < searchResults.length - 1 ? '1px solid #eee' : 'none',
+                        backgroundColor: isSelected ? '#e3f2fd' : 'transparent'
+                      }}
+                      onMouseEnter={() => {
+                        setSelectedSearchIndex(index);
+                        handleCardHover(card);
+                      }}
+                      onMouseDown={(e) => {
+                        // Prevent input blur
+                        e.preventDefault();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSearchCardClick(card);
+                      }}
+                    >
+                      <div style={{ 
+                        fontWeight: isSelected ? '600' : '500',
+                        fontSize: '12px',
+                        color: isSelected ? '#1976d2' : '#333'
+                      }}>
+                        {card.name}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
