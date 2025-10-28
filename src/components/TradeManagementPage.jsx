@@ -96,73 +96,32 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content trade-card-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop card-actions-modal" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}</h2>
-          <button className="close-button" onClick={onClose}>&times;</button>
+          <button onClick={onClose} className="close-button">&times;</button>
         </div>
         
-        <div className="modal-body" style={{ display: 'flex', gap: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
-          {/* Card Image and Info */}
-          <div className="card-info" style={{ flex: '0 0 280px' }}>
-            {selectedPrinting && (
-              <>
-                <img 
-                  src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
-                  alt={selectedPrinting.name}
-                  style={{ 
-                    width: '100%', 
-                    maxWidth: '280px', 
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                    marginBottom: '15px'
-                  }}
-                />
-                <div style={{ padding: '10px 0' }}>
-                  <h3 style={{ margin: '0 0 10px 0', fontSize: '20px' }}>{card?.name}</h3>
-                  {getCurrentPrice() && (
-                    <div style={{ 
-                      backgroundColor: '#f8f9fa', 
-                      padding: '8px 12px', 
-                      borderRadius: '6px',
-                      marginBottom: '10px'
-                    }}>
-                      <strong>Price:</strong> {formatPrice(getCurrentPrice())}
-                    </div>
-                  )}
-                  {selectedPrinting.type_line && (
-                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-                      {selectedPrinting.type_line}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Options */}
-          <div className="card-options" style={{ flex: 1, padding: '0 10px' }}>
+        <div className="modal-body">
+          {/* Left side controls */}
+          <div className="card-actions">
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#333' }}>
+              {isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}
+            </h3>
+            
             {/* Trader Assignment - Most Important */}
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label htmlFor="assign-to" style={{ 
-                display: 'block', 
-                fontWeight: 'bold', 
-                marginBottom: '8px',
-                fontSize: '16px'
-              }}>
-                Assign to:
-              </label>
+            <div className="action-row">
+              <label className="control-label">Assign to:</label>
               <select 
-                id="assign-to"
                 value={assignTo} 
                 onChange={(e) => setAssignTo(e.target.value)}
+                className="assignment-select"
                 style={{ 
-                  padding: '10px', 
-                  width: '100%',
-                  borderRadius: '6px',
+                  padding: '8px 12px', 
+                  borderRadius: '4px',
                   border: '1px solid #ddd',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  width: '100%'
                 }}
               >
                 <option value="user1">Me</option>
@@ -170,87 +129,115 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               </select>
             </div>
 
-            {/* Quantity and Foil in a row */}
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="quantity" style={{ 
-                  display: 'block', 
-                  fontWeight: 'bold', 
-                  marginBottom: '8px'
-                }}>
-                  Quantity:
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
+            {/* Quantity controls */}
+            <div className="action-row quantity-row">
+              <label className="control-label">Quantity:</label>
+              <div className="quantity-controls">
+                <button 
+                  className="quantity-btn" 
+                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                  disabled={quantity <= 1}
+                >−</button>
+                <input 
+                  type="number" 
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="quantity-input"
                   min="1"
-                  style={{ 
-                    width: '100%', 
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd'
-                  }}
                 />
-              </div>
-
-              <div className="form-group" style={{ flex: 1, display: 'flex', alignItems: 'end' }}>
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  padding: '8px 12px',
-                  backgroundColor: isFoil ? '#fff3cd' : '#f8f9fa',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s ease'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={isFoil}
-                    onChange={(e) => setIsFoil(e.target.checked)}
-                    style={{ margin: 0 }}
-                  />
-                  <span style={{ fontWeight: 'bold' }}>Foil ✨</span>
-                </label>
+                <button 
+                  className="quantity-btn" 
+                  onClick={() => setQuantity(prev => prev + 1)}
+                >+</button>
               </div>
             </div>
 
-            {/* Printings Selection */}
-            <div className="form-group" style={{ marginBottom: '25px' }}>
-              <label htmlFor="printing" style={{ 
-                display: 'block', 
-                fontWeight: 'bold', 
-                marginBottom: '8px'
-              }}>
-                Printing:
+            {/* Foil toggle */}
+            <div className="action-row foil-selector">
+              <label className="control-label">Foil:</label>
+              <label className="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  checked={isFoil}
+                  onChange={(e) => setIsFoil(e.target.checked)}
+                />
+                <span className={`toggle-slider ${isFoil ? 'foil-active' : ''}`}></span>
               </label>
-              {loading ? (
-                <div style={{ 
-                  padding: '20px', 
-                  textAlign: 'center', 
-                  color: '#666',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '6px'
-                }}>
-                  Loading printings...
+            </div>
+
+            {/* Price display */}
+            {getCurrentPrice() && (
+              <div className="action-row">
+                <label className="control-label">Price:</label>
+                <div className="price-display">
+                  {formatPrice(getCurrentPrice())}
                 </div>
+              </div>
+            )}
+            
+            {/* Action buttons */}
+            <div className="modal-buttons" style={{ marginTop: '20px' }}>
+              <button 
+                className="btn btn-primary modal-btn-primary" 
+                onClick={handleAddCard}
+                disabled={!selectedPrinting}
+              >
+                {isEditing ? 'Update Card' : 'Add to Trade'}
+              </button>
+              
+              {isEditing && (
+                <button 
+                  className="btn btn-secondary modal-btn-secondary" 
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right side - Card image and details */}
+          <div className="card-display">
+            {selectedPrinting && (
+              <>
+                <img 
+                  src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
+                  alt={selectedPrinting.name}
+                  className="card-image"
+                />
+                
+                <div className="card-details">
+                  <h4>{card?.name}</h4>
+                  {selectedPrinting.type_line && (
+                    <p className="type-line">{selectedPrinting.type_line}</p>
+                  )}
+                  {selectedPrinting.mana_cost && (
+                    <p className="mana-cost">{selectedPrinting.mana_cost}</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+            {/* Printings Selection */}
+            <div className="action-row">
+              <label className="control-label">Printing:</label>
+              {loading ? (
+                <div className="loading-printings">Loading printings...</div>
               ) : (
                 <select
-                  id="printing"
                   value={selectedPrinting?.id || ''}
                   onChange={(e) => {
                     const printing = printings.find(p => p.id === e.target.value);
                     setSelectedPrinting(printing);
                   }}
+                  className="printing-select"
                   style={{ 
-                    padding: '10px', 
-                    width: '100%',
-                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
                     border: '1px solid #ddd',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    width: '100%'
                   }}
                 >
                   {printings.map(printing => (
@@ -259,35 +246,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                     </option>
                   ))}
                 </select>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleAddCard}
-                disabled={!selectedPrinting}
-                style={{ 
-                  flex: 1,
-                  padding: '12px 20px',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
-                }}
-              >
-                {isEditing ? 'Update Card' : 'Add to Trade'}
-              </button>
-              
-              {isEditing && (
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={onClose}
-                  style={{ 
-                    padding: '12px 20px',
-                    fontSize: '16px'
-                  }}
-                >
-                  Cancel
-                </button>
               )}
             </div>
           </div>
@@ -522,24 +480,24 @@ const TradeManagementPage = ({ isNew }) => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '100%', padding: '20px' }}>
+    <div className="container" style={{ maxWidth: '100%', padding: '10px 20px', margin: 0 }}>
       {/* Header */}
-      <div style={{ marginBottom: '20px' }}>
-        <h1>{isNew ? 'Create New Trade' : `Trade ${trade?.id}`}</h1>
+      <div style={{ marginBottom: '15px', marginTop: 0 }}>
+        <h1 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>{isNew ? 'Create New Trade' : `Trade ${trade?.id}`}</h1>
         <button 
           onClick={() => navigate('/trade')} 
           className="btn btn-secondary"
-          style={{ marginBottom: '10px' }}
+          style={{ marginBottom: '0' }}
         >
           ← Back to Trades
         </button>
       </div>
 
       {/* Three-column layout */}
-      <div style={{ display: 'flex', gap: '20px', minHeight: '600px' }}>
+      <div style={{ display: 'flex', gap: '15px', minHeight: '600px', maxWidth: '1400px', margin: '0 auto' }}>
         
         {/* Left Column - Card Search and Preview */}
-        <div style={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: '0 0 280px', display: 'flex', flexDirection: 'column' }}>
           {/* Card Preview */}
           <div style={{ 
             marginBottom: '20px', 
@@ -566,19 +524,23 @@ const TradeManagementPage = ({ isNew }) => {
           </div>
 
           {/* Search Input */}
-          <div className="search-container" style={{ position: 'relative' }}>
+          <div className="search-container" style={{ position: 'relative', marginBottom: '15px' }}>
             <input
               type="text"
               placeholder="Search for cards to add..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
-                // Handle keyboard navigation for search dropdown
-                if (showDropdown && searchResults.length > 0) {
+                // Debug logging for arrow key navigation
+                console.log('🔍 KeyDown:', e.key, 'showDropdown:', showDropdown, 'results:', searchResults.length);
+                
+                // Handle keyboard navigation for search dropdown - make condition more permissive
+                if ((showDropdown || searchResults.length > 0) && searchResults.length > 0) {
                   if (e.key === "ArrowDown") {
                     e.preventDefault();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
+                      console.log('🔽 Arrow down to index:', newIndex);
                       // Show preview for the selected card
                       if (searchResults[newIndex]) {
                         handleCardHover(searchResults[newIndex]);
@@ -592,6 +554,7 @@ const TradeManagementPage = ({ isNew }) => {
                     e.preventDefault();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
+                      console.log('🔼 Arrow up to index:', newIndex);
                       // Show preview for the selected card
                       if (searchResults[newIndex]) {
                         handleCardHover(searchResults[newIndex]);
@@ -605,6 +568,7 @@ const TradeManagementPage = ({ isNew }) => {
                     e.preventDefault();
                     if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
                       const selectedCard = searchResults[selectedSearchIndex];
+                      console.log('⏎ Enter pressed for card:', selectedCard.name);
                       handleSearchCardClick(selectedCard);
                       return;
                     }
@@ -705,11 +669,21 @@ const TradeManagementPage = ({ isNew }) => {
               </div>
             )}
           </div>
+
+          {/* Save and Export Actions */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+            <button className="btn btn-success" style={{ flex: 1 }}>
+              Save Trade
+            </button>
+            <button className="btn btn-secondary" style={{ flex: 1 }}>
+              Export Trade
+            </button>
+          </div>
         </div>
 
         {/* Center Column - User 1 (Me) */}
         <div 
-          style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
           onDragOver={(e) => {
             e.preventDefault();
             e.currentTarget.style.borderColor = '#007bff';
@@ -881,7 +855,7 @@ const TradeManagementPage = ({ isNew }) => {
 
         {/* Right Column - User 2 (Trading Partner) */}
         <div 
-          style={{ flex: 1, border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
           onDragOver={(e) => {
             e.preventDefault();
             e.currentTarget.style.borderColor = '#28a745';
@@ -1061,14 +1035,14 @@ const TradeManagementPage = ({ isNew }) => {
         onUpdateCard={handleUpdateCard}
       />
       
-      {/* Bottom Actions */}
+      {/* Trade Summary */}
       <div style={{ 
-        marginTop: '20px', 
+        marginTop: '15px', 
         textAlign: 'center',
         borderTop: '1px solid #ddd',
-        paddingTop: '20px'
+        paddingTop: '15px'
       }}>
-        <div style={{ marginBottom: '10px', fontSize: '16px' }}>
+        <div style={{ fontSize: '16px' }}>
           <strong>Trade Difference: </strong>
           <span style={{ 
             color: user1Total > user2Total ? '#28a745' : user1Total < user2Total ? '#dc3545' : '#6c757d',
@@ -1080,13 +1054,6 @@ const TradeManagementPage = ({ isNew }) => {
             {user1Total === user2Total && ' (balanced)'}
           </span>
         </div>
-        
-        <button className="btn btn-success" style={{ marginRight: '10px' }}>
-          Save Trade
-        </button>
-        <button className="btn btn-secondary">
-          Export to Text
-        </button>
       </div>
     </div>
   );
