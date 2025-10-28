@@ -391,8 +391,35 @@ const TradeManagementPage = ({ isNew }) => {
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
   const [noResultsMsg, setNoResultsMsg] = useState('');
   
-  // Card preview
-  const [previewCard, setPreviewCard] = useState(null);
+  // Trading Post placeholder card to prevent sidebar layout jumps
+  const tradingPostPlaceholder = {
+    id: "1b65d800-c517-4a9d-b588-757235c26fe3",
+    name: "Trading Post",
+    mana_cost: "{4}",
+    cmc: 4.0,
+    type_line: "Artifact",
+    oracle_text: "{1}, {T}, Discard a card: You gain 4 life.\n{1}, {T}, Pay 1 life: Create a 0/1 white Goat creature token.\n{1}, {T}, Sacrifice a creature: Return target artifact card from your graveyard to your hand.\n{1}, {T}, Sacrifice an artifact: Draw a card.",
+    colors: [],
+    color_identity: [],
+    set: "c14",
+    set_name: "Commander 2014",
+    rarity: "rare",
+    artist: "Adam Paquette",
+    collector_number: "279",
+    image_uris: {
+      small: "https://cards.scryfall.io/small/front/1/b/1b65d800-c517-4a9d-b588-757235c26fe3.jpg?1561935035",
+      normal: "https://cards.scryfall.io/normal/front/1/b/1b65d800-c517-4a9d-b588-757235c26fe3.jpg?1561935035",
+      large: "https://cards.scryfall.io/large/front/1/b/1b65d800-c517-4a9d-b588-757235c26fe3.jpg?1561935035"
+    },
+    prices: {
+      usd: "0.34",
+      eur: "0.31"
+    },
+    scryfall_uri: "https://scryfall.com/card/c14/279/trading-post?utm_source=api"
+  };
+
+  // Card preview - initialize with Trading Post to prevent layout jumps
+  const [previewCard, setPreviewCard] = useState(tradingPostPlaceholder);
   
   // Modal state
   const [modalCard, setModalCard] = useState(null);
