@@ -1198,18 +1198,68 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ 
-                      fontWeight: 'bold',
+                  <div style={{ 
+                    flex: 1, 
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '14px'
+                  }}>
+                    <span style={{ fontWeight: '500', color: '#333' }}>
+                      {card.quantity} -
+                    </span>
+                    <span style={{ 
+                      fontWeight: card.foil ? '600' : '500',
+                      color: card.foil ? '#d4af37' : '#333',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      flex: 1
                     }}>
                       {card.name} {card.foil && '✨'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Qty: {card.quantity} • {formatPrice(card.price || 0)}
-                    </div>
+                    </span>
+                    {card.scryfall_json?.set && (
+                      <img 
+                        src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
+                        alt={card.scryfall_json.set}
+                        style={{ 
+                          width: '16px', 
+                          height: '16px', 
+                          flexShrink: 0 
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#666', 
+                      flexShrink: 0,
+                      fontFamily: 'monospace'
+                    }}>
+                      {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
+                    </span>
+                    {card.scryfall_json?.collector_number && (
+                      <span style={{ 
+                        fontSize: '12px', 
+                        color: '#666', 
+                        flexShrink: 0,
+                        fontFamily: 'monospace'
+                      }}>
+                        {card.scryfall_json.collector_number}
+                      </span>
+                    )}
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#059669', 
+                      fontWeight: '600',
+                      flexShrink: 0,
+                      fontFamily: 'monospace'
+                    }}>
+                      {formatPrice(card.price || 0)}
+                    </span>
                   </div>
                   <button
                     onClick={(e) => {
@@ -1397,18 +1447,68 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ 
-                      fontWeight: 'bold',
+                  <div style={{ 
+                    flex: 1, 
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '14px'
+                  }}>
+                    <span style={{ fontWeight: '500', color: '#333' }}>
+                      {card.quantity} -
+                    </span>
+                    <span style={{ 
+                      fontWeight: card.foil ? '600' : '500',
+                      color: card.foil ? '#d4af37' : '#333',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      flex: 1
                     }}>
                       {card.name} {card.foil && '✨'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Qty: {card.quantity} • {formatPrice(card.price || 0)}
-                    </div>
+                    </span>
+                    {card.scryfall_json?.set && (
+                      <img 
+                        src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
+                        alt={card.scryfall_json.set}
+                        style={{ 
+                          width: '16px', 
+                          height: '16px', 
+                          flexShrink: 0 
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#666', 
+                      flexShrink: 0,
+                      fontFamily: 'monospace'
+                    }}>
+                      {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
+                    </span>
+                    {card.scryfall_json?.collector_number && (
+                      <span style={{ 
+                        fontSize: '12px', 
+                        color: '#666', 
+                        flexShrink: 0,
+                        fontFamily: 'monospace'
+                      }}>
+                        {card.scryfall_json.collector_number}
+                      </span>
+                    )}
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: '#059669', 
+                      fontWeight: '600',
+                      flexShrink: 0,
+                      fontFamily: 'monospace'
+                    }}>
+                      {formatPrice(card.price || 0)}
+                    </span>
                   </div>
                   <button
                     onClick={(e) => {
