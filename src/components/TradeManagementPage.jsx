@@ -528,6 +528,39 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [search, debouncedSearch]);
 
+  // Close search dropdown when clicking outside or pressing Escape (mirrors DeckViewEdit)
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const handleClickOutside = (event) => {
+      // Check if the click is outside the search container
+      const searchContainer = event.target.closest(".search-container");
+      if (!searchContainer) {
+        setShowDropdown(false);
+        // Don't clear the search input when clicking outside - preserve user's search term
+        // setSearch("");
+      }
+    };
+
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape") {
+        setShowDropdown(false);
+        // Don't clear the search input when pressing Escape - preserve user's search term
+        // setSearch("");
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+
+    // Cleanup event listeners
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [showDropdown]);
+
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
     setModalCard(card);
@@ -610,7 +643,10 @@ const TradeManagementPage = ({ isNew }) => {
       {/* Subtle back navigation */}
       <div style={{ marginBottom: '10px' }}>
         <span 
-          onClick={() => navigate('/trade')} 
+          onClick={() => {
+            console.log('🧭 Navigating back to /trade');
+            navigate('/trade');
+          }} 
           style={{
             color: '#6c757d',
             fontSize: '14px',
@@ -672,10 +708,37 @@ const TradeManagementPage = ({ isNew }) => {
           <div className="search-container" style={{ position: 'relative', marginBottom: '15px' }}>
             <input
               type="text"
-              placeholder="Search for cards to add..."
+              placeholder="Search for cards to add (Scryfall syntax supported)..."
               value={search}
               data-trade-search="true"
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                console.log('🔍 Trade search input changed:', e.target.value);
+                setSearch(e.target.value);
+                // Don't call debouncedSearch directly - let useEffect handle it to avoid double triggers
+              }}
+              onBlur={(e) => {
+                console.log('🔍 Trade search input onBlur triggered');
+                // Capture references before setTimeout to avoid stale references
+                const searchInput = e.currentTarget;
+                const searchContainer = searchInput.closest('.search-container');
+                
+                // Clear dropdown when clicking outside the search input
+                // Use setTimeout to allow dropdown clicks to register first
+                setTimeout(() => {
+                  const activeElement = document.activeElement;
+                  const dropdown = searchContainer?.querySelector('[data-search-dropdown]');
+                  
+                  // Check if focus moved to the dropdown or its children
+                  const focusedOnDropdown = dropdown && dropdown.contains(activeElement);
+                  
+                  // Don't close if focus is still within the search container or dropdown
+                  if (!focusedOnDropdown && !searchContainer?.contains(activeElement)) {
+                    console.log('🔍 Trade search losing focus - will close dropdown');
+                    setShowDropdown(false);
+                    // Don't clear search on blur - preserve user's search term
+                  }
+                }, 150);
+              }}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -686,11 +749,11 @@ const TradeManagementPage = ({ isNew }) => {
                 fontSize: '14px'
               }}
               onKeyDown={(e) => {
-                
                 // Handle keyboard navigation for search dropdown - make condition more permissive
                 if ((showDropdown || searchResults.length > 0) && searchResults.length > 0) {
                   if (e.key === "ArrowDown") {
                     e.preventDefault();
+                    e.stopPropagation();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
                       // Show preview for the selected card
@@ -704,6 +767,7 @@ const TradeManagementPage = ({ isNew }) => {
                   
                   if (e.key === "ArrowUp") {
                     e.preventDefault();
+                    e.stopPropagation();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
                       // Show preview for the selected card
@@ -728,6 +792,7 @@ const TradeManagementPage = ({ isNew }) => {
                     }
                     
                     if (cardToSelect) {
+                      console.log('🔍 Trade search selecting card:', cardToSelect.name);
                       handleSearchCardClick(cardToSelect);
                     }
                     return;
@@ -743,25 +808,13 @@ const TradeManagementPage = ({ isNew }) => {
                 
                 // Handle Escape key to close dropdown
                 if (e.key === "Escape") {
-                  setSearch("");
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowDropdown(false);
                   setSearchResults([]);
                   setSelectedSearchIndex(-1);
+                  // Don't clear search on escape - preserve user's search term like DeckViewEdit
                 }
-              }}
-              onBlur={(e) => {
-                // Prevent immediate hiding - allow clicks on dropdown items
-                setTimeout(() => {
-                  const activeElement = document.activeElement;
-                  const searchContainer = e.currentTarget.closest('.search-container');
-                  const dropdown = searchContainer?.querySelector('[data-search-dropdown]');
-                  
-                  // Only hide if not focused on dropdown
-                  if (!dropdown || !dropdown.contains(activeElement)) {
-                    setShowDropdown(false);
-                    setSelectedSearchIndex(-1);
-                  }
-                }, 150);
               }}
             />
             
