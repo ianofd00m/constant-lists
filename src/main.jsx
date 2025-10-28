@@ -1472,6 +1472,12 @@ function implementInlineSearchFix() {
       return;
     }
     
+    // Skip if this is a TradeManagementPage search input - let it handle its own search
+    if (target.dataset && target.dataset.tradeSearch === 'true') {
+      console.log('🔍 TradeManagementPage search detected - skipping main.jsx intervention');
+      return;
+    }
+    
     const isSearchInput = target.closest('.search-container') || target.value.trim().length > 0;
     if (!isSearchInput) return;
     
