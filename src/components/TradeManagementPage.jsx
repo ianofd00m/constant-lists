@@ -124,10 +124,12 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
           onClose();
         }
       }}
-      tabIndex={-1}
+      tabIndex={0}
     >
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
         maxWidth: '800px',
@@ -274,29 +276,65 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
             alignItems: 'center',
             padding: '10px'
           }}>
-            {selectedPrinting && (
+            {(selectedPrinting || card) && (
               <>
-                <img 
-                  src={selectedPrinting.image_uris?.normal || selectedPrinting.image_uris?.small}
-                  alt={selectedPrinting.name}
-                  style={{
-                    maxWidth: '200px',
-                    height: 'auto',
-                    borderRadius: '8px',
-                    marginBottom: '10px'
-                  }}
-                />
+                <div style={{ 
+                  width: '240px', 
+                  height: '336px', 
+                  border: '1px solid #ddd', 
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  backgroundColor: '#f5f5f5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '15px'
+                }}>
+                  {((selectedPrinting?.image_uris?.normal || selectedPrinting?.image_uris?.small) || (card?.image_uris?.normal || card?.image_uris?.small)) ? (
+                    <img 
+                      src={selectedPrinting?.image_uris?.normal || selectedPrinting?.image_uris?.small || card?.image_uris?.normal || card?.image_uris?.small}
+                      alt={selectedPrinting?.name || card?.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div style={{
+                    display: ((selectedPrinting?.image_uris?.normal || selectedPrinting?.image_uris?.small) || (card?.image_uris?.normal || card?.image_uris?.small)) ? 'none' : 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    color: '#9ca3af',
+                    fontSize: '16px',
+                    textAlign: 'center',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div>🎴</div>
+                    <div>No Image Available</div>
+                  </div>
+                </div>
                 
                 <div className="card-details" style={{
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  maxWidth: '240px'
                 }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{card?.name}</h4>
-                  {selectedPrinting.type_line && (
-                    <p className="type-line" style={{ margin: '4px 0', color: '#666' }}>{selectedPrinting.type_line}</p>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{(selectedPrinting || card)?.name}</h4>
+                  {(selectedPrinting || card)?.type_line && (
+                    <p className="type-line" style={{ margin: '4px 0', color: '#666' }}>{(selectedPrinting || card).type_line}</p>
                   )}
-                  {selectedPrinting.mana_cost && (
-                    <p className="mana-cost" style={{ margin: '4px 0', color: '#333' }}>{selectedPrinting.mana_cost}</p>
+                  {(selectedPrinting || card)?.mana_cost && (
+                    <p className="mana-cost" style={{ margin: '4px 0', color: '#333', fontFamily: 'monospace' }}>{(selectedPrinting || card).mana_cost}</p>
+                  )}
+                  {(selectedPrinting || card)?.set_name && (
+                    <p className="set-name" style={{ margin: '4px 0', color: '#888', fontSize: '12px' }}>{(selectedPrinting || card).set_name}</p>
                   )}
                 </div>
               </>
@@ -479,11 +517,20 @@ const TradeManagementPage = ({ isNew }) => {
   // Handle search input changes
   useEffect(() => {
     if (search.trim()) {
+      // Set loading immediately when user types
+      if (search.length > 0 && !searchLoading) {
+        setSearchLoading(true);
+      }
       debouncedSearch(search);
     } else {
+      // Clear everything when search is empty
       debouncedSearch.cancel();
+      setSearchResults([]);
+      setShowDropdown(false);
+      setNoResultsMsg('');
+      setSearchLoading(false);
     }
-  }, [search, debouncedSearch]);
+  }, [search, debouncedSearch, searchLoading]);
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
@@ -583,7 +630,7 @@ const TradeManagementPage = ({ isNew }) => {
           {/* Card Preview */}
           <div style={{ 
             marginBottom: '20px', 
-            height: '400px', 
+            height: '520px', 
             border: '1px solid #ddd', 
             borderRadius: '8px', 
             padding: '10px',
@@ -659,6 +706,7 @@ const TradeManagementPage = ({ isNew }) => {
                   
                   if (e.key === "Enter") {
                     e.preventDefault();
+                    e.stopPropagation(); // Prevent global event handlers from firing
                     if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
                       const selectedCard = searchResults[selectedSearchIndex];
                       console.log('⏎ Enter pressed for card:', selectedCard.name);
@@ -671,6 +719,7 @@ const TradeManagementPage = ({ isNew }) => {
                 // Always prevent Enter key to avoid unwanted form submissions
                 if (e.key === "Enter") {
                   e.preventDefault();
+                  e.stopPropagation(); // Prevent global event handlers from firing
                   return;
                 }
                 
