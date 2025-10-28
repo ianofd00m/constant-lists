@@ -605,10 +605,35 @@ const TradeManagementPage = ({ isNew }) => {
     setSearchResults([]);
   };
 
-  // Handle card hover for preview
-  const handleCardHover = (card) => {
-    setPreviewCard(card);
-  };
+  // Handle card hover for preview (with null safety)
+  const handleCardHover = useCallback((cardObj) => {
+    if (!cardObj) {
+      // If cardObj is null/undefined, keep the current preview (don't clear)
+      return;
+    }
+
+    // Ensure we have a complete card object with all necessary data
+    try {
+      let card = { ...cardObj };
+      
+      // Handle different card object structures
+      if (cardObj.card && typeof cardObj.card === 'object') {
+        // If card has nested card object, flatten it
+        card = { ...cardObj.card, ...cardObj };
+      }
+      
+      // Ensure required fields exist
+      if (!card.name) {
+        console.warn('Card hover attempted with invalid card object:', cardObj);
+        return;
+      }
+      
+      setPreviewCard(card);
+    } catch (error) {
+      console.error('Error in handleCardHover:', error, 'Card object:', cardObj);
+      // Don't update preview if there's an error
+    }
+  }, []);
 
   // Add card to trade
   const handleAddCard = (tradeCard) => {
@@ -787,9 +812,10 @@ const TradeManagementPage = ({ isNew }) => {
                     e.stopPropagation();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev < searchResults.length - 1 ? prev + 1 : 0;
-                      // Show preview for the selected card
-                      if (searchResults[newIndex]) {
-                        handleCardHover(searchResults[newIndex]);
+                      // Show preview for the selected card (with safety check)
+                      const selectedCard = searchResults[newIndex];
+                      if (selectedCard && selectedCard.name) {
+                        handleCardHover(selectedCard);
                       }
                       return newIndex;
                     });
@@ -801,9 +827,10 @@ const TradeManagementPage = ({ isNew }) => {
                     e.stopPropagation();
                     setSelectedSearchIndex(prev => {
                       const newIndex = prev > 0 ? prev - 1 : searchResults.length - 1;
-                      // Show preview for the selected card
-                      if (searchResults[newIndex]) {
-                        handleCardHover(searchResults[newIndex]);
+                      // Show preview for the selected card (with safety check)
+                      const selectedCard = searchResults[newIndex];
+                      if (selectedCard && selectedCard.name) {
+                        handleCardHover(selectedCard);
                       }
                       return newIndex;
                     });
@@ -898,7 +925,10 @@ const TradeManagementPage = ({ isNew }) => {
                       }}
                       onMouseEnter={() => {
                         setSelectedSearchIndex(index);
-                        handleCardHover(card);
+                        // Safety check before hovering
+                        if (card && card.name) {
+                          handleCardHover(card);
+                        }
                       }}
                       onMouseDown={(e) => {
                         // Prevent input blur
