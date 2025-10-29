@@ -8,6 +8,8 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
+  console.log('🔥 DEBUGGING: TradeCardModal render with isOpen:', isOpen, 'card:', card?.name);
+  
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,8 +139,9 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
           e.preventDefault();
           e.stopPropagation();
+          // Use setTimeout to avoid calling handleAddCard directly in useEffect
           if (selectedPrinting && assignTo) {
-            handleAddCard();
+            setTimeout(() => handleAddCard(), 0);
           }
         }
       } else if (e.key === 'ArrowLeft') {
@@ -554,6 +557,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 };
 
 const TradeManagementPage = ({ isNew }) => {
+  console.log('🔥 DEBUGGING: TradeManagementPage render with isNew:', isNew);
+  
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -874,11 +879,26 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
+    console.log('🔥 DEBUGGING: handleSearchCardClick called with card:', card?.name);
+    console.log('🔥 DEBUGGING: About to set modal states');
+    console.trace('🔥 DEBUGGING: Call stack for handleSearchCardClick');
+    
     setModalCard(card);
+    console.log('🔥 DEBUGGING: setModalCard completed');
+    
     setIsModalOpen(true);
+    console.log('🔥 DEBUGGING: setIsModalOpen completed');
+    
     setSearch('');
+    console.log('🔥 DEBUGGING: setSearch completed');
+    
     setShowDropdown(false);
+    console.log('🔥 DEBUGGING: setShowDropdown completed');
+    
     setSearchResults([]);
+    console.log('🔥 DEBUGGING: setSearchResults completed');
+    
+    console.log('🔥 DEBUGGING: handleSearchCardClick finished');
   };
 
   // Handle card hover for preview (with null safety)
