@@ -146,35 +146,41 @@ function implementReactStateFix() {
   let lastStateCheck = 0;
   const STATE_CHECK_DELAY = 1000; // ms
   
-  // Enhanced state validation function for React components
+  // Enhanced state validation function for React components - with error handling
   function validateReactSearchState() {
-    if (!stateFixActive) return { isValid: true };
-    
-    const now = Date.now();
-    if (now - lastStateCheck < STATE_CHECK_DELAY) {
-      return { isValid: !stateCorruptionDetected };
-    }
-    
-    lastStateCheck = now;
-    
-    const searchInput = document.querySelector('input[type="text"]');
-    const searchValue = searchInput ? searchInput.value.trim() : '';
-    
-    const allClickable = document.querySelectorAll('[style*="cursor: pointer"]');
-    const searchResults = Array.from(allClickable).filter(el => {
-      const text = el.textContent?.trim();
-      return el.tagName === 'DIV' && 
-             el.className === '' && 
-             text?.length > 0 && 
-             text?.length < 100 && 
-             !text.includes('$') && 
-             !text.includes('×') &&
-             !text.includes('📋') &&
-             !text.includes('🖼️') &&
-             !text.includes('🔳') &&
-             text !== 'Logout' &&
-             text !== 'Necrobloom';
-    });
+    try {
+      if (!stateFixActive) return { isValid: true };
+      
+      const now = Date.now();
+      if (now - lastStateCheck < STATE_CHECK_DELAY) {
+        return { isValid: !stateCorruptionDetected };
+      }
+      
+      lastStateCheck = now;
+      
+      const searchInput = document.querySelector('input[type="text"]');
+      const searchValue = searchInput ? searchInput.value.trim() : '';
+      
+      const allClickable = document.querySelectorAll('[style*="cursor: pointer"]');
+      const searchResults = Array.from(allClickable).filter(el => {
+        try {
+          const text = el.textContent?.trim();
+          return el.tagName === 'DIV' && 
+                 el.className === '' && 
+                 text?.length > 0 && 
+                 text?.length < 100 && 
+                 !text.includes('$') && 
+                 !text.includes('×') &&
+                 !text.includes('📋') &&
+                 !text.includes('🖼️') &&
+                 !text.includes('🔳') &&
+                 text !== 'Logout' &&
+                 text !== 'Necrobloom';
+        } catch (error) {
+          console.error('Error filtering clickable element:', error);
+          return false;
+        }
+      });
     
     // State corruption detection: search results without search query
     const hasSearchResults = searchResults.length > 0;
@@ -200,16 +206,19 @@ function implementReactStateFix() {
     }
     
     return state;
+    } catch (error) {
+      console.error('❌ Error in validateReactSearchState:', error);
+      return { isValid: true, hasSearchResults: false, hasSearchQuery: false, searchResultsCount: 0, searchValue: '', isCorrupted: false };
+    }
   }
   
   // Force synchronous React state reset
   function forceReactStateSync() {
-    console.log('⚛️ Forcing React state synchronization...');
-    
-    const searchInput = document.querySelector('input[type="text"]');
-    if (!searchInput) return false;
-    
     try {
+      console.log('⚛️ Forcing React state synchronization...');
+      
+      const searchInput = document.querySelector('input[type="text"]');
+      if (!searchInput) return false;
       // Don't trigger sync if modal is open
       const activeModal = document.getElementById('show-all-modal');
       if (activeModal) {
@@ -238,13 +247,17 @@ function implementReactStateFix() {
       
       console.log('✅ React state sync completed');
       
-      // Verify fix worked
-      setTimeout(() => {
-        const postFixState = validateReactSearchState();
-        if (postFixState.isCorrupted) {
-          console.error('❌ State sync failed, corruption persists');
-        } else {
-          console.log('✅ State sync successful');
+      // Verify fix worked - with proper cleanup
+      const verifyTimeout = setTimeout(() => {
+        try {
+          const postFixState = validateReactSearchState();
+          if (postFixState.isCorrupted) {
+            console.error('❌ State sync failed, corruption persists');
+          } else {
+            console.log('✅ State sync successful');
+          }
+        } catch (error) {
+          console.error('❌ Error during state verification:', error);
         }
       }, 300);
       
@@ -273,19 +286,23 @@ function implementReactStateFix() {
         forceReactStateSync();
       }
       
-      // Post-click validation
-      setTimeout(() => {
-        const postClickState = validateReactSearchState();
-        console.log('📊 Post-click state:', {
-          cardClicked: cardText,
-          searchCleared: !postClickState.hasSearchQuery,
-          resultsCleared: !postClickState.hasSearchResults,
-          success: !postClickState.hasSearchResults && !postClickState.hasSearchQuery
-        });
-        
-        if (postClickState.isCorrupted) {
-          console.error('🚨 Click failed to clear state properly');
-          forceReactStateSync();
+      // Post-click validation - with error handling
+      const postClickTimeout = setTimeout(() => {
+        try {
+          const postClickState = validateReactSearchState();
+          console.log('📊 Post-click state:', {
+            cardClicked: cardText,
+            searchCleared: !postClickState.hasSearchQuery,
+            resultsCleared: !postClickState.hasSearchResults,
+            success: !postClickState.hasSearchResults && !postClickState.hasSearchQuery
+          });
+          
+          if (postClickState.isCorrupted) {
+            console.error('🚨 Click failed to clear state properly');
+            forceReactStateSync();
+          }
+        } catch (error) {
+          console.error('❌ Error during post-click validation:', error);
         }
       }, 200);
     }
@@ -294,14 +311,18 @@ function implementReactStateFix() {
   // Input event monitoring for state sync issues
   document.addEventListener('input', function(event) {
     if (event.target.type === 'text') {
-      // Monitor for search input changes
-      setTimeout(() => {
-        const state = validateReactSearchState();
-        
-        // If input is empty but we still have results, that's corruption
-        if (event.target.value === '' && state.hasSearchResults) {
-          console.warn('⚠️ Input cleared but search results persist');
-          forceReactStateSync();
+      // Monitor for search input changes - with error handling
+      const inputTimeout = setTimeout(() => {
+        try {
+          const state = validateReactSearchState();
+          
+          // If input is empty but we still have results, that's corruption
+          if (event.target.value === '' && state.hasSearchResults) {
+            console.warn('⚠️ Input cleared but search results persist');
+            forceReactStateSync();
+          }
+        } catch (error) {
+          console.error('❌ Error during input validation:', error);
         }
       }, 100);
     }
@@ -333,9 +354,13 @@ function implementReactStateFix() {
     });
     
     if (searchResultsChanged) {
-      // Check for state corruption after DOM changes
-      setTimeout(() => {
-        validateReactSearchState();
+      // Check for state corruption after DOM changes - with error handling
+      const domTimeout = setTimeout(() => {
+        try {
+          validateReactSearchState();
+        } catch (error) {
+          console.error('❌ Error during DOM mutation validation:', error);
+        }
       }, 100);
     }
   });
@@ -346,9 +371,13 @@ function implementReactStateFix() {
     subtree: true
   });
   
-  // Periodic state health monitoring
+  // Periodic state health monitoring - with error handling
   setInterval(() => {
-    validateReactSearchState();
+    try {
+      validateReactSearchState();
+    } catch (error) {
+      console.error('❌ Error during periodic state check:', error);
+    }
   }, 5000); // Every 5 seconds
   
   // Initial state check
