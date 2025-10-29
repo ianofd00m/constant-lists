@@ -663,6 +663,29 @@ const TradeManagementPage = ({ isNew }) => {
   
   // Sort state
   const [sortOption, setSortOption] = useState('name'); // 'name', 'price', 'color', 'type', 'set'
+
+  // Fetch card printings function
+  const fetchCardPrintings = async (card) => {
+    if (!card || !card.name) {
+      throw new Error('Card name is required');
+    }
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const url = `${apiUrl}/api/cards/printings?name=${encodeURIComponent(card.name)}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.data || [];
+    } catch (error) {
+      console.error('Failed to fetch printings for', card.name, ':', error);
+      throw error;
+    }
+  };
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [savingTrade, setSavingTrade] = useState(false);
   
