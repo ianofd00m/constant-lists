@@ -876,16 +876,16 @@ const TradeManagementPage = ({ isNew }) => {
   }, []);
 
   // Add card to trade
-  const handleAddCard = (tradeCard) => {
+  const handleAddCard = useCallback((tradeCard) => {
     if (tradeCard.assignedTo === 'user1') {
       setUser1Cards(prev => [...prev, tradeCard]);
     } else {
       setUser2Cards(prev => [...prev, tradeCard]);
     }
-  };
+  }, []);
 
   // Update existing card in trade
-  const handleUpdateCard = (updatedCard, originalAssignment) => {
+  const handleUpdateCard = useCallback((updatedCard, originalAssignment) => {
     const newAssignment = updatedCard.assignedTo;
     
     // Remove from original location
@@ -901,7 +901,7 @@ const TradeManagementPage = ({ isNew }) => {
     } else {
       setUser2Cards(prev => [...prev, updatedCard]);
     }
-  };
+  }, []);
 
   // Add card directly to User 1 from search modal
   const addCardToUser1 = (card) => {
@@ -1150,7 +1150,7 @@ const TradeManagementPage = ({ isNew }) => {
   }, [user2Cards]);
 
   // Navigation functions for modal
-  const navigateToPrevious = () => {
+  const navigateToPrevious = useCallback(() => {
     const allCards = [...user1Cards, ...user2Cards];
     if (!modalCard || allCards.length === 0) return;
     
@@ -1163,9 +1163,9 @@ const TradeManagementPage = ({ isNew }) => {
         originalAssignment: prevCard.assignedTo
       });
     }
-  };
+  }, [user1Cards, user2Cards, modalCard]);
 
-  const navigateToNext = () => {
+  const navigateToNext = useCallback(() => {
     const allCards = [...user1Cards, ...user2Cards];
     if (!modalCard || allCards.length === 0) return;
     
@@ -1178,7 +1178,12 @@ const TradeManagementPage = ({ isNew }) => {
         originalAssignment: nextCard.assignedTo
       });
     }
-  };
+  }, [user1Cards, user2Cards, modalCard]);
+
+  // Modal close function
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   if (loading) {
     return (
@@ -2225,7 +2230,7 @@ const TradeManagementPage = ({ isNew }) => {
       {/* Trade Card Modal */}
       <TradeCardModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         card={modalCard}
         onAddCard={handleAddCard}
         onUpdateCard={handleUpdateCard}
