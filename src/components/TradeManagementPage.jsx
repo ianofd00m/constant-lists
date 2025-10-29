@@ -75,58 +75,39 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       if (printingsData.length > 0) {
         let matchingPrinting = null;
         
-        // Debug logging
+        // Smart printing selection logic
         const scryfallData = card.scryfall_json || card.card || card;
-        console.log('🔍 Debug card object:', {
-          cardId: card.id,
-          cardSet: card.set,
-          cardCollectorNumber: card.collector_number,
-          hasPrintingData: !!card.printingData,
-          printingData: card.printingData,
-          scryfallSet: scryfallData.set,
-          scryfallCollectorNumber: scryfallData.collector_number,
-          scryfallId: scryfallData.id
-        });
         
         // First, try to match using stored printingData (for cards from trade)
         if (card.printingData) {
-          console.log('🔍 Trying to match using printingData:', card.printingData);
           matchingPrinting = printingsData.find(printing => 
             printing.id === card.printingData.id || 
             (printing.set === card.printingData.set && printing.collector_number === card.printingData.collector_number)
           );
           if (matchingPrinting) {
             console.log('🎯 Auto-selected from printingData:', matchingPrinting.set_name);
-          } else {
-            console.log('🚫 No match found in printingData');
           }
         }
         
         // If no match from printingData, try to match using scryfall_json data
         if (!matchingPrinting) {
-          console.log('🔍 Trying to match using scryfall data');
           matchingPrinting = printingsData.find(printing => 
             printing.id === scryfallData.id || 
             (printing.set === scryfallData.set && printing.collector_number === scryfallData.collector_number)
           );
           if (matchingPrinting) {
             console.log('🎯 Auto-selected from scryfall data:', matchingPrinting.set_name);
-          } else {
-            console.log('🚫 No match found using scryfall data');
           }
         }
         
         // If still no match, try to match the card itself (fallback for search results)
         if (!matchingPrinting) {
-          console.log('🔍 Trying to match using card properties');
           matchingPrinting = printingsData.find(printing => 
             printing.id === card.id || 
             (printing.set === card.set && printing.collector_number === card.collector_number)
           );
           if (matchingPrinting) {
             console.log('🎯 Auto-selected matching printing from search:', matchingPrinting.set_name);
-          } else {
-            console.log('🚫 No match found using card properties');
           }
         }
         
@@ -1013,10 +994,6 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Add card to trade
   const handleAddCard = useCallback((tradeCard) => {
-    console.log('🔍 handleAddCard receiving tradeCard:', tradeCard);
-    console.log('🔍 tradeCard.printingData:', tradeCard.printingData);
-    console.log('🔍 tradeCard keys:', Object.keys(tradeCard));
-    
     if (tradeCard.assignedTo === 'user1') {
       setUser1Cards(prev => [...prev, tradeCard]);
     } else {
@@ -2109,9 +2086,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card with preserved printing data
-                      console.log('🔍 Opening modal for card:', card);
-                      console.log('🔍 Card printingData:', card.printingData);
-                      console.log('🔍 All card properties:', Object.keys(card));
                       setModalCard({
                         ...card,
                         editing: true,
@@ -2482,9 +2456,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card with preserved printing data
-                      console.log('🔍 Opening modal for card:', card);
-                      console.log('🔍 Card printingData:', card.printingData);
-                      console.log('🔍 All card properties:', Object.keys(card));
                       setModalCard({
                         ...card,
                         editing: true,
