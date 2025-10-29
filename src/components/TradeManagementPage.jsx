@@ -131,6 +131,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       onClick={onClose}
       tabIndex={0}
       autoFocus
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
+      }}
     >
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
         maxWidth: '800px',
