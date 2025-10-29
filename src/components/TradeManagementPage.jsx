@@ -2352,7 +2352,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 src={`/svgs/${printing.set.toLowerCase()}.svg`}
                                 alt={printing.set}
                                 style={{ width: '16px', height: '16px', flexShrink: 0 }}
-                                onError={(e) => e.target.style.display = 'none'}
+                                onError={(e) => { if (e.target.src.includes('/svgs/')) { const setCode = e.target.src.split('/').pop().replace('.svg', ''); e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; } else { e.target.style.display = 'none'; } }}
                               />
                               <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
                                 {printing.set?.toUpperCase()}
@@ -2827,7 +2827,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 src={`/svgs/${printing.set.toLowerCase()}.svg`}
                                 alt={printing.set}
                                 style={{ width: '16px', height: '16px', flexShrink: 0 }}
-                                onError={(e) => e.target.style.display = 'none'}
+                                onError={(e) => { if (e.target.src.includes('/svgs/')) { const setCode = e.target.src.split('/').pop().replace('.svg', ''); e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; } else { e.target.style.display = 'none'; } }}
                               />
                               <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
                                 {printing.set?.toUpperCase()}
