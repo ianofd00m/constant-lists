@@ -15,6 +15,10 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [isFoil, setIsFoil] = useState(false);
   const [assignTo, setAssignTo] = useState(null); // 'user1' or 'user2' - no default selection
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Quantity editing states
+  const [isEditingQuantity, setIsEditingQuantity] = useState(false);
+  const [tempQuantity, setTempQuantity] = useState('1');
 
   useEffect(() => {
     if (isOpen && card) {
@@ -212,7 +216,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               </div>
             </div>
 
-            {/* Quantity and Foil controls on same row */}
+            {/* Quantity controls with Foil toggle positioned to the right */}
             <div className="action-row" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label className="control-label">Quantity:</label>
@@ -271,41 +275,41 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                     }}
                   >+</button>
                 </div>
-              </div>
-
-              {/* Foil toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label className="control-label">Foil:</label>
-                <label className="toggle-switch" style={{ display: 'flex', alignItems: 'center' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={isFoil}
-                    onChange={(e) => setIsFoil(e.target.checked)}
-                    style={{ margin: 0 }}
-                  />
-                  <span className={`toggle-slider ${isFoil ? 'foil-active' : ''}`} style={{
-                    width: '44px',
-                    height: '24px',
-                    backgroundColor: isFoil ? '#d4af37' : '#ccc',
-                    borderRadius: '12px',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    marginLeft: '8px'
-                  }}>
-                    <span style={{
-                      position: 'absolute',
-                      top: '2px',
-                      left: isFoil ? '22px' : '2px',
-                      width: '20px',
-                      height: '20px',
-                      backgroundColor: 'white',
-                      borderRadius: '50%',
+                
+                {/* Foil toggle positioned to the right of quantity controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '15px' }}>
+                  <label className="control-label">Foil:</label>
+                  <label className="toggle-switch" style={{ display: 'flex', alignItems: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isFoil}
+                      onChange={(e) => setIsFoil(e.target.checked)}
+                      style={{ margin: 0 }}
+                    />
+                    <span className={`toggle-slider ${isFoil ? 'foil-active' : ''}`} style={{
+                      width: '44px',
+                      height: '24px',
+                      backgroundColor: isFoil ? '#d4af37' : '#ccc',
+                      borderRadius: '12px',
+                      position: 'relative',
+                      cursor: 'pointer',
                       transition: 'all 0.3s ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}></span>
-                  </span>
-                </label>
+                      marginLeft: '8px'
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        top: '2px',
+                        left: isFoil ? '22px' : '2px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -540,6 +544,20 @@ const TradeManagementPage = ({ isNew }) => {
         user1_cards: [],
         user2_cards: []
       });
+      setLoading(false);
+    } else {
+      // Fallback - if neither isNew nor tradeId, treat as new trade
+      console.log('⚠️ TradeManagementPage: No isNew or tradeId provided, defaulting to new trade');
+      const fallbackTrade = {
+        id: `trade_${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        user1_name: 'Me',
+        user2_name: 'Trading Partner',
+        user1_cards: [],
+        user2_cards: []
+      };
+      setTrade(fallbackTrade);
       setLoading(false);
     }
   }, [isNew, tradeId]);
