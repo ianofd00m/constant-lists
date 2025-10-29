@@ -23,9 +23,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [tempQuantity, setTempQuantity] = useState('1');
 
   useEffect(() => {
+    console.log('🔥 DEBUGGING: TradeCardModal useEffect triggered. isOpen:', isOpen, 'card:', card?.name);
+    
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
+      console.log('🔥 DEBUGGING: Setting modal state, editing:', editing);
+      
       setIsEditing(editing);
       
       if (editing) {
@@ -124,42 +128,42 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling - minimal dependencies to prevent infinite loops
-  useEffect(() => {
-    if (!isOpen) return;
+  // Add useEffect for escape key handling - DISABLED to debug infinite loop
+  // useEffect(() => {
+  //   if (!isOpen) return;
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      } else if (e.key === 'Enter' && !isEditingQuantity) {
-        // Allow enter to trigger update card action, but not during quantity editing
-        const target = e.target;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          e.stopPropagation();
-          // Use setTimeout to avoid calling handleAddCard directly in useEffect
-          if (selectedPrinting && assignTo) {
-            setTimeout(() => handleAddCard(), 0);
-          }
-        }
-      } else if (e.key === 'ArrowLeft') {
-        // Navigation to previous card (when implemented)
-        e.preventDefault();
-        e.stopPropagation();
-        // TODO: Add onNavigateToPrevious prop and logic
-      } else if (e.key === 'ArrowRight') {
-        // Navigation to next card (when implemented)  
-        e.preventDefault();
-        e.stopPropagation();
-        // TODO: Add onNavigateToNext prop and logic
-      }
-    };
+  //   const handleKeyDown = (e) => {
+  //     if (e.key === 'Escape') {
+  //       e.preventDefault();
+  //       e.stopPropagation();
+  //       onClose();
+  //     } else if (e.key === 'Enter' && !isEditingQuantity) {
+  //       // Allow enter to trigger update card action, but not during quantity editing
+  //       const target = e.target;
+  //       if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
+  //         e.preventDefault();
+  //         e.stopPropagation();
+  //         // Use setTimeout to avoid calling handleAddCard directly in useEffect
+  //         if (selectedPrinting && assignTo) {
+  //           setTimeout(() => handleAddCard(), 0);
+  //         }
+  //       }
+  //     } else if (e.key === 'ArrowLeft') {
+  //       // Navigation to previous card (when implemented)
+  //       e.preventDefault();
+  //       e.stopPropagation();
+  //       // TODO: Add onNavigateToPrevious prop and logic
+  //     } else if (e.key === 'ArrowRight') {
+  //       // Navigation to next card (when implemented)  
+  //       e.preventDefault();
+  //       e.stopPropagation();
+  //       // TODO: Add onNavigateToNext prop and logic
+  //     }
+  //   };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]); // Only depend on isOpen and onClose to prevent infinite loops
+  //   document.addEventListener('keydown', handleKeyDown);
+  //   return () => document.removeEventListener('keydown', handleKeyDown);
+  // }, [isOpen, onClose]); // Only depend on isOpen and onClose to prevent infinite loops
 
   return (
     <div 
