@@ -62,7 +62,7 @@ function OAuthSuccess() {
       localStorage.setItem('token', t);
       setTimeout(() => navigate('/profile'), 2000); // Delay redirect for debug
     }
-  }, [navigate]);
+  }, []); // Remove navigate dependency to prevent infinite loops
   return (
     <div className="container">
       <h2>OAuth Success Debug</h2>
@@ -73,7 +73,7 @@ function OAuthSuccess() {
 }
 
 function App() {
-  console.log('App loaded');
+  console.log('🔍 RENDER: App component rendering');
   
   // INSTANT LOADING: Start preloading common cards as soon as app loads
   useEffect(() => {

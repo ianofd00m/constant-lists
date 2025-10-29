@@ -521,6 +521,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 };
 
 const TradeManagementPage = ({ isNew }) => {
+  console.log('🔍 RENDER: TradeManagementPage with isNew:', isNew);
+  
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
