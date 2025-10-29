@@ -10964,8 +10964,12 @@ export default function DeckViewEdit({ isPublic = false }) {
                           const card = searchResults[newIndex];
                           const cleanSearchCard = {
                             name: card.name,
+                            id: card.id || card.scryfall_id, // Add required ID for CardPreview validation
+                            scryfall_id: card.scryfall_id || card.id, // Add scryfall_id for CardPreview validation
                             card: {
                               name: card.name,
+                              id: card.id || card.scryfall_id, // Add ID to nested card object too
+                              scryfall_id: card.scryfall_id || card.id, // Add scryfall_id to nested card object too
                               ...(card.image_uris && { image_uris: card.image_uris }),
                               ...(card.scryfall_json && { scryfall_json: card.scryfall_json }),
                               ...(card.mana_cost && { mana_cost: card.mana_cost }),
@@ -10997,8 +11001,12 @@ export default function DeckViewEdit({ isPublic = false }) {
                           const card = searchResults[newIndex];
                           const cleanSearchCard = {
                             name: card.name,
+                            id: card.id || card.scryfall_id, // Add required ID for CardPreview validation
+                            scryfall_id: card.scryfall_id || card.id, // Add scryfall_id for CardPreview validation
                             card: {
                               name: card.name,
+                              id: card.id || card.scryfall_id, // Add ID to nested card object too
+                              scryfall_id: card.scryfall_id || card.id, // Add scryfall_id to nested card object too
                               ...(card.image_uris && { image_uris: card.image_uris }),
                               ...(card.scryfall_json && { scryfall_json: card.scryfall_json }),
                               ...(card.mana_cost && { mana_cost: card.mana_cost }),
@@ -11180,8 +11188,12 @@ export default function DeckViewEdit({ isPublic = false }) {
                             setFixedPreview({
                               card: {
                                 name: previewCard.name,
+                                id: previewCard.id || previewCard.scryfall_id, // Add required ID for CardPreview validation
+                                scryfall_id: previewCard.scryfall_id || previewCard.id, // Add scryfall_id for CardPreview validation
                                 card: {
                                   name: previewCard.name,
+                                  id: previewCard.id || previewCard.scryfall_id, // Add ID to nested card object too
+                                  scryfall_id: previewCard.scryfall_id || previewCard.id, // Add scryfall_id to nested card object too
                                   image_uris: previewCard.image_uris,
                                   scryfall_json: previewCard.scryfall_json,
                                   mana_cost: previewCard.mana_cost,
