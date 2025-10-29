@@ -545,6 +545,9 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 };
 
 const TradeManagementPage = ({ isNew }) => {
+  // TEMPORARY: Early return to test if this component causes infinite loops
+  return <div>TradeManagementPage temporarily disabled for debugging</div>;
+  
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
