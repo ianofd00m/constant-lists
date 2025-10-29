@@ -7,7 +7,8 @@ import { getUnifiedCardPrice, formatPrice } from '../utils/UnifiedPricing';
 import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
-const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
+const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
+  console.log('🎯 TradeCardModal render - isOpen:', isOpen, 'card:', card?.name);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 Modal card init useEffect - isOpen:', isOpen, 'card:', card?.name);
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
@@ -152,71 +154,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
         flexDirection: 'column'
       }}>
         <div className="modal-header">
-          {onNavigateToPrevious && (
-            <button 
-              onClick={onNavigateToPrevious} 
-              className="nav-arrow nav-arrow-left"
-              title="Previous card (Left arrow key)"
-              style={{
-                position: 'absolute',
-                left: '15px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#666',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#f0f0f0';
-                e.target.style.color = '#333';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
-                e.target.style.color = '#666';
-              }}
-            >
-              &#8249;
-            </button>
-          )}
-          
           <button onClick={onClose} className="close-button">&times;</button>
-          
-          {onNavigateToNext && (
-            <button 
-              onClick={onNavigateToNext} 
-              className="nav-arrow nav-arrow-right"
-              title="Next card (Right arrow key)"
-              style={{
-                position: 'absolute',
-                right: '15px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#666',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#f0f0f0';
-                e.target.style.color = '#333';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
-                e.target.style.color = '#666';
-              }}
-            >
-              &#8250;
-            </button>
-          )}
         </div>
         
         <div className="modal-body" style={{
@@ -502,6 +440,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 };
 
 const TradeManagementPage = ({ isNew }) => {
+  console.log('🔄 TradeManagementPage render - isNew:', isNew);
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -795,6 +734,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
+    console.log('🟢 Opening modal for card:', card.name);
     setModalCard(card);
     setIsModalOpen(true);
     setSearch('');
@@ -1106,44 +1046,7 @@ const TradeManagementPage = ({ isNew }) => {
     }, 0);
   }, [user2Cards]);
 
-  // Navigation functions for modal - stable references to prevent infinite loops
-  const navigateToPrevious = useCallback(() => {
-    // Access modalCard from state at execution time to avoid dependency issues
-    setModalCard(currentModalCard => {
-      const allCards = [...user1Cards, ...user2Cards];
-      if (!currentModalCard || allCards.length === 0) return currentModalCard;
-      
-      const currentIndex = allCards.findIndex(card => card.id === currentModalCard.id);
-      if (currentIndex > 0) {
-        const prevCard = allCards[currentIndex - 1];
-        return {
-          ...prevCard,
-          editing: true,
-          originalAssignment: prevCard.assignedTo
-        };
-      }
-      return currentModalCard;
-    });
-  }, [user1Cards, user2Cards]);
-
-  const navigateToNext = useCallback(() => {
-    // Access modalCard from state at execution time to avoid dependency issues
-    setModalCard(currentModalCard => {
-      const allCards = [...user1Cards, ...user2Cards];
-      if (!currentModalCard || allCards.length === 0) return currentModalCard;
-      
-      const currentIndex = allCards.findIndex(card => card.id === currentModalCard.id);
-      if (currentIndex < allCards.length - 1) {
-        const nextCard = allCards[currentIndex + 1];
-        return {
-          ...nextCard,
-          editing: true,
-          originalAssignment: nextCard.assignedTo
-        };
-      }
-      return currentModalCard;
-    });
-  }, [user1Cards, user2Cards]);
+  // Navigation functions removed to prevent infinite loops
 
   // Modal close function
   const closeModal = useCallback(() => {
@@ -1623,6 +1526,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
+                      console.log('🟢 Opening edit modal for user1 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
@@ -1988,6 +1892,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
+                      console.log('🟢 Opening edit modal for user2 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
@@ -2199,8 +2104,6 @@ const TradeManagementPage = ({ isNew }) => {
         card={modalCard}
         onAddCard={handleAddCard}
         onUpdateCard={handleUpdateCard}
-        onNavigateToPrevious={navigateToPrevious}
-        onNavigateToNext={navigateToNext}
       />
 
       {/* Search Results Modal (triggered by Enter key) */}
