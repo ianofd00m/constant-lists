@@ -674,78 +674,82 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [isNew, tradeId]);
 
-  // Search function - properly memoized to prevent infinite loops
-  const performSearch = useCallback(async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setNoResultsMsg('');
-      setSearchLoading(false);
-      setIsKeyboardNavigation(false);
-      return;
-    }
+  // Search function removed - now using stable ref-based approach
 
-    // Cancel previous request
-    if (searchAbortControllerRef.current) {
-      searchAbortControllerRef.current.abort();
-    }
-    
-    searchAbortControllerRef.current = new AbortController();
-    const signal = searchAbortControllerRef.current.signal;
-    
-    setSearchLoading(true);
-    
-    try {
-      const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const isDev = import.meta.env.DEV;
-      const finalUrl = isDev ? url : `${apiUrl}${url}`;
-      
-      const res = await fetch(finalUrl, { signal });
-      
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+  // Debounced search function - using stable ref to prevent infinite loop
+  const debouncedSearchRef = useRef();
+  
+  // Create debounced search only once
+  if (!debouncedSearchRef.current) {
+    debouncedSearchRef.current = debounce(async (query) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        setShowDropdown(false);
+        setNoResultsMsg('');
+        setSearchLoading(false);
+        setIsKeyboardNavigation(false);
+        return;
+      }
+
+      // Cancel previous request
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
       }
       
-      const data = await res.json();
-      let results = data.data || data || [];
+      searchAbortControllerRef.current = new AbortController();
+      const signal = searchAbortControllerRef.current.signal;
       
-      // Remove duplicates by name
-      const uniqueResults = [];
-      const seenNames = new Set();
+      setSearchLoading(true);
       
-      for (const result of results) {
-        if (!seenNames.has(result.name)) {
-          seenNames.add(result.name);
-          uniqueResults.push(result);
+      try {
+        const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const isDev = import.meta.env.DEV;
+        const finalUrl = isDev ? url : `${apiUrl}${url}`;
+        
+        const res = await fetch(finalUrl, { signal });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        let results = data.data || data || [];
+        
+        // Remove duplicates by name
+        const uniqueResults = [];
+        const seenNames = new Set();
+        
+        for (const result of results) {
+          if (!seenNames.has(result.name)) {
+            seenNames.add(result.name);
+            uniqueResults.push(result);
+          }
+        }
+        
+        setSearchResults(uniqueResults.slice(0, 20));
+        setShowDropdown(uniqueResults.length > 0);
+        setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
+        setSelectedSearchIndex(-1);
+        setIsKeyboardNavigation(false);
+        
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Search error:', error);
+          setSearchResults([]);
+          setShowDropdown(false);
+          setNoResultsMsg('Search failed');
         }
       }
       
-      setSearchResults(uniqueResults.slice(0, 20));
-      setShowDropdown(uniqueResults.length > 0);
-      setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
-      setSelectedSearchIndex(-1);
-      setIsKeyboardNavigation(false);
-      
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Search error:', error);
-        setSearchResults([]);
-        setShowDropdown(false);
-        setNoResultsMsg('Search failed');
-      }
-    }
-    
-    setSearchLoading(false);
-  }, [setSearchResults, setShowDropdown, setNoResultsMsg, setSearchLoading, setIsKeyboardNavigation]); // Fixed dependencies
+      setSearchLoading(false);
+    }, 500);
+  }
 
-  // Debounced search function - fixed to prevent infinite loop
-  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
-
-  // Handle search input changes - fixed dependencies
+  // Handle search input changes - using stable ref
   useEffect(() => {
     if (search.trim()) {
-      debouncedSearch(search);
+      debouncedSearchRef.current(search);
     } else {
       // Clear immediately when search is empty
       setSearchResults([]);
@@ -754,8 +758,8 @@ const TradeManagementPage = ({ isNew }) => {
       setSearchLoading(false);
       setIsKeyboardNavigation(false);
     }
-    return () => debouncedSearch.cancel();
-  }, [search, debouncedSearch, setSearchResults, setShowDropdown, setNoResultsMsg, setSearchLoading, setIsKeyboardNavigation]);
+    return () => debouncedSearchRef.current?.cancel();
+  }, [search]); // Only depend on search, not the function
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
