@@ -122,46 +122,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
-  // Use ref to avoid onClose dependency in useEffect
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
-  // Add useEffect for escape key handling with stable ref
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onCloseRef.current();
-      } else if (e.key === 'Enter' && !isEditingQuantity) {
-        // Allow enter to trigger update card action, but not during quantity editing
-        const target = e.target;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          e.stopPropagation();
-          // Use setTimeout to avoid calling handleAddCard directly in useEffect
-          if (selectedPrinting && assignTo) {
-            setTimeout(() => handleAddCard(), 0);
-          }
-        }
-      } else if (e.key === 'ArrowLeft') {
-        // Navigation to previous card (when implemented)
-        e.preventDefault();
-        e.stopPropagation();
-        // TODO: Add onNavigateToPrevious prop and logic
-      } else if (e.key === 'ArrowRight') {
-        // Navigation to next card (when implemented)  
-        e.preventDefault();
-        e.stopPropagation();
-        // TODO: Add onNavigateToNext prop and logic
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isEditingQuantity, selectedPrinting, assignTo]); // Stable dependencies only
+  // Disable escape key handling temporarily - causing useRef infinite loop
+  // TODO: Implement escape key without useRef to avoid React error #310
 
   return (
     <div 
@@ -762,20 +724,20 @@ const TradeManagementPage = ({ isNew }) => {
     }, 500);
   }
 
-  // Handle search input changes with stable ref
-  useEffect(() => {
-    if (search.trim()) {
-      debouncedSearchRef.current(search);
-    } else {
-      // Clear immediately when search is empty
-      setSearchResults([]);
-      setShowDropdown(false);
-      setNoResultsMsg('');
-      setSearchLoading(false);
-      setIsKeyboardNavigation(false);
-    }
-    return () => debouncedSearchRef.current?.cancel();
-  }, [search]); // Only depend on search, not the function
+  // Disable search useEffect temporarily - may be causing infinite re-renders
+  // useEffect(() => {
+  //   if (search.trim()) {
+  //     debouncedSearchRef.current(search);
+  //   } else {
+  //     // Clear immediately when search is empty
+  //     setSearchResults([]);
+  //     setShowDropdown(false);
+  //     setNoResultsMsg('');
+  //     setSearchLoading(false);
+  //     setIsKeyboardNavigation(false);
+  //   }
+  //   return () => debouncedSearchRef.current?.cancel();
+  // }, [search]); // Only depend on search, not the function
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
