@@ -118,7 +118,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling - optimized to prevent infinite loops
+  // Add useEffect for escape key handling - fixed dependency array
   useEffect(() => {
     if (!isOpen) return;
 
@@ -130,7 +130,35 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
       }
       if (e.key === 'Enter' && !e.target.matches('input, select, textarea')) {
         e.preventDefault();
-        handleAddCard(); // Use the existing function
+        // Call handleAddCard directly instead of using closure
+        if (selectedPrinting && assignTo) {
+          // Calculate price inline to avoid dependency issues
+          const mockCardData = {
+            ...selectedPrinting,
+            scryfall_json: selectedPrinting,
+            foil: isFoil
+          };
+          const currentPrice = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
+          
+          const tradeCard = {
+            id: isEditing ? card.id : `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
+            name: selectedPrinting.name,
+            card: selectedPrinting,
+            printing: selectedPrinting.id,
+            quantity: quantity,
+            foil: isFoil,
+            price: currentPrice,
+            assignedTo: assignTo,
+            scryfall_json: selectedPrinting
+          };
+
+          if (isEditing && onUpdateCard) {
+            onUpdateCard(tradeCard, card.originalAssignment);
+          } else if (onAddCard) {
+            onAddCard(tradeCard);
+          }
+          onClose();
+        }
       }
       
       // Navigation arrows - only if navigation functions provided
@@ -150,7 +178,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]); // Only depend on isOpen to prevent infinite loops
+  }, [isOpen, onClose, onNavigateToPrevious, onNavigateToNext, selectedPrinting, assignTo, quantity, isFoil, isEditing, card, onUpdateCard, onAddCard]); // Include all dependencies
 
   return (
     <div 
@@ -709,8 +737,8 @@ const TradeManagementPage = ({ isNew }) => {
       }
     };
 
-    // Use setTimeout to ensure the modal is in the DOM
-    setTimeout(focusModal, 0);
+    // Use setTimeout to ensure the modal is in the DOM - with proper cleanup
+    const timeoutId = setTimeout(focusModal, 0);
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
@@ -721,6 +749,7 @@ const TradeManagementPage = ({ isNew }) => {
 
     document.addEventListener('keydown', handleEscape);
     return () => {
+      clearTimeout(timeoutId); // Clear timeout on cleanup
       document.removeEventListener('keydown', handleEscape);
     };
   }, [showSearchModal]);
