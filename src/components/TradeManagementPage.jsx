@@ -1723,6 +1723,8 @@ const TradeManagementPage = ({ isNew }) => {
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card with preserved printing data
                       console.log('🔍 Opening modal for card:', card);
+                      console.log('🔍 Card printingData:', card.printingData);
+                      console.log('🔍 All card properties:', Object.keys(card));
                       setModalCard({
                         ...card,
                         editing: true,
@@ -2094,6 +2096,8 @@ const TradeManagementPage = ({ isNew }) => {
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card with preserved printing data
                       console.log('🔍 Opening modal for card:', card);
+                      console.log('🔍 Card printingData:', card.printingData);
+                      console.log('🔍 All card properties:', Object.keys(card));
                       setModalCard({
                         ...card,
                         editing: true,
