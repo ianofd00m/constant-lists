@@ -1314,7 +1314,9 @@ const TradeManagementPage = ({ isNew }) => {
           const card = item;
           const setInfo = card.scryfall_json?.set_name || card.set || '';
           const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
-          const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+          // Use unified pricing system for individual cards like we do for totals
+          const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+          const price = priceData.price && parseFloat(priceData.price) > 0 ? ` - ${formatPrice(priceData.price)}` : ' - N/A';
           const foilText = card.foil ? ' (Foil)' : '';
           
           textContent += `${card.quantity}x ${card.name}`;
@@ -1341,7 +1343,9 @@ const TradeManagementPage = ({ isNew }) => {
           const card = item;
           const setInfo = card.scryfall_json?.set_name || card.set || '';
           const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
-          const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+          // Use unified pricing system for individual cards like we do for totals
+          const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+          const price = priceData.price && parseFloat(priceData.price) > 0 ? ` - ${formatPrice(priceData.price)}` : ' - N/A';
           const foilText = card.foil ? ' (Foil)' : '';
           
           textContent += `${card.quantity}x ${card.name}`;
@@ -1454,7 +1458,9 @@ const TradeManagementPage = ({ isNew }) => {
             const card = item;
             const setInfo = card.scryfall_json?.set_name || card.set || '';
             const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
-            const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+            // Use unified pricing system for individual cards like we do for totals
+            const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+            const price = priceData.price && parseFloat(priceData.price) > 0 ? ` - ${formatPrice(priceData.price)}` : ' - N/A';
             const foilText = card.foil ? ' (F)' : '';
             
             let cardText = `${card.quantity}x ${card.name}`;
