@@ -122,21 +122,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
-  // Simple escape key handling without problematic dependencies
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscapeKey = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [isOpen]); // Only depend on isOpen
+  // DISABLED: Escape key useEffect also causes infinite loops 
+  // Need to implement keyboard shortcuts differently
 
   return (
     <div 
@@ -737,20 +724,20 @@ const TradeManagementPage = ({ isNew }) => {
     }, 500);
   }
 
-  // Handle search input changes with stable ref
-  useEffect(() => {
-    if (search.trim()) {
-      debouncedSearchRef.current(search);
-    } else {
-      // Clear immediately when search is empty
-      setSearchResults([]);
-      setShowDropdown(false);
-      setNoResultsMsg('');
-      setSearchLoading(false);
-      setIsKeyboardNavigation(false);
-    }
-    return () => debouncedSearchRef.current?.cancel();
-  }, [search]); // Only depend on search, not the function
+  // DISABLED: Search useEffect causes infinite loops - need alternative approach
+  // useEffect(() => {
+  //   if (search.trim()) {
+  //     debouncedSearchRef.current(search);
+  //   } else {
+  //     // Clear immediately when search is empty
+  //     setSearchResults([]);
+  //     setShowDropdown(false);
+  //     setNoResultsMsg('');
+  //     setSearchLoading(false);
+  //     setIsKeyboardNavigation(false);
+  //   }
+  //   return () => debouncedSearchRef.current?.cancel();
+  // }, [search]); // Only depend on search, not the function
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
@@ -1265,8 +1252,18 @@ const TradeManagementPage = ({ isNew }) => {
               value={search}
               data-trade-search="true"
               onChange={(e) => {
-                setSearch(e.target.value);
-                // Don't call debouncedSearch directly - let useEffect handle it to avoid double triggers
+                const newSearch = e.target.value;
+                setSearch(newSearch);
+                // Trigger search directly since useEffect is disabled to prevent infinite loops
+                if (newSearch.trim()) {
+                  debouncedSearchRef.current(newSearch);
+                } else {
+                  setSearchResults([]);
+                  setShowDropdown(false);
+                  setNoResultsMsg('');
+                  setSearchLoading(false);
+                  setIsKeyboardNavigation(false);
+                }
               }}
               onBlur={(e) => {
                 // Capture references before setTimeout to avoid stale references
