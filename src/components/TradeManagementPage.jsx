@@ -122,8 +122,21 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
-  // Disable escape key handling temporarily - causing useRef infinite loop
-  // TODO: Implement escape key without useRef to avoid React error #310
+  // Simple escape key handling without problematic dependencies
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [isOpen]); // Only depend on isOpen
 
   return (
     <div 
@@ -521,8 +534,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 };
 
 const TradeManagementPage = ({ isNew }) => {
-  console.log('🔍 RENDER: TradeManagementPage with isNew:', isNew);
-  
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -726,20 +737,20 @@ const TradeManagementPage = ({ isNew }) => {
     }, 500);
   }
 
-  // Disable search useEffect temporarily - may be causing infinite re-renders
-  // useEffect(() => {
-  //   if (search.trim()) {
-  //     debouncedSearchRef.current(search);
-  //   } else {
-  //     // Clear immediately when search is empty
-  //     setSearchResults([]);
-  //     setShowDropdown(false);
-  //     setNoResultsMsg('');
-  //     setSearchLoading(false);
-  //     setIsKeyboardNavigation(false);
-  //   }
-  //   return () => debouncedSearchRef.current?.cancel();
-  // }, [search]); // Only depend on search, not the function
+  // Handle search input changes with stable ref
+  useEffect(() => {
+    if (search.trim()) {
+      debouncedSearchRef.current(search);
+    } else {
+      // Clear immediately when search is empty
+      setSearchResults([]);
+      setShowDropdown(false);
+      setNoResultsMsg('');
+      setSearchLoading(false);
+      setIsKeyboardNavigation(false);
+    }
+    return () => debouncedSearchRef.current?.cancel();
+  }, [search]); // Only depend on search, not the function
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {

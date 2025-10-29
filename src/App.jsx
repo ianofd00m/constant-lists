@@ -73,7 +73,7 @@ function OAuthSuccess() {
 }
 
 function App() {
-  console.log('🔍 RENDER: App component rendering');
+  console.log('App loaded');
   
   // INSTANT LOADING: Start preloading common cards as soon as app loads
   useEffect(() => {
