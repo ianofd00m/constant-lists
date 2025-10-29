@@ -760,6 +760,101 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Get sorted cards with separator elements
+  const getSortedCardsWithSeparators = (cards) => {
+    const sortedCards = [...cards];
+    let result = [];
+    
+    switch (sortOption) {
+      case 'color':
+        const colorGroups = {};
+        const colorMap = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
+        
+        sortedCards.forEach(card => {
+          const colors = card.scryfall_json?.colors || [];
+          let colorKey;
+          
+          if (colors.length === 0) {
+            colorKey = 'Colorless';
+          } else if (colors.length === 1) {
+            colorKey = colorMap[colors[0]] || colors[0];
+          } else {
+            colorKey = 'Multicolor';
+          }
+          
+          if (!colorGroups[colorKey]) colorGroups[colorKey] = [];
+          colorGroups[colorKey].push(card);
+        });
+        
+        const colorOrder = ['White', 'Blue', 'Black', 'Red', 'Green', 'Multicolor', 'Colorless'];
+        colorOrder.forEach((color, index) => {
+          if (colorGroups[color] && colorGroups[color].length > 0) {
+            if (index > 0 && result.length > 0) {
+              result.push({ isSeparator: true, groupName: color, id: `sep-${color}` });
+            }
+            result.push(...colorGroups[color].sort((a, b) => a.name.localeCompare(b.name)));
+          }
+        });
+        return result;
+
+      case 'type':
+        const typeGroups = {};
+        sortedCards.forEach(card => {
+          const typeLine = card.scryfall_json?.type_line?.split('—')[0]?.trim() || 'Unknown';
+          const basicTypes = ['Artifact', 'Creature', 'Enchantment', 'Instant', 'Land', 'Planeswalker', 'Sorcery'];
+          const type = basicTypes.find(t => typeLine.includes(t)) || typeLine;
+          
+          if (!typeGroups[type]) typeGroups[type] = [];
+          typeGroups[type].push(card);
+        });
+        
+        const sortedTypes = Object.keys(typeGroups).sort();
+        sortedTypes.forEach((type, index) => {
+          if (index > 0 && result.length > 0) {
+            result.push({ isSeparator: true, groupName: type, id: `sep-${type}` });
+          }
+          result.push(...typeGroups[type].sort((a, b) => a.name.localeCompare(b.name)));
+        });
+        return result;
+
+      case 'set':
+        const setGroups = {};
+        sortedCards.forEach(card => {
+          const set = card.scryfall_json?.set_name || card.set || 'Unknown';
+          if (!setGroups[set]) setGroups[set] = [];
+          setGroups[set].push(card);
+        });
+        
+        const sortedSets = Object.keys(setGroups).sort();
+        sortedSets.forEach((set, index) => {
+          if (index > 0 && result.length > 0) {
+            result.push({ isSeparator: true, groupName: set, id: `sep-${set}` });
+          }
+          result.push(...setGroups[set].sort((a, b) => a.name.localeCompare(b.name)));
+        });
+        return result;
+
+      default:
+        return sortCards(sortedCards);
+    }
+  };
+
+  // Sort function with group detection
+  const sortCardsWithGroups = (cards) => {
+    const sortedCards = [...cards];
+    
+    switch (sortOption) {
+      case 'color':
+      case 'type':
+      case 'set':
+        // These need group separators
+        return getSortedCardsWithSeparators(sortedCards);
+      default:
+        // Simple sorts don't need separators
+        return sortCards(sortedCards);
+    }
+  };
+
   // Sort function
   const sortCards = (cards) => {
     const sortedCards = [...cards];
@@ -777,11 +872,20 @@ const TradeManagementPage = ({ isNew }) => {
       
       case 'color':
         const colorGroups = {};
+        const colorMap = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
+        
         sortedCards.forEach(card => {
           const colors = card.scryfall_json?.colors || [];
-          const colorKey = colors.length === 0 ? 'Colorless' : 
-                          colors.length === 1 ? colors[0] : 
-                          'Multicolor';
+          let colorKey;
+          
+          if (colors.length === 0) {
+            colorKey = 'Colorless';
+          } else if (colors.length === 1) {
+            colorKey = colorMap[colors[0]] || colors[0];
+          } else {
+            colorKey = 'Multicolor';
+          }
+          
           if (!colorGroups[colorKey]) colorGroups[colorKey] = [];
           colorGroups[colorKey].push(card);
         });
@@ -797,7 +901,11 @@ const TradeManagementPage = ({ isNew }) => {
       case 'type':
         const typeGroups = {};
         sortedCards.forEach(card => {
-          const type = card.scryfall_json?.type_line?.split('—')[0]?.trim() || 'Unknown';
+          const typeLine = card.scryfall_json?.type_line?.split('—')[0]?.trim() || 'Unknown';
+          // Extract the basic type (last word before subtypes)
+          const basicTypes = ['Artifact', 'Creature', 'Enchantment', 'Instant', 'Land', 'Planeswalker', 'Sorcery'];
+          const type = basicTypes.find(t => typeLine.includes(t)) || typeLine;
+          
           if (!typeGroups[type]) typeGroups[type] = [];
           typeGroups[type].push(card);
         });
@@ -1136,9 +1244,9 @@ const TradeManagementPage = ({ isNew }) => {
             >
               <option value="name">A-Z (Name)</option>
               <option value="price">$ - $$$ (Price)</option>
-              <option value="color">Color (Grouped)</option>
-              <option value="type">Card Type (Grouped)</option>
-              <option value="set">Set (Grouped)</option>
+              <option value="color">Color</option>
+              <option value="type">Card Type</option>
+              <option value="set">Set</option>
             </select>
           </div>
 
@@ -1232,7 +1340,30 @@ const TradeManagementPage = ({ isNew }) => {
                 No cards added yet
               </div>
             ) : (
-              sortCards(user1Cards).map(card => (
+              sortCardsWithGroups(user1Cards).map(item => {
+                // Handle separator elements
+                if (item.isSeparator) {
+                  return (
+                    <div 
+                      key={item.id}
+                      style={{
+                        borderTop: '1px solid #ddd',
+                        margin: '10px 0 5px 0',
+                        paddingTop: '5px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: '#666',
+                        textAlign: 'left'
+                      }}
+                    >
+                      {item.groupName}
+                    </div>
+                  );
+                }
+                
+                // Handle regular cards
+                const card = item;
+                return (
                 <div 
                   key={card.id}
                   draggable
@@ -1300,7 +1431,7 @@ const TradeManagementPage = ({ isNew }) => {
                       setIsModalOpen(true);
                     }}
                   >
-                    <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                       {card.quantity}
                     </span>
                     <span style={{ 
@@ -1359,7 +1490,7 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '40px',
                       textAlign: 'right'
                     }}>
-                      {formatPrice(card.price || card.scryfall_json?.prices?.usd || 0)}
+                      {formatPrice(getUnifiedCardPrice(card, { fallbackPrice: '0.00' }).price)}
                     </span>
                   </div>
 
@@ -1475,7 +1606,8 @@ const TradeManagementPage = ({ isNew }) => {
                     </button>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -1573,7 +1705,30 @@ const TradeManagementPage = ({ isNew }) => {
                 No cards added yet
               </div>
             ) : (
-              sortCards(user2Cards).map(card => (
+              sortCardsWithGroups(user2Cards).map(item => {
+                // Handle separator elements
+                if (item.isSeparator) {
+                  return (
+                    <div 
+                      key={item.id}
+                      style={{
+                        borderTop: '1px solid #ddd',
+                        margin: '10px 0 5px 0',
+                        paddingTop: '5px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: '#666',
+                        textAlign: 'left'
+                      }}
+                    >
+                      {item.groupName}
+                    </div>
+                  );
+                }
+                
+                // Handle regular cards
+                const card = item;
+                return (
                 <div 
                   key={card.id}
                   draggable
@@ -1641,7 +1796,7 @@ const TradeManagementPage = ({ isNew }) => {
                       setIsModalOpen(true);
                     }}
                   >
-                    <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                       {card.quantity}
                     </span>
                     <span style={{ 
@@ -1700,7 +1855,7 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '40px',
                       textAlign: 'right'
                     }}>
-                      {formatPrice(card.price || card.scryfall_json?.prices?.usd || 0)}
+                      {formatPrice(getUnifiedCardPrice(card, { fallbackPrice: '0.00' }).price)}
                     </span>
                   </div>
 
@@ -1816,7 +1971,8 @@ const TradeManagementPage = ({ isNew }) => {
                     </button>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 
