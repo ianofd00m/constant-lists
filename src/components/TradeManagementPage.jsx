@@ -919,6 +919,32 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [showSearchModal]);
 
+  // Handle escape key and click outside to close printing dropdowns
+  useEffect(() => {
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape') {
+        setPrintingDropdowns({});
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      // Check if click is outside any printing dropdown
+      if (!e.target.closest('[data-printing-dropdown]') && !e.target.closest('[data-card-name]')) {
+        setPrintingDropdowns({});
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('keydown', handleEscapeKey);
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Function to fetch all search results for the modal (triggered by Enter key)
   const fetchAllSearchResults = async (query) => {
     if (!query.trim()) return;
@@ -2252,6 +2278,7 @@ const TradeManagementPage = ({ isNew }) => {
                     </span>
                     <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                       <span 
+                        data-card-name="true"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCardNameClick(card, null, 'user1');
@@ -2273,7 +2300,9 @@ const TradeManagementPage = ({ isNew }) => {
                       
                       {/* Printing Dropdown */}
                       {printingDropdowns[`user1-${card.id}`] && availablePrintings[card.name] && (
-                        <div style={{
+                        <div 
+                          data-printing-dropdown="true"
+                          style={{
                           position: 'absolute',
                           top: '100%',
                           left: 0,
@@ -2734,6 +2763,7 @@ const TradeManagementPage = ({ isNew }) => {
                     </span>
                     <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                       <span 
+                        data-card-name="true"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCardNameClick(card, null, 'user2');
@@ -2755,7 +2785,9 @@ const TradeManagementPage = ({ isNew }) => {
                       
                       {/* Printing Dropdown */}
                       {printingDropdowns[`user2-${card.id}`] && availablePrintings[card.name] && (
-                        <div style={{
+                        <div 
+                          data-printing-dropdown="true"
+                          style={{
                           position: 'absolute',
                           top: '100%',
                           left: 0,
