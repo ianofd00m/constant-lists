@@ -131,10 +131,27 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         e.preventDefault();
         e.stopPropagation();
         onClose();
+      } else if (e.key === 'Enter' && !isEditingQuantity) {
+        // Allow enter to trigger update card action, but not during quantity editing
+        const target = e.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (selectedPrinting && assignTo) {
+            handleAddCard();
+          }
+        }
+      } else if (e.key === 'ArrowLeft') {
+        // Navigation to previous card (when implemented)
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO: Add onNavigateToPrevious prop and logic
+      } else if (e.key === 'ArrowRight') {
+        // Navigation to next card (when implemented)  
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO: Add onNavigateToNext prop and logic
       }
-      
-      // Simplified: no Enter key or navigation in the modal to avoid dependency issues
-      // Users can click the buttons instead
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -156,7 +173,58 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         flexDirection: 'column'
       }}>
         <div className="modal-header">
+          {/* Navigation arrows would go here when card list navigation is implemented */}
+          {/* Left arrow for previous card */}
+          <button 
+            className="nav-arrow nav-arrow-left"
+            title="Previous card (Left arrow key)"
+            style={{
+              position: 'absolute',
+              left: '-60px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              border: '2px solid #ddd',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              fontSize: '2rem',
+              cursor: 'pointer',
+              color: '#666',
+              display: 'none', // Hidden until navigation is implemented
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            &#8249;
+          </button>
+          
           <button onClick={onClose} className="close-button">&times;</button>
+          
+          {/* Right arrow for next card */}
+          <button 
+            className="nav-arrow nav-arrow-right"
+            title="Next card (Right arrow key)"
+            style={{
+              position: 'absolute',
+              right: '-60px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              border: '2px solid #ddd',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              fontSize: '2rem',
+              cursor: 'pointer',
+              color: '#666',
+              display: 'none', // Hidden until navigation is implemented
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            &#8250;
+          </button>
         </div>
         
         <div className="modal-body" style={{
@@ -220,7 +288,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
             <div className="action-row" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label className="control-label">Quantity:</label>
-                <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                   <button 
                     className="quantity-btn" 
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
@@ -239,26 +307,67 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                   >−</button>
                   <input 
                     type="number" 
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    onFocus={(e) => e.target.select()}
+                    value={isEditingQuantity ? tempQuantity : quantity}
+                    onChange={(e) => {
+                      if (isEditingQuantity) {
+                        setTempQuantity(e.target.value);
+                      } else {
+                        setQuantity(Math.max(1, parseInt(e.target.value) || 1));
+                      }
+                    }}
+                    onFocus={(e) => {
+                      setTempQuantity(quantity.toString());
+                      setIsEditingQuantity(true);
+                      setTimeout(() => e.target.select(), 0);
+                    }}
+                    onBlur={() => {
+                      if (isEditingQuantity) {
+                        const newQuantity = Math.max(1, parseInt(tempQuantity) || 1);
+                        setQuantity(newQuantity);
+                        setIsEditingQuantity(false);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        const newQuantity = Math.max(1, parseInt(tempQuantity) || 1);
+                        setQuantity(newQuantity);
+                        setIsEditingQuantity(false);
+                        e.target.blur();
+                      } else if (e.key === 'Escape') {
+                        setIsEditingQuantity(false);
                         e.target.blur();
                       }
                     }}
-                    className="quantity-input"
+                    className={`quantity-input ${isEditingQuantity ? 'editing' : ''}`}
                     min="1"
                     style={{
                       width: '50px',
                       height: '28px',
-                      border: '1px solid #ddd',
+                      border: isEditingQuantity ? '2px solid #1976d2' : '1px solid #ddd',
                       borderLeft: 'none',
                       borderRight: 'none',
                       textAlign: 'center',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      backgroundColor: isEditingQuantity ? '#f0f8ff' : 'white'
                     }}
                   />
+                  {isEditingQuantity && (
+                    <span style={{ 
+                      position: 'absolute', 
+                      fontSize: '11px', 
+                      color: '#666', 
+                      top: '-18px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: 'white',
+                      padding: '2px 4px',
+                      border: '1px solid #ddd',
+                      borderRadius: '3px'
+                    }}>
+                      Enter to save, Esc to cancel
+                    </span>
+                  )}
                   <button 
                     className="quantity-btn" 
                     onClick={() => setQuantity(prev => prev + 1)}
@@ -408,15 +517,18 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                     padding: '8px 12px',
                     borderRadius: '4px',
                     border: '1px solid #ddd',
-                    fontSize: '13px',
+                    fontSize: '14px',
                     width: '100%',
                     backgroundColor: 'white',
-                    color: '#333',
-                    fontFamily: 'inherit'
+                    color: '#000',
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: 'none'
                   }}
                 >
                   {printings.map(printing => {
-                    // Get price for this printing
+                    // Get price for this printing for display (even though we removed it from simple dropdown)
                     const mockCardData = {
                       ...printing,
                       scryfall_json: printing,
@@ -427,7 +539,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                     
                     return (
                       <option key={printing.id} value={printing.id}>
-                        🃏 {printing.set_name} • #{printing.collector_number} • {price}
+                        {printing.set_name} ({printing.set}) #{printing.collector_number} • {price}
                       </option>
                     );
                   })}
