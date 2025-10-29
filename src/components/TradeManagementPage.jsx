@@ -118,7 +118,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling - fixed dependency array
+  // Add useEffect for escape key handling - minimal dependencies
   useEffect(() => {
     if (!isOpen) return;
 
@@ -178,7 +178,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onNavigateToPrevious, onNavigateToNext, selectedPrinting, assignTo, quantity, isFoil, isEditing, card?.id, onUpdateCard, onAddCard]); // Use card.id instead of entire card object
+  }, [isOpen]); // Drastically reduce dependencies - functions and state accessed directly
 
   return (
     <div 
@@ -723,7 +723,7 @@ const TradeManagementPage = ({ isNew }) => {
   useEffect(() => {
     debouncedSearch(search);
     return () => debouncedSearch.cancel();
-  }, [search, debouncedSearch]);
+  }, [search]); // Remove debouncedSearch to prevent infinite loops
 
   // Handle modal focus and escape key functionality
   useEffect(() => {
@@ -1163,7 +1163,7 @@ const TradeManagementPage = ({ isNew }) => {
         originalAssignment: prevCard.assignedTo
       });
     }
-  }, [user1Cards, user2Cards, modalCard]);
+  }, [user1Cards, user2Cards]); // Remove modalCard to prevent infinite loop
 
   const navigateToNext = useCallback(() => {
     const allCards = [...user1Cards, ...user2Cards];
@@ -1178,7 +1178,7 @@ const TradeManagementPage = ({ isNew }) => {
         originalAssignment: nextCard.assignedTo
       });
     }
-  }, [user1Cards, user2Cards, modalCard]);
+  }, [user1Cards, user2Cards]); // Remove modalCard to prevent infinite loop
 
   // Modal close function
   const closeModal = useCallback(() => {
