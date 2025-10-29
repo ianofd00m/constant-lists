@@ -1481,58 +1481,18 @@ async function loadSearchModalFix() {
   }
 }
 
-// Inline search fix implementation
+// Inline search fix implementation - DISABLED to prevent React interference
 function implementInlineSearchFix() {
-  console.log('🔧 Implementing inline search modal fix...');
+  console.log('✅ Inline search fix disabled to prevent React interference');
   
-  // Override Enter key behavior for search
+  // DISABLED: This keydown event listener was causing infinite React renders
+  // React components handle their own search functionality
+  
+  /* DISABLED CODE:
   document.addEventListener('keydown', function(event) {
-    const target = event.target;
-    if (target.tagName !== 'INPUT' || target.type !== 'text') return;
-    
-    // Skip if this is a ResearchPage search input - let it handle its own search
-    if (target.dataset && target.dataset.researchPageSearch === 'true') {
-      console.log('🔍 ResearchPage search detected - skipping main.jsx intervention');
-      return;
-    }
-    
-    // Skip if this is a DeckViewEdit search input - let it handle its own search
-    if (target.dataset && target.dataset.deckViewSearch === 'true') {
-      console.log('🔍 DeckViewEdit search detected - skipping main.jsx intervention');
-      return;
-    }
-    
-    // Skip if this is a TradeManagementPage search input - let it handle its own search
-    if (target.dataset && target.dataset.tradeSearch === 'true') {
-      console.log('🔍 TradeManagementPage search detected - skipping main.jsx intervention');
-      return;
-    }
-    
-    // Skip if this is a name input field
-    if (target.dataset && target.dataset.nameInput) {
-      console.log('📝 Name input detected - skipping main.jsx intervention');
-      return;
-    }
-    
-    const isSearchInput = target.closest('.search-container') || target.value.trim().length > 0;
-    if (!isSearchInput) return;
-    
-    if (event.key === 'Enter') {
-      const query = target.value.trim();
-      if (query) {
-        console.log('🎯 Enter pressed in search - triggering modal for:', query);
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Use the existing modal system but force all results
-        if (window.triggerShowAll) {
-          window.triggerShowAll(query);
-        }
-      }
-    }
+    // This was interfering with React components and causing infinite renders
   }, true);
-  
-  console.log('✅ Inline search fix ready');
+  */
 }
 
 // Apply fixes when DOM is ready

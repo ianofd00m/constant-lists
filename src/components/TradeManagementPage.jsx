@@ -8,7 +8,6 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
-  console.log('🎯 TradeCardModal render - isOpen:', isOpen, 'card:', card?.name);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,7 +17,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    console.log('🔄 Modal card init useEffect - isOpen:', isOpen, 'card:', card?.name);
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
@@ -440,7 +438,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 };
 
 const TradeManagementPage = ({ isNew }) => {
-  console.log('🔄 TradeManagementPage render - isNew:', isNew);
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -612,14 +609,14 @@ const TradeManagementPage = ({ isNew }) => {
     setSearchLoading(false);
   }, []); // Empty dependency array - function is completely self-contained
 
-  // Debounced search function - DISABLED to debug infinite loop
-  // const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
+  // Debounced search function - re-enabled after fixing main.jsx interference
+  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
-  // Handle search input changes - DISABLED to debug infinite loop
-  // useEffect(() => {
-  //   debouncedSearch(search);
-  //   return () => debouncedSearch.cancel();
-  // }, [search, debouncedSearch]);
+  // Handle search input changes - re-enabled after fixing main.jsx interference
+  useEffect(() => {
+    debouncedSearch(search);
+    return () => debouncedSearch.cancel();
+  }, [search, debouncedSearch]);
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
@@ -734,7 +731,6 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
-    console.log('🟢 Opening modal for card:', card.name);
     setModalCard(card);
     setIsModalOpen(true);
     setSearch('');
@@ -1526,7 +1522,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
-                      console.log('🟢 Opening edit modal for user1 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
@@ -1892,7 +1887,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
-                      console.log('🟢 Opening edit modal for user2 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
