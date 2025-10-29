@@ -1077,6 +1077,21 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Duplicate card as separate line item
+  const handleDuplicateCard = (cardToDuplicate, fromUser) => {
+    const duplicatedCard = {
+      ...cardToDuplicate,
+      id: `${cardToDuplicate.id}_duplicate_${Date.now()}`, // New unique ID
+      quantity: 1 // Start with quantity 1 for the duplicate
+    };
+    
+    if (fromUser === 'user1') {
+      setUser1Cards(prev => [...prev, duplicatedCard]);
+    } else {
+      setUser2Cards(prev => [...prev, duplicatedCard]);
+    }
+  };
+
   // Save trade to pending trades
   const handleSaveTrade = async () => {
     if (savingTrade) return;
@@ -1921,7 +1936,7 @@ const TradeManagementPage = ({ isNew }) => {
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                   >
-                    📄 Export Text
+                    Export Text
                   </button>
                   <button
                     style={{
@@ -1937,7 +1952,7 @@ const TradeManagementPage = ({ isNew }) => {
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                   >
-                    📋 Export PDF
+                    Export PDF
                   </button>
                 </div>
               )}
@@ -2238,6 +2253,32 @@ const TradeManagementPage = ({ isNew }) => {
                       title="Increase quantity"
                     >
                       +
+                    </button>
+                    
+                    {/* Duplicate Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicateCard(card, 'user1');
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        outline: 'none'
+                      }}
+                      title="Duplicate as separate line item"
+                    >
+                      ⎘
                     </button>
 
                     {/* Foil Toggle */}
@@ -2608,6 +2649,32 @@ const TradeManagementPage = ({ isNew }) => {
                       title="Increase quantity"
                     >
                       +
+                    </button>
+                    
+                    {/* Duplicate Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicateCard(card, 'user2');
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        outline: 'none'
+                      }}
+                      title="Duplicate as separate line item"
+                    >
+                      ⎘
                     </button>
 
                     {/* Foil Toggle */}
