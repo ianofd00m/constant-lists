@@ -751,6 +751,32 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Add card directly to User 1 from search modal
+  const addCardToUser1 = (card) => {
+    const tradeCard = {
+      id: `${card.id || card.scryfall_id}-${Date.now()}-user1`,
+      name: card.name,
+      quantity: 1,
+      foil: false,
+      scryfall_json: card,
+      assignedTo: 'user1'
+    };
+    setUser1Cards(prev => [...prev, tradeCard]);
+  };
+
+  // Add card directly to User 2 from search modal
+  const addCardToUser2 = (card) => {
+    const tradeCard = {
+      id: `${card.id || card.scryfall_id}-${Date.now()}-user2`,
+      name: card.name,
+      quantity: 1,
+      foil: false,
+      scryfall_json: card,
+      assignedTo: 'user2'
+    };
+    setUser2Cards(prev => [...prev, tradeCard]);
+  };
+
   // Remove card from trade
   const handleRemoveCard = (cardId, fromUser) => {
     if (fromUser === 'user1') {
@@ -789,9 +815,8 @@ const TradeManagementPage = ({ isNew }) => {
         const colorOrder = ['White', 'Blue', 'Black', 'Red', 'Green', 'Multicolor', 'Colorless'];
         colorOrder.forEach((color, index) => {
           if (colorGroups[color] && colorGroups[color].length > 0) {
-            if (index > 0 && result.length > 0) {
-              result.push({ isSeparator: true, groupName: color, id: `sep-${color}` });
-            }
+            // Always add separator for group headers
+            result.push({ isSeparator: true, groupName: color, id: `sep-${color}` });
             result.push(...colorGroups[color].sort((a, b) => a.name.localeCompare(b.name)));
           }
         });
@@ -810,9 +835,8 @@ const TradeManagementPage = ({ isNew }) => {
         
         const sortedTypes = Object.keys(typeGroups).sort();
         sortedTypes.forEach((type, index) => {
-          if (index > 0 && result.length > 0) {
-            result.push({ isSeparator: true, groupName: type, id: `sep-${type}` });
-          }
+          // Always add separator for group headers
+          result.push({ isSeparator: true, groupName: type, id: `sep-${type}` });
           result.push(...typeGroups[type].sort((a, b) => a.name.localeCompare(b.name)));
         });
         return result;
@@ -827,9 +851,8 @@ const TradeManagementPage = ({ isNew }) => {
         
         const sortedSets = Object.keys(setGroups).sort();
         sortedSets.forEach((set, index) => {
-          if (index > 0 && result.length > 0) {
-            result.push({ isSeparator: true, groupName: set, id: `sep-${set}` });
-          }
+          // Always add separator for group headers
+          result.push({ isSeparator: true, groupName: set, id: `sep-${set}` });
           result.push(...setGroups[set].sort((a, b) => a.name.localeCompare(b.name)));
         });
         return result;
@@ -865,9 +888,9 @@ const TradeManagementPage = ({ isNew }) => {
       
       case 'price':
         return sortedCards.sort((a, b) => {
-          const priceA = a.price || a.scryfall_json?.prices?.usd || 0;
-          const priceB = b.price || b.scryfall_json?.prices?.usd || 0;
-          return parseFloat(priceB) - parseFloat(priceA); // High to low
+          const priceA = getUnifiedCardPrice(a, { fallbackPrice: '0.00' }).price;
+          const priceB = getUnifiedCardPrice(b, { fallbackPrice: '0.00' }).price;
+          return parseFloat(priceB || 0) - parseFloat(priceA || 0); // High to low
         });
       
       case 'color':
@@ -936,7 +959,8 @@ const TradeManagementPage = ({ isNew }) => {
   // Calculate totals
   const user1Total = useMemo(() => {
     return user1Cards.reduce((sum, card) => {
-      const price = card.price || 0;
+      const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+      const price = parseFloat(priceData.price || 0);
       const quantity = card.quantity || 1;
       return sum + (price * quantity);
     }, 0);
@@ -944,7 +968,8 @@ const TradeManagementPage = ({ isNew }) => {
 
   const user2Total = useMemo(() => {
     return user2Cards.reduce((sum, card) => {
-      const price = card.price || 0;
+      const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+      const price = parseFloat(priceData.price || 0);
       const quantity = card.quantity || 1;
       return sum + (price * quantity);
     }, 0);
@@ -2155,10 +2180,13 @@ const TradeManagementPage = ({ isNew }) => {
                           e.currentTarget.style.boxShadow = "none";
                           e.currentTarget.style.backgroundColor = "#fafafa";
                         }}
-                        onClick={() => {
-                          setModalCard(card);
-                          setIsModalOpen(true);
-                          setShowSearchModal(false);
+                        onClick={(e) => {
+                          // Only open modal if clicking on the card image/name area, not buttons
+                          if (!e.target.closest('.add-card-buttons')) {
+                            setModalCard(card);
+                            setIsModalOpen(true);
+                            setShowSearchModal(false);
+                          }
                         }}
                       >
                         {/* Card Image */}
@@ -2201,11 +2229,75 @@ const TradeManagementPage = ({ isNew }) => {
                             textAlign: "center",
                             color: "#333",
                             lineHeight: "1.3",
-                            marginBottom: "8px",
+                            marginBottom: "12px",
                             padding: "0 8px",
                           }}
                         >
                           {card.name}
+                        </div>
+
+                        {/* Add Card Buttons */}
+                        <div 
+                          className="add-card-buttons"
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            width: "100%",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addCardToUser1(card);
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "8px 12px",
+                              backgroundColor: "#1976d2",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = "#1565c0";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = "#1976d2";
+                            }}
+                          >
+                            Add to Me
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addCardToUser2(card);
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "8px 12px",
+                              backgroundColor: "#dc004e",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = "#c2185b";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = "#dc004e";
+                            }}
+                          >
+                            Add to Pal
+                          </button>
                         </div>
                       </div>
                     ))}
