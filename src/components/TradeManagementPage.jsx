@@ -634,12 +634,24 @@ const TradeManagementPage = ({ isNew }) => {
   const lastSearchTimeRef = useRef(0);
   const MIN_SEARCH_INTERVAL = 100;
 
+  // Track if trade has been initialized to prevent re-initialization
+  const tradeInitializedRef = useRef(false);
+  
   // Initialize new trade or load existing
   useEffect(() => {
+    console.log('🔥 DEBUGGING: Trade initialization useEffect triggered. isNew:', isNew, 'tradeId:', tradeId, 'initialized:', tradeInitializedRef.current);
+    
+    if (tradeInitializedRef.current) {
+      console.log('🔥 DEBUGGING: Trade already initialized, skipping');
+      return;
+    }
+    
     if (isNew) {
-      // Create a new trade
+      console.log('🔥 DEBUGGING: Creating new trade');
+      // Create a new trade with stable ID
+      const newTradeId = `trade_${Date.now()}`;
       const newTrade = {
-        id: `trade_${Date.now()}`,
+        id: newTradeId,
         date: new Date().toISOString().split('T')[0],
         status: 'pending',
         user1_name: 'Me',
@@ -649,7 +661,9 @@ const TradeManagementPage = ({ isNew }) => {
       };
       setTrade(newTrade);
       setLoading(false);
+      tradeInitializedRef.current = true;
     } else if (tradeId) {
+      console.log('🔥 DEBUGGING: Loading existing trade');
       // Load existing trade (implement server call here later)
       // For now, create a mock trade
       setTrade({
@@ -662,11 +676,13 @@ const TradeManagementPage = ({ isNew }) => {
         user2_cards: []
       });
       setLoading(false);
+      tradeInitializedRef.current = true;
     } else {
       // Fallback - if neither isNew nor tradeId, treat as new trade
-      console.log('⚠️ TradeManagementPage: No isNew or tradeId provided, defaulting to new trade');
+      console.log('🔥 DEBUGGING: Creating fallback trade - no isNew or tradeId provided');
+      const fallbackTradeId = `trade_${Date.now()}`;
       const fallbackTrade = {
-        id: `trade_${Date.now()}`,
+        id: fallbackTradeId,
         date: new Date().toISOString().split('T')[0],
         status: 'pending',
         user1_name: 'Me',
@@ -676,6 +692,7 @@ const TradeManagementPage = ({ isNew }) => {
       };
       setTrade(fallbackTrade);
       setLoading(false);
+      tradeInitializedRef.current = true;
     }
   }, [isNew, tradeId]);
 
