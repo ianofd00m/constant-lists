@@ -76,12 +76,16 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         let matchingPrinting = null;
         
         // Debug logging
+        const scryfallData = card.scryfall_json || card.card || card;
         console.log('🔍 Debug card object:', {
           cardId: card.id,
           cardSet: card.set,
           cardCollectorNumber: card.collector_number,
           hasPrintingData: !!card.printingData,
-          printingData: card.printingData
+          printingData: card.printingData,
+          scryfallSet: scryfallData.set,
+          scryfallCollectorNumber: scryfallData.collector_number,
+          scryfallId: scryfallData.id
         });
         
         // First, try to match using stored printingData (for cards from trade)
@@ -98,7 +102,21 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
           }
         }
         
-        // If no match from printingData, try to match the card itself (for search results)
+        // If no match from printingData, try to match using scryfall_json data
+        if (!matchingPrinting) {
+          console.log('🔍 Trying to match using scryfall data');
+          matchingPrinting = printingsData.find(printing => 
+            printing.id === scryfallData.id || 
+            (printing.set === scryfallData.set && printing.collector_number === scryfallData.collector_number)
+          );
+          if (matchingPrinting) {
+            console.log('🎯 Auto-selected from scryfall data:', matchingPrinting.set_name);
+          } else {
+            console.log('🚫 No match found using scryfall data');
+          }
+        }
+        
+        // If still no match, try to match the card itself (fallback for search results)
         if (!matchingPrinting) {
           console.log('🔍 Trying to match using card properties');
           matchingPrinting = printingsData.find(printing => 
