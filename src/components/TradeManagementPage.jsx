@@ -2278,7 +2278,7 @@ const TradeManagementPage = ({ isNew }) => {
                       }}
                       title="Duplicate as separate line item"
                     >
-                      ⎘
+                      ⧉
                     </button>
 
                     {/* Foil Toggle */}
@@ -2674,7 +2674,7 @@ const TradeManagementPage = ({ isNew }) => {
                       }}
                       title="Duplicate as separate line item"
                     >
-                      ⎘
+                      ⧉
                     </button>
 
                     {/* Foil Toggle */}
