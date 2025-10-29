@@ -644,6 +644,13 @@ const TradeManagementPage = ({ isNew }) => {
   const [modalSearch, setModalSearch] = useState('');
   const [searchModalLoading, setSearchModalLoading] = useState(false);
   
+  // Refs for auto-focus functionality
+  const mainSearchInputRef = useRef(null);
+  
+  // Printing dropdown states
+  const [printingDropdowns, setPrintingDropdowns] = useState({});
+  const [availablePrintings, setAvailablePrintings] = useState({});
+  
   // User names (editable)
   const [user1Name, setUser1Name] = useState('Me');
   const [user2Name, setUser2Name] = useState('Trading Partner');
@@ -869,6 +876,26 @@ const TradeManagementPage = ({ isNew }) => {
   //   };
   // }, [showSearchModal]);
 
+  // Auto-focus main search input on component mount and when modal closes
+  useEffect(() => {
+    // Focus on initial load
+    if (mainSearchInputRef.current) {
+      mainSearchInputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    // Focus main search when modal closes
+    if (!showSearchModal && mainSearchInputRef.current) {
+      // Small delay to ensure modal is fully closed
+      setTimeout(() => {
+        if (mainSearchInputRef.current) {
+          mainSearchInputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [showSearchModal]);
+
   // Function to fetch all search results for the modal (triggered by Enter key)
   const fetchAllSearchResults = async (query) => {
     if (!query.trim()) return;
@@ -1075,6 +1102,67 @@ const TradeManagementPage = ({ isNew }) => {
     } else {
       setUser2Cards(prev => prev.filter(card => card.id !== cardId));
     }
+  };
+
+  // Handle printing dropdown toggle and fetching
+  const handleCardNameClick = async (card, cardIndex, userType) => {
+    const dropdownKey = `${userType}-${cardIndex}`;
+    
+    // Close if already open
+    if (printingDropdowns[dropdownKey]) {
+      setPrintingDropdowns(prev => ({
+        ...prev,
+        [dropdownKey]: false
+      }));
+      return;
+    }
+    
+    // Close all other dropdowns
+    setPrintingDropdowns({ [dropdownKey]: true });
+    
+    // Fetch printings if not already cached
+    if (!availablePrintings[card.name]) {
+      try {
+        const printings = await fetchCardPrintings(card);
+        setAvailablePrintings(prev => ({
+          ...prev,
+          [card.name]: printings
+        }));
+      } catch (error) {
+        console.error('Failed to fetch printings:', error);
+        // Close dropdown on error
+        setPrintingDropdowns(prev => ({
+          ...prev,
+          [dropdownKey]: false
+        }));
+      }
+    }
+  };
+
+  // Handle selecting a different printing
+  const handlePrintingSelect = (newPrinting, cardIndex, userType) => {
+    const updatedCard = {
+      ...newPrinting,
+      id: `${newPrinting.id || newPrinting.scryfall_id}-${Date.now()}-${userType}`,
+      quantity: userType === 'user1' ? user1Cards[cardIndex].quantity : user2Cards[cardIndex].quantity,
+      foil: userType === 'user1' ? user1Cards[cardIndex].foil : user2Cards[cardIndex].foil,
+      assignedTo: userType,
+      scryfall_json: newPrinting,
+      card: newPrinting
+    };
+
+    if (userType === 'user1') {
+      setUser1Cards(prev => prev.map((card, index) => 
+        index === cardIndex ? updatedCard : card
+      ));
+    } else {
+      setUser2Cards(prev => prev.map((card, index) => 
+        index === cardIndex ? updatedCard : card
+      ));
+    }
+
+    // Close dropdown
+    setPrintingDropdowns({});
   };
 
   // Duplicate card as separate line item
@@ -1653,6 +1741,7 @@ const TradeManagementPage = ({ isNew }) => {
           {/* Search Input */}
           <div className="search-container" style={{ position: 'relative', marginBottom: '15px' }}>
             <input
+              ref={mainSearchInputRef}
               type="text"
               placeholder="Search for cards to add (Scryfall syntax supported)..."
               value={search}
@@ -2039,7 +2128,7 @@ const TradeManagementPage = ({ isNew }) => {
                 No cards added yet
               </div>
             ) : (
-              sortCardsWithGroups(user1Cards).map(item => {
+              sortCardsWithGroups(user1Cards).map((item, index) => {
                 // Handle separator elements
                 if (item.isSeparator) {
                   return (
@@ -2850,6 +2939,41 @@ const TradeManagementPage = ({ isNew }) => {
               <h3 style={{ margin: 0, marginBottom: "10px", color: "#333" }}>
                 Search Results for "{modalSearchTerm}"
               </h3>
+              
+              {/* Search Input Inside Modal */}
+              <div style={{ marginTop: "10px" }}>
+                <input
+                  type="text"
+                  placeholder="Search for cards..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && search.trim()) {
+                      setModalSearchTerm(search.trim());
+                      // Trigger search with new term
+                      if (search.trim()) {
+                        debouncedSearchRef.current(search);
+                      }
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "2px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    outline: "none",
+                    transition: "border-color 0.2s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#007bff";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#ddd";
+                  }}
+                  autoFocus
+                />
+              </div>
             </div>
 
             {/* Modal Content */}
