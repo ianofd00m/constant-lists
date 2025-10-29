@@ -32,7 +32,7 @@ import TermsOfService from './components/TermsOfService';
 import EmailVerification from './components/EmailVerification';
 import ResetPassword from './components/ResetPassword';
 import TradePage from './components/TradePage';
-// import TradeManagementPage from './components/TradeManagementPage'; // TEMPORARILY DISABLED
+import TradeManagementPage from './components/TradeManagementPage';
 import ShoppingCart from './components/ShoppingCart';
 import WishlistPage from './components/WishlistPage';
 
@@ -119,20 +119,8 @@ function App() {
           <Route path="/build" element={<BuildPageWithAuth />} />
           <Route path="/collect" element={<CollectPage />} />
           <Route path="/trade" element={<TradePage />} />
-          <Route path="/trade/new" element={
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-              <h2>Trade Management (Temporarily Disabled)</h2>
-              <p>The trade management component is temporarily disabled for debugging.</p>
-              <p>React error #310 investigation in progress...</p>
-            </div>
-          } />
-          <Route path="/trades/:tradeId" element={
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-              <h2>Trade Management (Temporarily Disabled)</h2>
-              <p>The trade management component is temporarily disabled for debugging.</p>
-              <p>React error #310 investigation in progress...</p>
-            </div>
-          } />
+          <Route path="/trade/new" element={<TradeManagementPage />} />
+          <Route path="/trades/:tradeId" element={<TradeManagementPage />} />
           <Route path="/shopping-cart" element={<ShoppingCart />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/search" element={<CardSearch />} />

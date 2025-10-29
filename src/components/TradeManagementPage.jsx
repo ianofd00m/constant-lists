@@ -607,16 +607,25 @@ const TradeManagementPage = ({ isNew }) => {
     }
     
     setSearchLoading(false);
-  }, []); // Empty dependency array - function is completely self-contained
+  }, [setSearchResults, setShowDropdown, setNoResultsMsg, setSearchLoading, setIsKeyboardNavigation]); // Fixed dependencies
 
-  // Debounced search function - re-enabled after fixing main.jsx interference
+  // Debounced search function - fixed to prevent infinite loop
   const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
-  // Handle search input changes - re-enabled after fixing main.jsx interference
+  // Handle search input changes - fixed dependencies
   useEffect(() => {
-    debouncedSearch(search);
+    if (search.trim()) {
+      debouncedSearch(search);
+    } else {
+      // Clear immediately when search is empty
+      setSearchResults([]);
+      setShowDropdown(false);
+      setNoResultsMsg('');
+      setSearchLoading(false);
+      setIsKeyboardNavigation(false);
+    }
     return () => debouncedSearch.cancel();
-  }, [search, debouncedSearch]);
+  }, [search, debouncedSearch, setSearchResults, setShowDropdown, setNoResultsMsg, setSearchLoading, setIsKeyboardNavigation]);
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
