@@ -8,6 +8,7 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
+  console.log('🔄 TradeCardModal render:', { isOpen, cardName: card?.name, cardId: card?.id });
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -545,9 +546,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 };
 
 const TradeManagementPage = ({ isNew }) => {
-  // TEMPORARY: Early return to test if this component causes infinite loops
-  return <div>TradeManagementPage temporarily disabled for debugging</div>;
-  
+  console.log('🔄 TradeManagementPage render:', { isNew });
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
