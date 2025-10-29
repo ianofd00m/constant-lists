@@ -675,6 +675,8 @@ const TradeManagementPage = ({ isNew }) => {
   
   // Sort state
   const [sortOption, setSortOption] = useState('name'); // 'name', 'price', 'color', 'type', 'set'
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [savingTrade, setSavingTrade] = useState(false);
   
   // Refs for search functionality
   const searchAbortControllerRef = useRef(null);
@@ -683,6 +685,20 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Track if trade has been initialized to prevent re-initialization
   const tradeInitializedRef = useRef(false);
+  
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showExportDropdown && !event.target.closest('[data-export-dropdown]')) {
+        setShowExportDropdown(false);
+      }
+    };
+    
+    if (showExportDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showExportDropdown]);
   
   // Initialize new trade or load existing
   useEffect(() => {
@@ -706,17 +722,36 @@ const TradeManagementPage = ({ isNew }) => {
       setLoading(false);
       tradeInitializedRef.current = true;
     } else if (tradeId) {
-      // Load existing trade (implement server call here later)
-      // For now, create a mock trade
-      setTrade({
-        id: tradeId,
-        date: new Date().toISOString().split('T')[0],
-        status: 'pending',
-        user1_name: 'Me',
-        user2_name: 'Trading Partner',
-        user1_cards: [],
-        user2_cards: []
-      });
+      // Load existing trade from localStorage
+      const savedTrades = JSON.parse(localStorage.getItem('savedTrades') || '[]');
+      const existingTrade = savedTrades.find(t => t.id === tradeId);
+      
+      if (existingTrade) {
+        setTrade(existingTrade);
+        // Restore the sorting option
+        if (existingTrade.sortOption) {
+          setSortOption(existingTrade.sortOption);
+        }
+        // Restore the card lists
+        if (existingTrade.user1_cards) {
+          setUser1Cards(existingTrade.user1_cards);
+        }
+        if (existingTrade.user2_cards) {
+          setUser2Cards(existingTrade.user2_cards);
+        }
+        // Restore user names
+        if (existingTrade.user1_name) {
+          setUser1Name(existingTrade.user1_name);
+        }
+        if (existingTrade.user2_name) {
+          setUser2Name(existingTrade.user2_name);
+        }
+      } else {
+        // Trade not found, redirect to trade list
+        toast.error('Trade not found');
+        navigate('/trade');
+        return;
+      }
       setLoading(false);
       tradeInitializedRef.current = true;
     } else {
@@ -1062,6 +1097,277 @@ const TradeManagementPage = ({ isNew }) => {
       setUser1Cards(prev => prev.filter(card => card.id !== cardId));
     } else {
       setUser2Cards(prev => prev.filter(card => card.id !== cardId));
+    }
+  };
+
+  // Save trade to pending trades
+  const handleSaveTrade = async () => {
+    if (savingTrade) return;
+    
+    setSavingTrade(true);
+    try {
+      // Generate trade name in format: yyyy.mm.dd - user1 name(#items) & user2 name(#items)
+      const today = new Date();
+      const dateStr = today.getFullYear() + '.' + 
+                    String(today.getMonth() + 1).padStart(2, '0') + '.' + 
+                    String(today.getDate()).padStart(2, '0');
+      
+      const user1Count = user1Cards.length;
+      const user2Count = user2Cards.length;
+      const tradeName = `${dateStr} - ${user1Name}(${user1Count}) & ${user2Name}(${user2Count})`;
+      
+      // Create trade object
+      const tradeToSave = {
+        id: trade?.id || `trade_${Date.now()}`,
+        name: tradeName,
+        date: today.toISOString().split('T')[0],
+        status: 'pending',
+        user1_name: user1Name,
+        user2_name: user2Name,
+        user1_cards: user1Cards,
+        user2_cards: user2Cards,
+        sortOption: sortOption, // Preserve sorting preference
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Get existing trades from localStorage or create empty array
+      const existingTrades = JSON.parse(localStorage.getItem('savedTrades') || '[]');
+      
+      // Check if trade already exists (updating vs creating new)
+      const existingIndex = existingTrades.findIndex(t => t.id === tradeToSave.id);
+      if (existingIndex >= 0) {
+        // Update existing trade
+        existingTrades[existingIndex] = { ...existingTrades[existingIndex], ...tradeToSave };
+        toast.success('Trade updated successfully!');
+      } else {
+        // Add new trade
+        existingTrades.push(tradeToSave);
+        toast.success('Trade saved successfully!');
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('savedTrades', JSON.stringify(existingTrades));
+      
+      // Update current trade state
+      setTrade(tradeToSave);
+      
+    } catch (error) {
+      console.error('Error saving trade:', error);
+      toast.error('Failed to save trade');
+    } finally {
+      setSavingTrade(false);
+    }
+  };
+
+  // Export trade as text file
+  const handleExportText = () => {
+    try {
+      // Create formatted text content
+      let textContent = `TRADE EXPORT\n`;
+      textContent += `Date: ${new Date().toLocaleDateString()}\n`;
+      textContent += `${user1Name} & ${user2Name}\n`;
+      textContent += `\n${'='.repeat(50)}\n\n`;
+      
+      // User 1 section
+      textContent += `${user1Name.toUpperCase()}'S CARDS (${user1Cards.length} items):\n`;
+      textContent += `-${'-'.repeat(user1Name.length + 15)}\n`;
+      
+      const sortedUser1Cards = getSortedCardsWithSeparators(user1Cards);
+      let currentGroup = '';
+      
+      sortedUser1Cards.forEach(item => {
+        if (item.isSeparator) {
+          if (currentGroup) textContent += '\n';
+          textContent += `\n--- ${item.groupName.toUpperCase()} ---\n`;
+          currentGroup = item.groupName;
+        } else {
+          const card = item;
+          const setInfo = card.scryfall_json?.set_name || card.set || '';
+          const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
+          const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+          const foilText = card.foil ? ' (Foil)' : '';
+          
+          textContent += `${card.quantity}x ${card.name}`;
+          if (setInfo) textContent += ` [${setInfo}${collectorNumber ? ' #' + collectorNumber : ''}]`;
+          textContent += `${foilText}${price}\n`;
+        }
+      });
+      
+      textContent += `\n${'='.repeat(50)}\n\n`;
+      
+      // User 2 section
+      textContent += `${user2Name.toUpperCase()}'S CARDS (${user2Cards.length} items):\n`;
+      textContent += `-${'-'.repeat(user2Name.length + 15)}\n`;
+      
+      const sortedUser2Cards = getSortedCardsWithSeparators(user2Cards);
+      currentGroup = '';
+      
+      sortedUser2Cards.forEach(item => {
+        if (item.isSeparator) {
+          if (currentGroup) textContent += '\n';
+          textContent += `\n--- ${item.groupName.toUpperCase()} ---\n`;
+          currentGroup = item.groupName;
+        } else {
+          const card = item;
+          const setInfo = card.scryfall_json?.set_name || card.set || '';
+          const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
+          const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+          const foilText = card.foil ? ' (Foil)' : '';
+          
+          textContent += `${card.quantity}x ${card.name}`;
+          if (setInfo) textContent += ` [${setInfo}${collectorNumber ? ' #' + collectorNumber : ''}]`;
+          textContent += `${foilText}${price}\n`;
+        }
+      });
+      
+      // Calculate totals
+      const user1Total = user1Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      const user2Total = user2Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      
+      textContent += `\n${'='.repeat(50)}\n`;
+      textContent += `TOTALS:\n`;
+      textContent += `${user1Name}: ${formatPrice({ value: user1Total, currency: 'USD' })}\n`;
+      textContent += `${user2Name}: ${formatPrice({ value: user2Total, currency: 'USD' })}\n`;
+      
+      // Create and download file
+      const blob = new Blob([textContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `trade_${user1Name}_${user2Name}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setShowExportDropdown(false);
+      toast.success('Text file exported successfully!');
+    } catch (error) {
+      console.error('Error exporting text:', error);
+      toast.error('Failed to export text file');
+    }
+  };
+
+  // Export trade as PDF
+  const handleExportPDF = async () => {
+    try {
+      // Dynamic import of jsPDF
+      const { default: jsPDF } = await import('jspdf');
+      
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      const margin = 20;
+      const columnWidth = (pageWidth - margin * 3) / 2; // Two columns with margins
+      
+      let yPosition = margin;
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('TRADE SUMMARY', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 10;
+      
+      // Date and names
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 5;
+      pdf.text(`${user1Name} & ${user2Name}`, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+      
+      // Column headers
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text(`${user1Name} (${user1Cards.length} cards)`, margin, yPosition);
+      pdf.text(`${user2Name} (${user2Cards.length} cards)`, margin + columnWidth + margin, yPosition);
+      yPosition += 10;
+      
+      // Reset font for content
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'normal');
+      
+      // Helper function to add card list to PDF
+      const addCardsToPDF = (cards, startX) => {
+        let currentY = yPosition;
+        const sortedCards = getSortedCardsWithSeparators(cards);
+        
+        sortedCards.forEach(item => {
+          if (currentY > pageHeight - 20) {
+            pdf.addPage();
+            currentY = margin;
+            // Re-add headers on new page
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`${user1Name} (${user1Cards.length} cards)`, margin, currentY);
+            pdf.text(`${user2Name} (${user2Cards.length} cards)`, margin + columnWidth + margin, currentY);
+            currentY += 10;
+            pdf.setFontSize(8);
+            pdf.setFont(undefined, 'normal');
+          }
+          
+          if (item.isSeparator) {
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`--- ${item.groupName} ---`, startX, currentY);
+            pdf.setFont(undefined, 'normal');
+            currentY += 4;
+          } else {
+            const card = item;
+            const setInfo = card.scryfall_json?.set_name || card.set || '';
+            const collectorNumber = card.scryfall_json?.collector_number || card.collector_number || '';
+            const price = card.price ? ` - ${formatPrice(card.price)}` : '';
+            const foilText = card.foil ? ' (F)' : '';
+            
+            let cardText = `${card.quantity}x ${card.name}`;
+            if (setInfo) cardText += ` [${setInfo}${collectorNumber ? ' #' + collectorNumber : ''}]`;
+            cardText += `${foilText}${price}`;
+            
+            // Split long text if needed
+            const lines = pdf.splitTextToSize(cardText, columnWidth - 5);
+            lines.forEach(line => {
+              pdf.text(line, startX, currentY);
+              currentY += 3;
+            });
+          }
+        });
+        
+        return currentY;
+      };
+      
+      // Add cards for both users in parallel columns
+      const user1EndY = addCardsToPDF(user1Cards, margin);
+      const user2EndY = addCardsToPDF(user2Cards, margin + columnWidth + margin);
+      
+      // Add totals at the bottom
+      const finalY = Math.max(user1EndY, user2EndY) + 10;
+      if (finalY > pageHeight - 30) {
+        pdf.addPage();
+        yPosition = margin;
+      } else {
+        yPosition = finalY;
+      }
+      
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('TOTALS:', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 5;
+      
+      const user1Total = user1Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      const user2Total = user2Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      
+      pdf.text(`${user1Name}: ${formatPrice({ value: user1Total, currency: 'USD' })}`, margin, yPosition);
+      pdf.text(`${user2Name}: ${formatPrice({ value: user2Total, currency: 'USD' })}`, margin + columnWidth + margin, yPosition);
+      
+      // Save the PDF
+      const filename = `trade_${user1Name}_${user2Name}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+      
+      setShowExportDropdown(false);
+      toast.success('PDF exported successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to export PDF');
     }
   };
 
@@ -1573,12 +1879,71 @@ const TradeManagementPage = ({ isNew }) => {
 
           {/* Save and Export Actions */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-            <button className="btn btn-success" style={{ flex: 1 }}>
-              Save Trade
+            <button 
+              className="btn btn-success" 
+              style={{ flex: 1 }}
+              onClick={handleSaveTrade}
+              disabled={savingTrade}
+            >
+              {savingTrade ? 'Saving...' : 'Save Trade'}
             </button>
-            <button className="btn btn-secondary" style={{ flex: 1 }}>
-              Export Trade
-            </button>
+            
+            {/* Export Dropdown */}
+            <div style={{ flex: 1, position: 'relative' }} data-export-dropdown>
+              <button 
+                className="btn btn-secondary" 
+                style={{ width: '100%' }}
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+              >
+                Export Trade ▼
+              </button>
+              
+              {showExportDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  zIndex: 1000
+                }}>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #eee'
+                    }}
+                    onClick={handleExportText}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    📄 Export as Text File
+                  </button>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer'
+                    }}
+                    onClick={handleExportPDF}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    📋 Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
