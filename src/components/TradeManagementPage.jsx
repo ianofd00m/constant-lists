@@ -1029,6 +1029,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
+    // Instead of opening modal, show dropdown selection for user assignment
     setModalCard(card);
     setIsModalOpen(true);
     setSearch('');
@@ -1166,25 +1167,21 @@ const TradeManagementPage = ({ isNew }) => {
       return;
     }
     
-    // Close all other dropdowns
+    // Close all other dropdowns and open this one IMMEDIATELY for snappy UX
     setPrintingDropdowns({ [dropdownKey]: true });
     
-    // Fetch printings if not already cached
+    // Fetch printings in background if not already cached
     if (!availablePrintings[card.name]) {
-      try {
-        const printings = await fetchCardPrintings(card);
+      // Don't await - let it fetch in background while dropdown shows
+      fetchCardPrintings(card).then(printings => {
         setAvailablePrintings(prev => ({
           ...prev,
           [card.name]: printings
         }));
-      } catch (error) {
+      }).catch(error => {
         console.error('Failed to fetch printings:', error);
-        // Close dropdown on error
-        setPrintingDropdowns(prev => ({
-          ...prev,
-          [dropdownKey]: false
-        }));
-      }
+        // Keep dropdown open even on error to show the current printing
+      });
     }
   };
 
@@ -2263,20 +2260,10 @@ const TradeManagementPage = ({ isNew }) => {
                       cursor: 'pointer'
                     }}
                     onClick={(e) => {
-                      // Don't open modal if clicking control buttons
+                      // Don't open dropdown if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
-                      // Open edit modal for this card with preserved printing data
-                      setModalCard({
-                        ...card,
-                        editing: true,
-                        originalAssignment: 'user1',
-                        // Explicitly preserve printing data and card properties
-                        printingData: card.printingData,
-                        id: card.printingData?.id || card.id,
-                        set: card.printingData?.set || card.set,
-                        collector_number: card.printingData?.collector_number || card.collector_number
-                      });
-                      setIsModalOpen(true);
+                      // Show printing dropdown instead of modal for better UX
+                      handleCardNameClick(card, null, 'user1');
                     }}
                   >
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -2362,7 +2349,7 @@ const TradeManagementPage = ({ isNew }) => {
                               }}
                             >
                               <img 
-                                src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
+                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
                                 alt={printing.set}
                                 style={{ width: '16px', height: '16px', flexShrink: 0 }}
                                 onError={(e) => e.target.style.display = 'none'}
@@ -2385,7 +2372,7 @@ const TradeManagementPage = ({ isNew }) => {
                     </div>
                     {card.scryfall_json?.set && (
                       <img 
-                        src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
+                        src={`/svgs/${card.scryfall_json.set.toLowerCase()}.svg`}
                         alt={card.scryfall_json.set}
                         style={{ 
                           width: '14px', 
@@ -2748,20 +2735,10 @@ const TradeManagementPage = ({ isNew }) => {
                       cursor: 'pointer'
                     }}
                     onClick={(e) => {
-                      // Don't open modal if clicking control buttons
+                      // Don't open dropdown if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
-                      // Open edit modal for this card with preserved printing data
-                      setModalCard({
-                        ...card,
-                        editing: true,
-                        originalAssignment: 'user2',
-                        // Explicitly preserve printing data and card properties
-                        printingData: card.printingData,
-                        id: card.printingData?.id || card.id,
-                        set: card.printingData?.set || card.set,
-                        collector_number: card.printingData?.collector_number || card.collector_number
-                      });
-                      setIsModalOpen(true);
+                      // Show printing dropdown instead of modal for better UX
+                      handleCardNameClick(card, null, 'user2');
                     }}
                   >
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -2847,7 +2824,7 @@ const TradeManagementPage = ({ isNew }) => {
                               }}
                             >
                               <img 
-                                src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
+                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
                                 alt={printing.set}
                                 style={{ width: '16px', height: '16px', flexShrink: 0 }}
                                 onError={(e) => e.target.style.display = 'none'}
@@ -2870,7 +2847,7 @@ const TradeManagementPage = ({ isNew }) => {
                     </div>
                     {card.scryfall_json?.set && (
                       <img 
-                        src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
+                        src={`/svgs/${card.scryfall_json.set.toLowerCase()}.svg`}
                         alt={card.scryfall_json.set}
                         style={{ 
                           width: '14px', 
