@@ -1106,7 +1106,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle printing dropdown toggle and fetching
   const handleCardNameClick = async (card, cardIndex, userType) => {
-    const dropdownKey = `${userType}-${cardIndex}`;
+    const dropdownKey = `${userType}-${card.id}`;
     
     // Close if already open
     if (printingDropdowns[dropdownKey]) {
@@ -1140,24 +1140,24 @@ const TradeManagementPage = ({ isNew }) => {
   };
 
   // Handle selecting a different printing
-  const handlePrintingSelect = (newPrinting, cardIndex, userType) => {
+  const handlePrintingSelect = (newPrinting, originalCard, userType) => {
     const updatedCard = {
       ...newPrinting,
       id: `${newPrinting.id || newPrinting.scryfall_id}-${Date.now()}-${userType}`,
-      quantity: userType === 'user1' ? user1Cards[cardIndex].quantity : user2Cards[cardIndex].quantity,
-      foil: userType === 'user1' ? user1Cards[cardIndex].foil : user2Cards[cardIndex].foil,
+      quantity: originalCard.quantity,
+      foil: originalCard.foil,
       assignedTo: userType,
       scryfall_json: newPrinting,
       card: newPrinting
     };
 
     if (userType === 'user1') {
-      setUser1Cards(prev => prev.map((card, index) => 
-        index === cardIndex ? updatedCard : card
+      setUser1Cards(prev => prev.map(card => 
+        card.id === originalCard.id ? updatedCard : card
       ));
     } else {
-      setUser2Cards(prev => prev.map((card, index) => 
-        index === cardIndex ? updatedCard : card
+      setUser2Cards(prev => prev.map(card => 
+        card.id === originalCard.id ? updatedCard : card
       ));
     }
 
@@ -2231,8 +2231,7 @@ const TradeManagementPage = ({ isNew }) => {
                       <span 
                         onClick={(e) => {
                           e.stopPropagation();
-                          const cardIndex = user1Cards.findIndex(c => c.id === card.id);
-                          handleCardNameClick(card, cardIndex, 'user1');
+                          handleCardNameClick(card, null, 'user1');
                         }}
                         style={{ 
                           fontWeight: 'bold',
@@ -2242,7 +2241,6 @@ const TradeManagementPage = ({ isNew }) => {
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                           cursor: 'pointer',
-                          textDecoration: 'underline',
                           display: 'block'
                         }}
                         title="Click to see other printings"
@@ -2251,7 +2249,7 @@ const TradeManagementPage = ({ isNew }) => {
                       </span>
                       
                       {/* Printing Dropdown */}
-                      {printingDropdowns[`user1-${user1Cards.findIndex(c => c.id === card.id)}`] && availablePrintings[card.name] && (
+                      {printingDropdowns[`user1-${card.id}`] && availablePrintings[card.name] && (
                         <div style={{
                           position: 'absolute',
                           top: '100%',
@@ -2270,8 +2268,7 @@ const TradeManagementPage = ({ isNew }) => {
                               key={`${printing.id}-${pIndex}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const cardIndex = user1Cards.findIndex(c => c.id === card.id);
-                                handlePrintingSelect(printing, cardIndex, 'user1');
+                                handlePrintingSelect(printing, card, 'user1');
                               }}
                               style={{
                                 padding: '8px 12px',
@@ -2696,8 +2693,7 @@ const TradeManagementPage = ({ isNew }) => {
                       <span 
                         onClick={(e) => {
                           e.stopPropagation();
-                          const cardIndex = user2Cards.findIndex(c => c.id === card.id);
-                          handleCardNameClick(card, cardIndex, 'user2');
+                          handleCardNameClick(card, null, 'user2');
                         }}
                         style={{ 
                           fontWeight: 'bold',
@@ -2707,7 +2703,6 @@ const TradeManagementPage = ({ isNew }) => {
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                           cursor: 'pointer',
-                          textDecoration: 'underline',
                           display: 'block'
                         }}
                         title="Click to see other printings"
@@ -2716,7 +2711,7 @@ const TradeManagementPage = ({ isNew }) => {
                       </span>
                       
                       {/* Printing Dropdown */}
-                      {printingDropdowns[`user2-${user2Cards.findIndex(c => c.id === card.id)}`] && availablePrintings[card.name] && (
+                      {printingDropdowns[`user2-${card.id}`] && availablePrintings[card.name] && (
                         <div style={{
                           position: 'absolute',
                           top: '100%',
@@ -2735,8 +2730,7 @@ const TradeManagementPage = ({ isNew }) => {
                               key={`${printing.id}-${pIndex}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const cardIndex = user2Cards.findIndex(c => c.id === card.id);
-                                handlePrintingSelect(printing, cardIndex, 'user2');
+                                handlePrintingSelect(printing, card, 'user2');
                               }}
                               style={{
                                 padding: '8px 12px',
