@@ -1478,6 +1478,12 @@ function implementInlineSearchFix() {
       return;
     }
     
+    // Skip if this is a name input field
+    if (target.dataset && target.dataset.nameInput) {
+      console.log('📝 Name input detected - skipping main.jsx intervention');
+      return;
+    }
+    
     const isSearchInput = target.closest('.search-container') || target.value.trim().length > 0;
     if (!isSearchInput) return;
     

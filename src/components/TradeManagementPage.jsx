@@ -783,7 +783,7 @@ const TradeManagementPage = ({ isNew }) => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '100%', padding: '10px 20px', margin: 0 }}>
+    <div className="container" style={{ maxWidth: '1200px', padding: '10px 20px', margin: '0 auto' }}>
       {/* Header */}
       {/* Subtle back navigation */}
       <div style={{ marginBottom: '10px' }}>
@@ -1146,10 +1146,7 @@ const TradeManagementPage = ({ isNew }) => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '8px',
                     marginBottom: '5px',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '4px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
                     border: '1px solid transparent',
@@ -1216,12 +1213,12 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
+                      fontFamily: 'monospace',
                       flex: 1,
                       minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '8px'
+                      whiteSpace: 'nowrap'
                     }}>
                       {card.name}
                     </span>
@@ -1490,10 +1487,7 @@ const TradeManagementPage = ({ isNew }) => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '8px',
                     marginBottom: '5px',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '4px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
                     border: '1px solid transparent',
@@ -1560,12 +1554,12 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
+                      fontFamily: 'monospace',
                       flex: 1,
                       minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '8px'
+                      whiteSpace: 'nowrap'
                     }}>
                       {card.name}
                     </span>
