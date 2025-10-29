@@ -1198,14 +1198,23 @@ const TradeManagementPage = ({ isNew }) => {
         }
       });
       
-      // Calculate totals
-      const user1Total = user1Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
-      const user2Total = user2Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      // Calculate totals using proper pricing system
+      const calculateTotal = (cards) => {
+        return cards.reduce((sum, card) => {
+          const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+          const price = parseFloat(priceData.price || 0);
+          const quantity = card.quantity || 1;
+          return sum + (price * quantity);
+        }, 0);
+      };
+      
+      const user1Total = calculateTotal(user1Cards);
+      const user2Total = calculateTotal(user2Cards);
       
       textContent += `\n${'='.repeat(50)}\n`;
       textContent += `TOTALS:\n`;
-      textContent += `${user1Name}: ${formatPrice({ value: user1Total, currency: 'USD' })}\n`;
-      textContent += `${user2Name}: ${formatPrice({ value: user2Total, currency: 'USD' })}\n`;
+      textContent += `${user1Name}: ${formatPrice(user1Total)}\n`;
+      textContent += `${user2Name}: ${formatPrice(user2Total)}\n`;
       
       // Create and download file
       const blob = new Blob([textContent], { type: 'text/plain' });
@@ -1330,11 +1339,21 @@ const TradeManagementPage = ({ isNew }) => {
       pdf.text('TOTALS:', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 5;
       
-      const user1Total = user1Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
-      const user2Total = user2Cards.reduce((sum, card) => sum + (card.price?.value || 0), 0);
+      // Calculate totals using proper pricing system  
+      const calculateTotal = (cards) => {
+        return cards.reduce((sum, card) => {
+          const priceData = getUnifiedCardPrice(card, { fallbackPrice: '0.00' });
+          const price = parseFloat(priceData.price || 0);
+          const quantity = card.quantity || 1;
+          return sum + (price * quantity);
+        }, 0);
+      };
       
-      pdf.text(`${user1Name}: ${formatPrice({ value: user1Total, currency: 'USD' })}`, margin, yPosition);
-      pdf.text(`${user2Name}: ${formatPrice({ value: user2Total, currency: 'USD' })}`, margin + columnWidth + margin, yPosition);
+      const user1Total = calculateTotal(user1Cards);
+      const user2Total = calculateTotal(user2Cards);
+      
+      pdf.text(`${user1Name}: ${formatPrice(user1Total)}`, margin, yPosition);
+      pdf.text(`${user2Name}: ${formatPrice(user2Total)}`, margin + columnWidth + margin, yPosition);
       
       // Save the PDF
       const filename = `trade_${user1Name}_${user2Name}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1582,7 +1601,7 @@ const TradeManagementPage = ({ isNew }) => {
       
       {/* Main header */}
       <div style={{ marginBottom: '15px' }}>
-        <h1 style={{ margin: '0', fontSize: '24px' }}>{isNew ? 'Create New Trade' : `Trade ${trade?.id}`}</h1>
+        <h1 style={{ margin: '0', fontSize: '24px' }}>{isNew ? 'Create New Trade' : (trade?.name || `Trade ${trade?.id}`)}</h1>
       </div>
 
       {/* Three-column layout */}
@@ -1872,7 +1891,7 @@ const TradeManagementPage = ({ isNew }) => {
                 style={{ width: '100%' }}
                 onClick={() => setShowExportDropdown(!showExportDropdown)}
               >
-                Export Trade ▼
+                Export ▼
               </button>
               
               {showExportDropdown && (
@@ -1895,13 +1914,14 @@ const TradeManagementPage = ({ isNew }) => {
                       background: 'none',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      borderBottom: '1px solid #eee'
+                      borderBottom: '1px solid #eee',
+                      color: '#333'
                     }}
                     onClick={handleExportText}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                   >
-                    📄 Export as Text File
+                    📄 Export Text
                   </button>
                   <button
                     style={{
@@ -1910,13 +1930,14 @@ const TradeManagementPage = ({ isNew }) => {
                       border: 'none',
                       background: 'none',
                       textAlign: 'left',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      color: '#333'
                     }}
                     onClick={handleExportPDF}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                   >
-                    📋 Export as PDF
+                    📋 Export PDF
                   </button>
                 </div>
               )}
