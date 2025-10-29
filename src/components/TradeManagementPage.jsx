@@ -118,7 +118,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling
+  // Add useEffect for escape key handling - optimized to prevent infinite loops
   useEffect(() => {
     if (!isOpen) return;
 
@@ -130,35 +130,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
       }
       if (e.key === 'Enter' && !e.target.matches('input, select, textarea')) {
         e.preventDefault();
-        // Call handleAddCard directly without dependency
-        if (!selectedPrinting || !assignTo) return;
-        
-        // Inline getCurrentPrice logic to avoid dependency issues
-        const mockCardData = {
-          ...selectedPrinting,
-          scryfall_json: selectedPrinting,
-          foil: isFoil
-        };
-        const currentPrice = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
-        
-        const tradeCard = {
-          id: isEditing ? card.id : `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
-          name: selectedPrinting.name,
-          card: selectedPrinting,
-          printing: selectedPrinting.id,
-          quantity: quantity,
-          foil: isFoil,
-          price: currentPrice,
-          assignedTo: assignTo,
-          scryfall_json: selectedPrinting
-        };
-
-        if (isEditing && onUpdateCard) {
-          onUpdateCard(tradeCard, card.originalAssignment);
-        } else {
-          onAddCard(tradeCard);
-        }
-        onClose();
+        handleAddCard(); // Use the existing function
       }
       
       // Navigation arrows - only if navigation functions provided
@@ -178,7 +150,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onNavigateToPrevious, onNavigateToNext, selectedPrinting, assignTo, quantity, isFoil, isEditing, card, onUpdateCard, onAddCard]);
+  }, [isOpen]); // Only depend on isOpen to prevent infinite loops
 
   return (
     <div 
