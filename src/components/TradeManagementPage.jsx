@@ -612,43 +612,43 @@ const TradeManagementPage = ({ isNew }) => {
     setSearchLoading(false);
   }, []); // Empty dependency array - function is completely self-contained
 
-  // Debounced search function - stable reference
-  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
+  // Debounced search function - DISABLED to debug infinite loop
+  // const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
-  // Handle search input changes - fixed to prevent infinite loops
-  useEffect(() => {
-    debouncedSearch(search);
-    return () => debouncedSearch.cancel();
-  }, [search, debouncedSearch]); // Include debouncedSearch since it's now stable
+  // Handle search input changes - DISABLED to debug infinite loop
+  // useEffect(() => {
+  //   debouncedSearch(search);
+  //   return () => debouncedSearch.cancel();
+  // }, [search, debouncedSearch]);
 
-  // Handle modal focus and escape key functionality
-  useEffect(() => {
-    if (!showSearchModal) return;
+  // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
+  // useEffect(() => {
+  //   if (!showSearchModal) return;
 
-    // Focus the modal immediately when it opens
-    const focusModal = () => {
-      const modalElement = document.querySelector('[data-search-modal="true"]');
-      if (modalElement) {
-        modalElement.focus();
-      }
-    };
+  //   // Focus the modal immediately when it opens
+  //   const focusModal = () => {
+  //     const modalElement = document.querySelector('[data-search-modal="true"]');
+  //     if (modalElement) {
+  //       modalElement.focus();
+  //     }
+  //   };
 
-    // Use setTimeout to ensure the modal is in the DOM - with proper cleanup
-    const timeoutId = setTimeout(focusModal, 0);
+  //   // Use setTimeout to ensure the modal is in the DOM - with proper cleanup
+  //   const timeoutId = setTimeout(focusModal, 0);
 
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setShowSearchModal(false);
-      }
-    };
+  //   const handleEscape = (event) => {
+  //     if (event.key === 'Escape') {
+  //       event.preventDefault();
+  //       setShowSearchModal(false);
+  //     }
+  //   };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      clearTimeout(timeoutId); // Clear timeout on cleanup
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [showSearchModal]);
+  //   document.addEventListener('keydown', handleEscape);
+  //   return () => {
+  //     clearTimeout(timeoutId); // Clear timeout on cleanup
+  //     document.removeEventListener('keydown', handleEscape);
+  //   };
+  // }, [showSearchModal]);
 
   // Function to fetch all search results for the modal (triggered by Enter key)
   const fetchAllSearchResults = async (query) => {
@@ -696,41 +696,41 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
-  // Close search dropdown when clicking outside or pressing Escape (mirrors DeckViewEdit)
-  useEffect(() => {
-    if (!showDropdown) return;
+  // Close search dropdown when clicking outside or pressing Escape - DISABLED to debug infinite loop
+  // useEffect(() => {
+  //   if (!showDropdown) return;
 
-    const handleClickOutside = (event) => {
-      // Check if the click is outside the search container
-      const searchContainer = event.target.closest(".search-container");
-      if (!searchContainer) {
-        setShowDropdown(false);
-        setSearch(''); // Clear the search input when clicking outside
-        setSearchResults([]);
-        setSelectedSearchIndex(-1);
-        setIsKeyboardNavigation(false); // Reset keyboard navigation when clicking outside
-      }
-    };
+  //   const handleClickOutside = (event) => {
+  //     // Check if the click is outside the search container
+  //     const searchContainer = event.target.closest(".search-container");
+  //     if (!searchContainer) {
+  //       setShowDropdown(false);
+  //       setSearch(''); // Clear the search input when clicking outside
+  //       setSearchResults([]);
+  //       setSelectedSearchIndex(-1);
+  //       setIsKeyboardNavigation(false); // Reset keyboard navigation when clicking outside
+  //     }
+  //   };
 
-    const handleEscapeKey = (event) => {
-      if (event.key === "Escape") {
-        setShowDropdown(false);
-        setSearch(''); // Clear the search input when pressing Escape
-        setSearchResults([]);
-        setSelectedSearchIndex(-1);
-      }
-    };
+  //   const handleEscapeKey = (event) => {
+  //     if (event.key === "Escape") {
+  //       setShowDropdown(false);
+  //       setSearch(''); // Clear the search input when pressing Escape
+  //       setSearchResults([]);
+  //       setSelectedSearchIndex(-1);
+  //     }
+  //   };
 
-    // Add event listeners
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscapeKey);
+  //   // Add event listeners
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   document.addEventListener("keydown", handleEscapeKey);
 
-    // Cleanup event listeners
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscapeKey);
-    };
-  }, [showDropdown]);
+  //   // Cleanup event listeners
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //     document.removeEventListener("keydown", handleEscapeKey);
+  //   };
+  // }, [showDropdown]);
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
