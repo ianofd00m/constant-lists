@@ -34,10 +34,11 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         setAssignTo(card.assignedTo || card.originalAssignment || null);
         setSelectedPrinting(card.card || card.scryfall_json || card);
       } else {
-        // New card - use defaults
+        // New card - use defaults and set initial printing to search result card
         setQuantity(1);
         setIsFoil(false);
         setAssignTo(null); // No default selection
+        setSelectedPrinting(card); // Start with the card from search results
       }
 
       fetchPrintings();
@@ -70,10 +71,21 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       
       setPrintings(printingsData);
       
-      // Auto-select first printing if available
+      // Auto-select the printing that matches the search result card, or fall back to first printing
       if (printingsData.length > 0) {
-        setSelectedPrinting(printingsData[0]);
-        console.log('🎯 Auto-selected first printing:', printingsData[0].set_name);
+        // Try to find the printing that matches the original card from search results
+        const matchingPrinting = printingsData.find(printing => 
+          printing.id === card.id || 
+          (printing.set === card.set && printing.collector_number === card.collector_number)
+        );
+        
+        if (matchingPrinting) {
+          setSelectedPrinting(matchingPrinting);
+          console.log('🎯 Auto-selected matching printing from search:', matchingPrinting.set_name);
+        } else {
+          setSelectedPrinting(printingsData[0]);
+          console.log('🎯 Auto-selected first printing (no match found):', printingsData[0].set_name);
+        }
       } else {
         setSelectedPrinting(card);
         console.log('🎯 Fallback to original card');
