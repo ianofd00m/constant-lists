@@ -759,7 +759,18 @@ const TradeManagementPage = ({ isNew }) => {
       quantity: 1,
       foil: false,
       scryfall_json: card,
-      assignedTo: 'user1'
+      assignedTo: 'user1',
+      // Add fields needed for card preview
+      card: {
+        name: card.name,
+        image_uris: card.image_uris,
+        mana_cost: card.mana_cost,
+        type_line: card.type_line,
+        oracle_text: card.oracle_text,
+        power: card.power,
+        toughness: card.toughness,
+        scryfall_id: card.id || card.scryfall_id
+      }
     };
     setUser1Cards(prev => [...prev, tradeCard]);
   };
@@ -772,7 +783,18 @@ const TradeManagementPage = ({ isNew }) => {
       quantity: 1,
       foil: false,
       scryfall_json: card,
-      assignedTo: 'user2'
+      assignedTo: 'user2',
+      // Add fields needed for card preview
+      card: {
+        name: card.name,
+        image_uris: card.image_uris,
+        mana_cost: card.mana_cost,
+        type_line: card.type_line,
+        oracle_text: card.oracle_text,
+        power: card.power,
+        toughness: card.toughness,
+        scryfall_id: card.id || card.scryfall_id
+      }
     };
     setUser2Cards(prev => [...prev, tradeCard]);
   };
