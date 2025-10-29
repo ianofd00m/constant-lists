@@ -75,25 +75,40 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       if (printingsData.length > 0) {
         let matchingPrinting = null;
         
+        // Debug logging
+        console.log('🔍 Debug card object:', {
+          cardId: card.id,
+          cardSet: card.set,
+          cardCollectorNumber: card.collector_number,
+          hasPrintingData: !!card.printingData,
+          printingData: card.printingData
+        });
+        
         // First, try to match using stored printingData (for cards from trade)
         if (card.printingData) {
+          console.log('🔍 Trying to match using printingData:', card.printingData);
           matchingPrinting = printingsData.find(printing => 
             printing.id === card.printingData.id || 
             (printing.set === card.printingData.set && printing.collector_number === card.printingData.collector_number)
           );
           if (matchingPrinting) {
             console.log('🎯 Auto-selected from printingData:', matchingPrinting.set_name);
+          } else {
+            console.log('🚫 No match found in printingData');
           }
         }
         
         // If no match from printingData, try to match the card itself (for search results)
         if (!matchingPrinting) {
+          console.log('🔍 Trying to match using card properties');
           matchingPrinting = printingsData.find(printing => 
             printing.id === card.id || 
             (printing.set === card.set && printing.collector_number === card.collector_number)
           );
           if (matchingPrinting) {
             console.log('🎯 Auto-selected matching printing from search:', matchingPrinting.set_name);
+          } else {
+            console.log('🚫 No match found using card properties');
           }
         }
         
