@@ -110,7 +110,15 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       foil: isFoil,
       price: getCurrentPrice(),
       assignedTo: assignTo,
-      scryfall_json: selectedPrinting
+      scryfall_json: selectedPrinting,
+      // Ensure printing data is preserved
+      printingData: {
+        id: selectedPrinting.id,
+        set_name: selectedPrinting.set_name,
+        set: selectedPrinting.set,
+        collector_number: selectedPrinting.collector_number,
+        image_uris: selectedPrinting.image_uris
+      }
     };
 
     if (isEditing && onUpdateCard) {
@@ -404,8 +412,52 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               </div>
             </div>
 
+            {/* Printings Selection - moved below quantity and foil controls */}
+            <div style={{ marginTop: '15px' }}>
+              <label className="control-label" style={{ marginBottom: '8px', display: 'block' }}>Printing:</label>
+              {loading ? (
+                <div style={{ textAlign: 'center', color: '#666', padding: '20px' }}>Loading printings...</div>
+              ) : (
+                <select
+                  value={selectedPrinting?.id || ''}
+                  onChange={(e) => {
+                    const printing = printings.find(p => p.id === e.target.value);
+                    setSelectedPrinting(printing);
+                  }}
+                  style={{ 
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    fontSize: '14px',
+                    width: '100%',
+                    backgroundColor: 'white',
+                    color: '#000',
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: 'none'
+                  }}
+                >
+                  {printings.map(printing => {
+                    // Get price for this printing for display
+                    const mockCardData = {
+                      ...printing,
+                      scryfall_json: printing,
+                      foil: isFoil
+                    };
+                    const priceData = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
+                    const price = priceData?.price ? formatPrice(priceData.price) : 'N/A';
+                    
+                    return (
+                      <option key={printing.id} value={printing.id}>
+                        {printing.set_name} ({printing.set}) #{printing.collector_number} • {price}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+            </div>
 
-            
             {/* Action buttons */}
             <div className="modal-buttons" style={{ marginTop: '20px' }}>
               <button 
@@ -438,8 +490,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
             {(selectedPrinting || card) && (
               <>
                 <div style={{ 
-                  width: '240px', 
-                  height: '336px', 
+                  width: '360px', 
+                  height: '504px', 
                   border: '1px solid #ddd', 
                   borderRadius: '12px',
                   overflow: 'hidden',
@@ -483,51 +535,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
               </>
             )}
-            {/* Printings Selection */}
-            <div style={{ marginTop: '15px' }}>
-              <label className="control-label" style={{ marginBottom: '8px', display: 'block' }}>Printing:</label>
-              {loading ? (
-                <div style={{ textAlign: 'center', color: '#666', padding: '20px' }}>Loading printings...</div>
-              ) : (
-                <select
-                  value={selectedPrinting?.id || ''}
-                  onChange={(e) => {
-                    const printing = printings.find(p => p.id === e.target.value);
-                    setSelectedPrinting(printing);
-                  }}
-                  style={{ 
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    fontSize: '14px',
-                    width: '100%',
-                    backgroundColor: 'white',
-                    color: '#000',
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: 'none'
-                  }}
-                >
-                  {printings.map(printing => {
-                    // Get price for this printing for display (even though we removed it from simple dropdown)
-                    const mockCardData = {
-                      ...printing,
-                      scryfall_json: printing,
-                      foil: isFoil
-                    };
-                    const priceData = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
-                    const price = priceData?.price ? formatPrice(priceData.price) : 'N/A';
-                    
-                    return (
-                      <option key={printing.id} value={printing.id}>
-                        {printing.set_name} ({printing.set}) #{printing.collector_number} • {price}
-                      </option>
-                    );
-                  })}
-                </select>
-              )}
-            </div>
+
           </div>
         </div>
       </div>
