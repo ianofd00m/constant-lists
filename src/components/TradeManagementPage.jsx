@@ -8,6 +8,7 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
+  console.log('🎯 TradeCardModal render - isOpen:', isOpen, 'cardName:', card?.name);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 TradeCardModal useEffect [isOpen, card] triggered - isOpen:', isOpen, 'card:', card?.name);
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
@@ -120,6 +122,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
   // Add useEffect for escape key handling - minimal dependencies
   useEffect(() => {
+    console.log('🔄 TradeCardModal keydown useEffect triggered');
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
@@ -622,6 +625,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Initialize new trade or load existing
   useEffect(() => {
+    console.log('🔄 TradeManagementPage initialize useEffect triggered - isNew:', isNew, 'tradeId:', tradeId);
     if (isNew) {
       // Create a new trade
       const newTrade = {
@@ -721,6 +725,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle search input changes - fixed to prevent infinite loops
   useEffect(() => {
+    console.log('🔄 TradeManagementPage search useEffect triggered - search:', search);
     debouncedSearch(search);
     return () => debouncedSearch.cancel();
   }, [search, debouncedSearch]); // Include debouncedSearch since it's now stable
@@ -838,6 +843,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
+    console.log('🟢 Opening modal for card:', card.name);
     setModalCard(card);
     setIsModalOpen(true);
     setSearch('');
@@ -1182,6 +1188,7 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Modal close function
   const closeModal = useCallback(() => {
+    console.log('🔴 Modal closing');
     setIsModalOpen(false);
   }, []);
 
@@ -1658,6 +1665,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
+                      console.log('🟢 Opening edit modal for user1 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
@@ -2023,6 +2031,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
+                      console.log('🟢 Opening edit modal for user2 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
