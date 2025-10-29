@@ -71,17 +71,34 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       
       setPrintings(printingsData);
       
-      // Auto-select the printing that matches the search result card, or fall back to first printing
+      // Auto-select the printing that matches the card, prioritizing stored printing data
       if (printingsData.length > 0) {
-        // Try to find the printing that matches the original card from search results
-        const matchingPrinting = printingsData.find(printing => 
-          printing.id === card.id || 
-          (printing.set === card.set && printing.collector_number === card.collector_number)
-        );
+        let matchingPrinting = null;
+        
+        // First, try to match using stored printingData (for cards from trade)
+        if (card.printingData) {
+          matchingPrinting = printingsData.find(printing => 
+            printing.id === card.printingData.id || 
+            (printing.set === card.printingData.set && printing.collector_number === card.printingData.collector_number)
+          );
+          if (matchingPrinting) {
+            console.log('🎯 Auto-selected from printingData:', matchingPrinting.set_name);
+          }
+        }
+        
+        // If no match from printingData, try to match the card itself (for search results)
+        if (!matchingPrinting) {
+          matchingPrinting = printingsData.find(printing => 
+            printing.id === card.id || 
+            (printing.set === card.set && printing.collector_number === card.collector_number)
+          );
+          if (matchingPrinting) {
+            console.log('🎯 Auto-selected matching printing from search:', matchingPrinting.set_name);
+          }
+        }
         
         if (matchingPrinting) {
           setSelectedPrinting(matchingPrinting);
-          console.log('🎯 Auto-selected matching printing from search:', matchingPrinting.set_name);
         } else {
           setSelectedPrinting(printingsData[0]);
           console.log('🎯 Auto-selected first printing (no match found):', printingsData[0].set_name);
