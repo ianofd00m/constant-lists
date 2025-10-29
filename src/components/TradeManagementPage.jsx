@@ -1213,7 +1213,7 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ color: '#666', fontSize: '12px' }}>-</span>
+                    <span style={{ color: '#666', fontSize: '12px', marginLeft: '2px', marginRight: '6px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
@@ -1223,7 +1223,7 @@ const TradeManagementPage = ({ isNew }) => {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
                     }}>
-                      {card.name} {card.foil && '✨'}
+                      {card.name}
                     </span>
                     {card.scryfall_json?.set && (
                       <img 
@@ -1295,7 +1295,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '11px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Decrease quantity"
                     >
@@ -1320,7 +1321,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '11px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Increase quantity"
                     >
@@ -1347,7 +1349,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '9px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Toggle foil"
                     >
@@ -1372,7 +1375,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Remove card"
                     >
@@ -1552,7 +1556,7 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ color: '#666', fontSize: '12px' }}>-</span>
+                    <span style={{ color: '#666', fontSize: '12px', marginLeft: '2px', marginRight: '6px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
@@ -1562,7 +1566,7 @@ const TradeManagementPage = ({ isNew }) => {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
                     }}>
-                      {card.name} {card.foil && '✨'}
+                      {card.name}
                     </span>
                     {card.scryfall_json?.set && (
                       <img 
@@ -1634,7 +1638,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '11px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Decrease quantity"
                     >
@@ -1659,7 +1664,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '11px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Increase quantity"
                     >
@@ -1686,7 +1692,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '9px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Toggle foil"
                     >
@@ -1711,7 +1718,8 @@ const TradeManagementPage = ({ isNew }) => {
                         fontSize: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        outline: 'none'
                       }}
                       title="Remove card"
                     >
