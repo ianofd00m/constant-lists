@@ -8,7 +8,6 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
-  console.log('🎯 TradeCardModal render - isOpen:', isOpen, 'cardName:', card?.name);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,7 +17,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    console.log('🔄 TradeCardModal useEffect [isOpen, card] triggered - isOpen:', isOpen, 'card:', card?.name);
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
@@ -120,9 +118,8 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling - minimal dependencies
+  // Add useEffect for escape key handling - minimal dependencies to prevent infinite loops
   useEffect(() => {
-    console.log('🔄 TradeCardModal keydown useEffect triggered');
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
@@ -131,57 +128,14 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
         e.stopPropagation();
         onClose();
       }
-      if (e.key === 'Enter' && !e.target.matches('input, select, textarea')) {
-        e.preventDefault();
-        // Call handleAddCard directly instead of using closure
-        if (selectedPrinting && assignTo) {
-          // Calculate price inline to avoid dependency issues
-          const mockCardData = {
-            ...selectedPrinting,
-            scryfall_json: selectedPrinting,
-            foil: isFoil
-          };
-          const currentPrice = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
-          
-          const tradeCard = {
-            id: isEditing ? card.id : `${selectedPrinting.id || selectedPrinting.name}_${Date.now()}`,
-            name: selectedPrinting.name,
-            card: selectedPrinting,
-            printing: selectedPrinting.id,
-            quantity: quantity,
-            foil: isFoil,
-            price: currentPrice,
-            assignedTo: assignTo,
-            scryfall_json: selectedPrinting
-          };
-
-          if (isEditing && onUpdateCard) {
-            onUpdateCard(tradeCard, card.originalAssignment);
-          } else if (onAddCard) {
-            onAddCard(tradeCard);
-          }
-          onClose();
-        }
-      }
       
-      // Navigation arrows - only if navigation functions provided
-      if (onNavigateToPrevious && onNavigateToNext && !e.target.matches('input, select, textarea')) {
-        if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          e.stopPropagation();
-          onNavigateToPrevious();
-        }
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          e.stopPropagation();
-          onNavigateToNext();
-        }
-      }
+      // Simplified: no Enter key or navigation in the modal to avoid dependency issues
+      // Users can click the buttons instead
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedPrinting, assignTo, isFoil, quantity, isEditing, card, onClose, onUpdateCard, onAddCard, onNavigateToPrevious, onNavigateToNext]); // Include all accessed variables
+  }, [isOpen, onClose]); // Only depend on isOpen and onClose to prevent infinite loops
 
   return (
     <div 
@@ -625,7 +579,6 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Initialize new trade or load existing
   useEffect(() => {
-    console.log('🔄 TradeManagementPage initialize useEffect triggered - isNew:', isNew, 'tradeId:', tradeId);
     if (isNew) {
       // Create a new trade
       const newTrade = {
@@ -725,7 +678,6 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle search input changes - fixed to prevent infinite loops
   useEffect(() => {
-    console.log('🔄 TradeManagementPage search useEffect triggered - search:', search);
     debouncedSearch(search);
     return () => debouncedSearch.cancel();
   }, [search, debouncedSearch]); // Include debouncedSearch since it's now stable
@@ -843,7 +795,6 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
-    console.log('🟢 Opening modal for card:', card.name);
     setModalCard(card);
     setIsModalOpen(true);
     setSearch('');
@@ -1155,40 +1106,47 @@ const TradeManagementPage = ({ isNew }) => {
     }, 0);
   }, [user2Cards]);
 
-  // Navigation functions for modal
+  // Navigation functions for modal - stable references to prevent infinite loops
   const navigateToPrevious = useCallback(() => {
-    const allCards = [...user1Cards, ...user2Cards];
-    if (!modalCard || allCards.length === 0) return;
-    
-    const currentIndex = allCards.findIndex(card => card.id === modalCard.id);
-    if (currentIndex > 0) {
-      const prevCard = allCards[currentIndex - 1];
-      setModalCard({
-        ...prevCard,
-        editing: true,
-        originalAssignment: prevCard.assignedTo
-      });
-    }
-  }, [user1Cards, user2Cards]); // Remove modalCard to prevent infinite loop
+    // Access modalCard from state at execution time to avoid dependency issues
+    setModalCard(currentModalCard => {
+      const allCards = [...user1Cards, ...user2Cards];
+      if (!currentModalCard || allCards.length === 0) return currentModalCard;
+      
+      const currentIndex = allCards.findIndex(card => card.id === currentModalCard.id);
+      if (currentIndex > 0) {
+        const prevCard = allCards[currentIndex - 1];
+        return {
+          ...prevCard,
+          editing: true,
+          originalAssignment: prevCard.assignedTo
+        };
+      }
+      return currentModalCard;
+    });
+  }, [user1Cards, user2Cards]);
 
   const navigateToNext = useCallback(() => {
-    const allCards = [...user1Cards, ...user2Cards];
-    if (!modalCard || allCards.length === 0) return;
-    
-    const currentIndex = allCards.findIndex(card => card.id === modalCard.id);
-    if (currentIndex < allCards.length - 1) {
-      const nextCard = allCards[currentIndex + 1];
-      setModalCard({
-        ...nextCard,
-        editing: true,
-        originalAssignment: nextCard.assignedTo
-      });
-    }
-  }, [user1Cards, user2Cards]); // Remove modalCard to prevent infinite loop
+    // Access modalCard from state at execution time to avoid dependency issues
+    setModalCard(currentModalCard => {
+      const allCards = [...user1Cards, ...user2Cards];
+      if (!currentModalCard || allCards.length === 0) return currentModalCard;
+      
+      const currentIndex = allCards.findIndex(card => card.id === currentModalCard.id);
+      if (currentIndex < allCards.length - 1) {
+        const nextCard = allCards[currentIndex + 1];
+        return {
+          ...nextCard,
+          editing: true,
+          originalAssignment: nextCard.assignedTo
+        };
+      }
+      return currentModalCard;
+    });
+  }, [user1Cards, user2Cards]);
 
   // Modal close function
   const closeModal = useCallback(() => {
-    console.log('🔴 Modal closing');
     setIsModalOpen(false);
   }, []);
 
@@ -1665,7 +1623,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
-                      console.log('🟢 Opening edit modal for user1 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
@@ -2031,7 +1988,6 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Open edit modal for this card
-                      console.log('🟢 Opening edit modal for user2 card:', card.name);
                       setModalCard({
                         ...card,
                         editing: true,
