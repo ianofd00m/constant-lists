@@ -8,6 +8,7 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
+  const modalRef = useRef(null);
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
       // Check if we're editing an existing card
       const editing = card.editing || false;
       setIsEditing(editing);
-      
+
       if (editing) {
         // Pre-populate with existing values
         setQuantity(card.quantity || 1);
@@ -38,7 +39,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         setIsFoil(false);
         setAssignTo(null); // No default selection
       }
-      
+
       fetchPrintings();
     }
   }, [isOpen, card]); // Simplified - only depend on isOpen and card
@@ -127,6 +128,13 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   return (
     <div 
+      ref={(el) => {
+        modalRef.current = el;
+        // Auto-focus when modal opens
+        if (isOpen && el) {
+          setTimeout(() => el.focus(), 0);
+        }
+      }}
       className="modal-backdrop card-actions-modal" 
       onClick={onClose}
       tabIndex={0}
