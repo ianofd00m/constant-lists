@@ -960,6 +960,10 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Add card to trade
   const handleAddCard = useCallback((tradeCard) => {
+    console.log('🔍 handleAddCard receiving tradeCard:', tradeCard);
+    console.log('🔍 tradeCard.printingData:', tradeCard.printingData);
+    console.log('🔍 tradeCard keys:', Object.keys(tradeCard));
+    
     if (tradeCard.assignedTo === 'user1') {
       setUser1Cards(prev => [...prev, tradeCard]);
     } else {
