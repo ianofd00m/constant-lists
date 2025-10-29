@@ -1145,7 +1145,6 @@ const TradeManagementPage = ({ isNew }) => {
                   draggable
                   style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px',
                     marginBottom: '5px',
@@ -1153,7 +1152,8 @@ const TradeManagementPage = ({ isNew }) => {
                     borderRadius: '4px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
-                    border: '1px solid transparent'
+                    border: '1px solid transparent',
+                    gap: '8px'
                   }}
                   onMouseEnter={() => {
                     // Create proper card object for preview
@@ -1174,17 +1174,6 @@ const TradeManagementPage = ({ isNew }) => {
                     };
                     handleCardHover(previewCard);
                   }}
-                  onClick={(e) => {
-                    // Don't open modal if clicking remove button
-                    if (e.target.closest('button')) return;
-                    // Open edit modal for this card
-                    setModalCard({
-                      ...card,
-                      editing: true,
-                      originalAssignment: 'user1'
-                    });
-                    setIsModalOpen(true);
-                  }}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('application/json', JSON.stringify({
                       card: card,
@@ -1198,24 +1187,41 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div style={{ 
-                    flex: 1, 
-                    minWidth: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ fontWeight: '500', color: '#333' }}>
-                      {card.quantity} -
+                  {/* Card Info Section - Clickable for modal */}
+                  <div 
+                    style={{ 
+                      flex: 1, 
+                      minWidth: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      // Don't open modal if clicking control buttons
+                      if (e.target.closest('.trade-controls')) return;
+                      // Open edit modal for this card
+                      setModalCard({
+                        ...card,
+                        editing: true,
+                        originalAssignment: 'user1'
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
+                      {card.quantity}
                     </span>
+                    <span style={{ color: '#666', fontSize: '12px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
-                      whiteSpace: 'nowrap',
+                      flex: 1,
+                      minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      flex: 1
+                      whiteSpace: 'nowrap'
                     }}>
                       {card.name} {card.foil && '✨'}
                     </span>
@@ -1224,8 +1230,8 @@ const TradeManagementPage = ({ isNew }) => {
                         src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
                         alt={card.scryfall_json.set}
                         style={{ 
-                          width: '16px', 
-                          height: '16px', 
+                          width: '14px', 
+                          height: '14px', 
                           flexShrink: 0 
                         }}
                         onError={(e) => {
@@ -1234,19 +1240,21 @@ const TradeManagementPage = ({ isNew }) => {
                       />
                     )}
                     <span style={{ 
-                      fontSize: '12px', 
+                      fontSize: '11px', 
                       color: '#666', 
                       flexShrink: 0,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
+                      minWidth: '30px'
                     }}>
                       {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
                     </span>
                     {card.scryfall_json?.collector_number && (
                       <span style={{ 
-                        fontSize: '12px', 
+                        fontSize: '11px', 
                         color: '#666', 
                         flexShrink: 0,
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
+                        minWidth: '25px'
                       }}>
                         {card.scryfall_json.collector_number}
                       </span>
@@ -1256,39 +1264,121 @@ const TradeManagementPage = ({ isNew }) => {
                       color: '#059669', 
                       fontWeight: '600',
                       flexShrink: 0,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
+                      minWidth: '40px',
+                      textAlign: 'right'
                     }}>
                       {formatPrice(card.price || 0)}
                     </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveCard(card.id, 'user1');
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#dc3545',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      padding: '2px 4px',
-                      borderRadius: '3px',
-                      minWidth: '20px',
-                      height: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    ✕
-                  </button>
+
+                  {/* Control Buttons */}
+                  <div className="trade-controls" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                    {/* Quantity Controls */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newQuantity = Math.max(1, card.quantity - 1);
+                        setUser1Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, quantity: newQuantity } : c
+                        ));
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUser1Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, quantity: card.quantity + 1 } : c
+                        ));
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Increase quantity"
+                    >
+                      +
+                    </button>
+
+                    {/* Foil Toggle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUser1Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, foil: !c.foil } : c
+                        ));
+                      }}
+                      style={{
+                        width: '20px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: card.foil ? '#d4af37' : '#f3f4f6',
+                        color: card.foil ? 'white' : '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '9px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Toggle foil"
+                    >
+                      ✨
+                    </button>
+
+                    {/* Remove Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveCard(card.id, 'user1');
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Remove card"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -1394,7 +1484,6 @@ const TradeManagementPage = ({ isNew }) => {
                   draggable
                   style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '8px',
                     marginBottom: '5px',
@@ -1402,7 +1491,8 @@ const TradeManagementPage = ({ isNew }) => {
                     borderRadius: '4px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
-                    border: '1px solid transparent'
+                    border: '1px solid transparent',
+                    gap: '8px'
                   }}
                   onMouseEnter={() => {
                     // Create proper card object for preview
@@ -1423,17 +1513,6 @@ const TradeManagementPage = ({ isNew }) => {
                     };
                     handleCardHover(previewCard);
                   }}
-                  onClick={(e) => {
-                    // Don't open modal if clicking remove button
-                    if (e.target.closest('button')) return;
-                    // Open edit modal for this card
-                    setModalCard({
-                      ...card,
-                      editing: true,
-                      originalAssignment: 'user2'
-                    });
-                    setIsModalOpen(true);
-                  }}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('application/json', JSON.stringify({
                       card: card,
@@ -1447,24 +1526,41 @@ const TradeManagementPage = ({ isNew }) => {
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  <div style={{ 
-                    flex: 1, 
-                    minWidth: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '14px'
-                  }}>
-                    <span style={{ fontWeight: '500', color: '#333' }}>
-                      {card.quantity} -
+                  {/* Card Info Section - Clickable for modal */}
+                  <div 
+                    style={{ 
+                      flex: 1, 
+                      minWidth: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      // Don't open modal if clicking control buttons
+                      if (e.target.closest('.trade-controls')) return;
+                      // Open edit modal for this card
+                      setModalCard({
+                        ...card,
+                        editing: true,
+                        originalAssignment: 'user2'
+                      });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
+                      {card.quantity}
                     </span>
+                    <span style={{ color: '#666', fontSize: '12px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
-                      whiteSpace: 'nowrap',
+                      flex: 1,
+                      minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      flex: 1
+                      whiteSpace: 'nowrap'
                     }}>
                       {card.name} {card.foil && '✨'}
                     </span>
@@ -1473,8 +1569,8 @@ const TradeManagementPage = ({ isNew }) => {
                         src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
                         alt={card.scryfall_json.set}
                         style={{ 
-                          width: '16px', 
-                          height: '16px', 
+                          width: '14px', 
+                          height: '14px', 
                           flexShrink: 0 
                         }}
                         onError={(e) => {
@@ -1483,19 +1579,21 @@ const TradeManagementPage = ({ isNew }) => {
                       />
                     )}
                     <span style={{ 
-                      fontSize: '12px', 
+                      fontSize: '11px', 
                       color: '#666', 
                       flexShrink: 0,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
+                      minWidth: '30px'
                     }}>
                       {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
                     </span>
                     {card.scryfall_json?.collector_number && (
                       <span style={{ 
-                        fontSize: '12px', 
+                        fontSize: '11px', 
                         color: '#666', 
                         flexShrink: 0,
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
+                        minWidth: '25px'
                       }}>
                         {card.scryfall_json.collector_number}
                       </span>
@@ -1505,39 +1603,121 @@ const TradeManagementPage = ({ isNew }) => {
                       color: '#059669', 
                       fontWeight: '600',
                       flexShrink: 0,
-                      fontFamily: 'monospace'
+                      fontFamily: 'monospace',
+                      minWidth: '40px',
+                      textAlign: 'right'
                     }}>
                       {formatPrice(card.price || 0)}
                     </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveCard(card.id, 'user2');
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#dc3545',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      padding: '2px 4px',
-                      borderRadius: '3px',
-                      minWidth: '20px',
-                      height: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    ✕
-                  </button>
+
+                  {/* Control Buttons */}
+                  <div className="trade-controls" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                    {/* Quantity Controls */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newQuantity = Math.max(1, card.quantity - 1);
+                        setUser2Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, quantity: newQuantity } : c
+                        ));
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUser2Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, quantity: card.quantity + 1 } : c
+                        ));
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Increase quantity"
+                    >
+                      +
+                    </button>
+
+                    {/* Foil Toggle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUser2Cards(prev => prev.map(c => 
+                          c.id === card.id ? { ...c, foil: !c.foil } : c
+                        ));
+                      }}
+                      style={{
+                        width: '20px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: card.foil ? '#d4af37' : '#f3f4f6',
+                        color: card.foil ? 'white' : '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '9px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Toggle foil"
+                    >
+                      ✨
+                    </button>
+
+                    {/* Remove Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveCard(card.id, 'user2');
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        padding: '0',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Remove card"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))
             )}
