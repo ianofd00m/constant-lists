@@ -2277,7 +2277,7 @@ const TradeManagementPage = ({ isNew }) => {
                           position: 'absolute',
                           top: '100%',
                           left: 0,
-                          right: 0,
+                          width: '300px', // Fixed width for better layout
                           backgroundColor: 'white',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
@@ -2303,8 +2303,28 @@ const TradeManagementPage = ({ isNew }) => {
                                 gap: '8px',
                                 backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
                               }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f5f5f5';
+                                // Update card preview on hover
+                                handleCardHover({
+                                  ...printing,
+                                  card: printing,
+                                  scryfall_json: printing,
+                                  image_uris: printing.image_uris,
+                                  foil: card.foil
+                                });
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white';
+                                // Reset to original card preview on mouse leave
+                                handleCardHover({
+                                  ...card,
+                                  card: card.card || card.scryfall_json || card,
+                                  scryfall_json: card.scryfall_json,
+                                  image_uris: card.scryfall_json?.image_uris,
+                                  foil: card.foil
+                                });
+                              }}
                             >
                               <img 
                                 src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
@@ -2739,7 +2759,7 @@ const TradeManagementPage = ({ isNew }) => {
                           position: 'absolute',
                           top: '100%',
                           left: 0,
-                          right: 0,
+                          width: '300px', // Fixed width for better layout
                           backgroundColor: 'white',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
@@ -2765,8 +2785,28 @@ const TradeManagementPage = ({ isNew }) => {
                                 gap: '8px',
                                 backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
                               }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f5f5f5';
+                                // Update card preview on hover
+                                handleCardHover({
+                                  ...printing,
+                                  card: printing,
+                                  scryfall_json: printing,
+                                  image_uris: printing.image_uris,
+                                  foil: card.foil
+                                });
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white';
+                                // Reset to original card preview on mouse leave
+                                handleCardHover({
+                                  ...card,
+                                  card: card.card || card.scryfall_json || card,
+                                  scryfall_json: card.scryfall_json,
+                                  image_uris: card.scryfall_json?.image_uris,
+                                  foil: card.foil
+                                });
+                              }}
                             >
                               <img 
                                 src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
