@@ -443,6 +443,9 @@ const TradeManagementPage = ({ isNew }) => {
   const [user1Cards, setUser1Cards] = useState([]);
   const [user2Cards, setUser2Cards] = useState([]);
   
+  // Sort state
+  const [sortOption, setSortOption] = useState('name'); // 'name', 'price', 'color', 'type', 'set'
+  
   // Refs for search functionality
   const searchAbortControllerRef = useRef(null);
   const lastSearchTimeRef = useRef(0);
@@ -757,6 +760,71 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Sort function
+  const sortCards = (cards) => {
+    const sortedCards = [...cards];
+    
+    switch (sortOption) {
+      case 'name':
+        return sortedCards.sort((a, b) => a.name.localeCompare(b.name));
+      
+      case 'price':
+        return sortedCards.sort((a, b) => {
+          const priceA = a.price || a.scryfall_json?.prices?.usd || 0;
+          const priceB = b.price || b.scryfall_json?.prices?.usd || 0;
+          return parseFloat(priceB) - parseFloat(priceA); // High to low
+        });
+      
+      case 'color':
+        const colorGroups = {};
+        sortedCards.forEach(card => {
+          const colors = card.scryfall_json?.colors || [];
+          const colorKey = colors.length === 0 ? 'Colorless' : 
+                          colors.length === 1 ? colors[0] : 
+                          'Multicolor';
+          if (!colorGroups[colorKey]) colorGroups[colorKey] = [];
+          colorGroups[colorKey].push(card);
+        });
+        
+        const colorOrder = ['White', 'Blue', 'Black', 'Red', 'Green', 'Multicolor', 'Colorless'];
+        return colorOrder.reduce((result, color) => {
+          if (colorGroups[color]) {
+            result.push(...colorGroups[color].sort((a, b) => a.name.localeCompare(b.name)));
+          }
+          return result;
+        }, []);
+      
+      case 'type':
+        const typeGroups = {};
+        sortedCards.forEach(card => {
+          const type = card.scryfall_json?.type_line?.split('—')[0]?.trim() || 'Unknown';
+          if (!typeGroups[type]) typeGroups[type] = [];
+          typeGroups[type].push(card);
+        });
+        
+        return Object.keys(typeGroups).sort().reduce((result, type) => {
+          result.push(...typeGroups[type].sort((a, b) => a.name.localeCompare(b.name)));
+          return result;
+        }, []);
+      
+      case 'set':
+        const setGroups = {};
+        sortedCards.forEach(card => {
+          const set = card.scryfall_json?.set_name || 'Unknown Set';
+          if (!setGroups[set]) setGroups[set] = [];
+          setGroups[set].push(card);
+        });
+        
+        return Object.keys(setGroups).sort().reduce((result, set) => {
+          result.push(...setGroups[set].sort((a, b) => a.name.localeCompare(b.name)));
+          return result;
+        }, []);
+      
+      default:
+        return sortedCards;
+    }
+  };
+
   // Calculate totals
   const user1Total = useMemo(() => {
     return user1Cards.reduce((sum, card) => {
@@ -1049,6 +1117,31 @@ const TradeManagementPage = ({ isNew }) => {
             )}
           </div>
 
+          {/* Sort Dropdown */}
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>
+              Sort by:
+            </label>
+            <select 
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: 'white',
+                fontSize: '14px'
+              }}
+            >
+              <option value="name">A-Z (Name)</option>
+              <option value="price">$ - $$$ (Price)</option>
+              <option value="color">Color (Grouped)</option>
+              <option value="type">Card Type (Grouped)</option>
+              <option value="set">Set (Grouped)</option>
+            </select>
+          </div>
+
           {/* Save and Export Actions */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
             <button className="btn btn-success" style={{ flex: 1 }}>
@@ -1062,7 +1155,7 @@ const TradeManagementPage = ({ isNew }) => {
 
         {/* Center Column - User 1 (Me) */}
         <div 
-          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}
           onDragOver={(e) => {
             e.preventDefault();
             e.currentTarget.style.borderColor = '#007bff';
@@ -1127,7 +1220,7 @@ const TradeManagementPage = ({ isNew }) => {
                 style={{ cursor: 'pointer', margin: 0 }}
                 title="Click to edit name"
               >
-                {user1Name} ✏️
+                {user1Name}
               </h2>
             )}
           </div>
@@ -1139,7 +1232,7 @@ const TradeManagementPage = ({ isNew }) => {
                 No cards added yet
               </div>
             ) : (
-              user1Cards.map(card => (
+              sortCards(user1Cards).map(card => (
                 <div 
                   key={card.id}
                   draggable
@@ -1211,9 +1304,9 @@ const TradeManagementPage = ({ isNew }) => {
                       {card.quantity}
                     </span>
                     <span style={{ 
-                      fontWeight: card.foil ? '600' : '500',
+                      fontWeight: 'bold',
                       color: card.foil ? '#d4af37' : '#333',
-                      fontFamily: 'monospace',
+                      fontSize: '11px',
                       flex: 1,
                       minWidth: '80px',
                       overflow: 'hidden',
@@ -1388,7 +1481,7 @@ const TradeManagementPage = ({ isNew }) => {
 
           {/* Total for User 1 */}
           <div style={{
-            marginTop: '15px',
+            marginTop: 'auto',
             padding: '10px',
             backgroundColor: '#f8f9fa',
             borderRadius: '4px',
@@ -1403,7 +1496,7 @@ const TradeManagementPage = ({ isNew }) => {
 
         {/* Right Column - User 2 (Trading Partner) */}
         <div 
-          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px' }}
+          style={{ flex: '1 1 350px', maxWidth: '400px', border: '1px solid #ddd', borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column' }}
           onDragOver={(e) => {
             e.preventDefault();
             e.currentTarget.style.borderColor = '#28a745';
@@ -1468,7 +1561,7 @@ const TradeManagementPage = ({ isNew }) => {
                 style={{ cursor: 'pointer', margin: 0 }}
                 title="Click to edit name"
               >
-                {user2Name} ✏️
+                {user2Name}
               </h2>
             )}
           </div>
@@ -1480,7 +1573,7 @@ const TradeManagementPage = ({ isNew }) => {
                 No cards added yet
               </div>
             ) : (
-              user2Cards.map(card => (
+              sortCards(user2Cards).map(card => (
                 <div 
                   key={card.id}
                   draggable
@@ -1552,9 +1645,9 @@ const TradeManagementPage = ({ isNew }) => {
                       {card.quantity}
                     </span>
                     <span style={{ 
-                      fontWeight: card.foil ? '600' : '500',
+                      fontWeight: 'bold',
                       color: card.foil ? '#d4af37' : '#333',
-                      fontFamily: 'monospace',
+                      fontSize: '11px',
                       flex: 1,
                       minWidth: '80px',
                       overflow: 'hidden',
@@ -1729,7 +1822,7 @@ const TradeManagementPage = ({ isNew }) => {
 
           {/* Total for User 2 */}
           <div style={{
-            marginTop: '15px',
+            marginTop: 'auto',
             padding: '10px',
             backgroundColor: '#f8f9fa',
             borderRadius: '4px',
