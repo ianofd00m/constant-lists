@@ -8,7 +8,6 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
-  console.log('🔄 TradeCardModal render:', { isOpen, cardName: card?.name, cardId: card?.id });
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
       
       fetchPrintings();
     }
-  }, [isOpen, card?.id, card?.name]); // Use stable properties instead of entire card object
+  }, [isOpen, card]); // Simplified - only depend on isOpen and card
 
   const fetchPrintings = async () => {
     if (!card) {
@@ -179,7 +178,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]); // Drastically reduce dependencies - functions and state accessed directly
+  }, [isOpen, selectedPrinting, assignTo, isFoil, quantity, isEditing, card, onClose, onUpdateCard, onAddCard, onNavigateToPrevious, onNavigateToNext]); // Include all accessed variables
 
   return (
     <div 
@@ -546,7 +545,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 };
 
 const TradeManagementPage = ({ isNew }) => {
-  console.log('🔄 TradeManagementPage render:', { isNew });
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -653,7 +651,7 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [isNew, tradeId]);
 
-  // Search function - simplified to prevent infinite loops
+  // Search function - properly memoized to prevent infinite loops
   const performSearch = useCallback(async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -716,16 +714,16 @@ const TradeManagementPage = ({ isNew }) => {
     }
     
     setSearchLoading(false);
-  }, []);
+  }, []); // Empty dependency array - function is completely self-contained
 
-  // Debounced search function 
+  // Debounced search function - stable reference
   const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
 
-  // Handle search input changes - simplified
+  // Handle search input changes - fixed to prevent infinite loops
   useEffect(() => {
     debouncedSearch(search);
     return () => debouncedSearch.cancel();
-  }, [search]); // Remove debouncedSearch to prevent infinite loops
+  }, [search, debouncedSearch]); // Include debouncedSearch since it's now stable
 
   // Handle modal focus and escape key functionality
   useEffect(() => {
