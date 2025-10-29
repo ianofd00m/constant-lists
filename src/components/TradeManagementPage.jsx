@@ -623,97 +623,79 @@ const TradeManagementPage = ({ isNew }) => {
     }
   }, [isNew, tradeId]);
 
-  // Debounced search function (stable reference to prevent re-creation)
-  const debouncedSearch = useCallback(
-    debounce(async (q) => {
-      const now = Date.now();
-      if (now - lastSearchTimeRef.current < MIN_SEARCH_INTERVAL) {
-        return;
-      }
-      lastSearchTimeRef.current = now;
-      
-      if (!q.trim()) {
-        setSearchResults([]);
-        setShowDropdown(false);
-        setNoResultsMsg('');
-        setSearchLoading(false);
-        setIsKeyboardNavigation(false); // Reset keyboard navigation when search is cleared
-        return;
-      }
-      
-      // Cancel previous request
-      if (searchAbortControllerRef.current) {
-        searchAbortControllerRef.current.abort();
-      }
-      
-      searchAbortControllerRef.current = new AbortController();
-      const signal = searchAbortControllerRef.current.signal;
-      
-      setSearchLoading(true);
-      
-      try {
-        const query = q.trim();
-        const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const isDev = import.meta.env.DEV;
-        const finalUrl = isDev ? url : `${apiUrl}${url}`;
-        
-        const res = await fetch(finalUrl, { signal });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        const data = await res.json();
-        let results = data.data || data || [];
-        
-        // Remove duplicates by name
-        const uniqueResults = [];
-        const seenNames = new Set();
-        
-        for (const result of results) {
-          if (!seenNames.has(result.name)) {
-            seenNames.add(result.name);
-            uniqueResults.push(result);
-          }
-        }
-        
-        setSearchResults(uniqueResults.slice(0, 20)); // Show more results with scrolling
-        setShowDropdown(uniqueResults.length > 0);
-        setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
-        setSelectedSearchIndex(-1);
-        setIsKeyboardNavigation(false); // Reset keyboard navigation on new search results
-        
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Search error:', error);
-          setSearchResults([]);
-          setShowDropdown(false);
-          setNoResultsMsg('Search failed');
-        }
-      }
-      
-      setSearchLoading(false);
-    }, 500),
-    [] // Empty dependency array - function is stable
-  );
-
-  // Handle search input changes
-  useEffect(() => {
-    if (search.trim()) {
-      debouncedSearch(search);
-    } else {
-      // Clear everything when search is empty
-      debouncedSearch.cancel();
+  // Search function - simplified to prevent infinite loops
+  const performSearch = useCallback(async (query) => {
+    if (!query.trim()) {
       setSearchResults([]);
       setShowDropdown(false);
       setNoResultsMsg('');
       setSearchLoading(false);
+      setIsKeyboardNavigation(false);
+      return;
     }
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [search]);
+
+    // Cancel previous request
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+    }
+    
+    searchAbortControllerRef.current = new AbortController();
+    const signal = searchAbortControllerRef.current.signal;
+    
+    setSearchLoading(true);
+    
+    try {
+      const url = `/api/cards/typesense-search?q=${encodeURIComponent(query)}&limit=20`;
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const isDev = import.meta.env.DEV;
+      const finalUrl = isDev ? url : `${apiUrl}${url}`;
+      
+      const res = await fetch(finalUrl, { signal });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      let results = data.data || data || [];
+      
+      // Remove duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      for (const result of results) {
+        if (!seenNames.has(result.name)) {
+          seenNames.add(result.name);
+          uniqueResults.push(result);
+        }
+      }
+      
+      setSearchResults(uniqueResults.slice(0, 20));
+      setShowDropdown(uniqueResults.length > 0);
+      setNoResultsMsg(uniqueResults.length === 0 ? 'No cards found' : '');
+      setSelectedSearchIndex(-1);
+      setIsKeyboardNavigation(false);
+      
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Search error:', error);
+        setSearchResults([]);
+        setShowDropdown(false);
+        setNoResultsMsg('Search failed');
+      }
+    }
+    
+    setSearchLoading(false);
+  }, []);
+
+  // Debounced search function 
+  const debouncedSearch = useMemo(() => debounce(performSearch, 500), [performSearch]);
+
+  // Handle search input changes - simplified
+  useEffect(() => {
+    debouncedSearch(search);
+    return () => debouncedSearch.cancel();
+  }, [search, debouncedSearch]);
 
   // Handle modal focus and escape key functionality
   useEffect(() => {
