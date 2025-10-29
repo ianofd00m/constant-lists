@@ -7,7 +7,7 @@ import { getUnifiedCardPrice, formatPrice } from '../utils/UnifiedPricing';
 import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
-const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
+const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavigateToPrevious, onNavigateToNext }) => {
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -118,18 +118,46 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
+  // Add useEffect for escape key handling
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+      if (e.key === 'Enter' && !e.target.matches('input, select, textarea')) {
+        e.preventDefault();
+        handleAddCard();
+      }
+      
+      // Navigation arrows - only if navigation functions provided
+      if (onNavigateToPrevious && onNavigateToNext && !e.target.matches('input, select, textarea')) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          e.stopPropagation();
+          onNavigateToPrevious();
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          e.stopPropagation();
+          onNavigateToNext();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, handleAddCard]);
+
   return (
     <div 
       className="modal-backdrop card-actions-modal" 
       onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }
-      }}
       tabIndex={0}
+      autoFocus
     >
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
         maxWidth: '800px',
@@ -139,7 +167,71 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
         flexDirection: 'column'
       }}>
         <div className="modal-header">
+          {onNavigateToPrevious && (
+            <button 
+              onClick={onNavigateToPrevious} 
+              className="nav-arrow nav-arrow-left"
+              title="Previous card (Left arrow key)"
+              style={{
+                position: 'absolute',
+                left: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#f0f0f0';
+                e.target.style.color = '#333';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#666';
+              }}
+            >
+              &#8249;
+            </button>
+          )}
+          
           <button onClick={onClose} className="close-button">&times;</button>
+          
+          {onNavigateToNext && (
+            <button 
+              onClick={onNavigateToNext} 
+              className="nav-arrow nav-arrow-right"
+              title="Next card (Right arrow key)"
+              style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#f0f0f0';
+                e.target.style.color = '#333';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#666';
+              }}
+            >
+              &#8250;
+            </button>
+          )}
         </div>
         
         <div className="modal-body" style={{
@@ -156,9 +248,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
             flexDirection: 'column',
             gap: '12px'
           }}>
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#333' }}>
-              {isEditing ? 'Edit Trade Card' : 'Add Card to Trade'}
-            </h3>
+
             
             {/* Trader Assignment - Toggle Buttons */}
             <div className="action-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -201,51 +291,104 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
               </div>
             </div>
 
-            {/* Quantity controls */}
-            <div className="action-row quantity-row">
-              <label className="control-label">Quantity:</label>
-              <div className="quantity-controls">
-                <button 
-                  className="quantity-btn" 
-                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                  disabled={quantity <= 1}
-                >−</button>
-                <input 
-                  type="number" 
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="quantity-input"
-                  min="1"
-                />
-                <button 
-                  className="quantity-btn" 
-                  onClick={() => setQuantity(prev => prev + 1)}
-                >+</button>
-              </div>
-            </div>
-
-            {/* Foil toggle */}
-            <div className="action-row foil-selector">
-              <label className="control-label">Foil:</label>
-              <label className="toggle-switch">
-                <input 
-                  type="checkbox" 
-                  checked={isFoil}
-                  onChange={(e) => setIsFoil(e.target.checked)}
-                />
-                <span className={`toggle-slider ${isFoil ? 'foil-active' : ''}`}></span>
-              </label>
-            </div>
-
-            {/* Price display */}
-            {getCurrentPrice() && (
-              <div className="action-row">
-                <label className="control-label">Price:</label>
-                <div className="price-display">
-                  {formatPrice(getCurrentPrice())}
+            {/* Quantity and Foil controls on same row */}
+            <div className="action-row" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="control-label">Quantity:</label>
+                <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center' }}>
+                  <button 
+                    className="quantity-btn" 
+                    onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                    disabled={quantity <= 1}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '4px 0 0 4px',
+                      border: '1px solid #ddd',
+                      background: '#f8f9fa',
+                      cursor: quantity <= 1 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >−</button>
+                  <input 
+                    type="number" 
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.target.blur();
+                      }
+                    }}
+                    className="quantity-input"
+                    min="1"
+                    style={{
+                      width: '50px',
+                      height: '28px',
+                      border: '1px solid #ddd',
+                      borderLeft: 'none',
+                      borderRight: 'none',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <button 
+                    className="quantity-btn" 
+                    onClick={() => setQuantity(prev => prev + 1)}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '0 4px 4px 0',
+                      border: '1px solid #ddd',
+                      background: '#f8f9fa',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >+</button>
                 </div>
               </div>
-            )}
+
+              {/* Foil toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label className="control-label">Foil:</label>
+                <label className="toggle-switch" style={{ display: 'flex', alignItems: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isFoil}
+                    onChange={(e) => setIsFoil(e.target.checked)}
+                    style={{ margin: 0 }}
+                  />
+                  <span className={`toggle-slider ${isFoil ? 'foil-active' : ''}`} style={{
+                    width: '44px',
+                    height: '24px',
+                    backgroundColor: isFoil ? '#d4af37' : '#ccc',
+                    borderRadius: '12px',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    marginLeft: '8px'
+                  }}>
+                    <span style={{
+                      position: 'absolute',
+                      top: '2px',
+                      left: isFoil ? '22px' : '2px',
+                      width: '20px',
+                      height: '20px',
+                      backgroundColor: 'white',
+                      borderRadius: '50%',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+
             
             {/* Action buttons */}
             <div className="modal-buttons" style={{ marginTop: '20px' }}>
@@ -321,29 +464,14 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                   </div>
                 </div>
                 
-                <div className="card-details" style={{
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  maxWidth: '240px'
-                }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{(selectedPrinting || card)?.name}</h4>
-                  {(selectedPrinting || card)?.type_line && (
-                    <p className="type-line" style={{ margin: '4px 0', color: '#666' }}>{(selectedPrinting || card).type_line}</p>
-                  )}
-                  {(selectedPrinting || card)?.mana_cost && (
-                    <p className="mana-cost" style={{ margin: '4px 0', color: '#333', fontFamily: 'monospace' }}>{(selectedPrinting || card).mana_cost}</p>
-                  )}
-                  {(selectedPrinting || card)?.set_name && (
-                    <p className="set-name" style={{ margin: '4px 0', color: '#888', fontSize: '12px' }}>{(selectedPrinting || card).set_name}</p>
-                  )}
-                </div>
+
               </>
             )}
             {/* Printings Selection */}
-            <div className="action-row">
-              <label className="control-label">Printing:</label>
+            <div style={{ marginTop: '15px' }}>
+              <label className="control-label" style={{ marginBottom: '8px', display: 'block' }}>Printing:</label>
               {loading ? (
-                <div className="loading-printings">Loading printings...</div>
+                <div style={{ textAlign: 'center', color: '#666', padding: '20px' }}>Loading printings...</div>
               ) : (
                 <select
                   value={selectedPrinting?.id || ''}
@@ -351,20 +479,33 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
                     const printing = printings.find(p => p.id === e.target.value);
                     setSelectedPrinting(printing);
                   }}
-                  className="printing-select"
                   style={{ 
                     padding: '8px 12px',
                     borderRadius: '4px',
                     border: '1px solid #ddd',
-                    fontSize: '14px',
-                    width: '100%'
+                    fontSize: '13px',
+                    width: '100%',
+                    backgroundColor: 'white',
+                    color: '#333',
+                    fontFamily: 'inherit'
                   }}
                 >
-                  {printings.map(printing => (
-                    <option key={printing.id} value={printing.id}>
-                      {printing.set_name} ({printing.set.toUpperCase()}) #{printing.collector_number}
-                    </option>
-                  ))}
+                  {printings.map(printing => {
+                    // Get price for this printing
+                    const mockCardData = {
+                      ...printing,
+                      scryfall_json: printing,
+                      foil: isFoil
+                    };
+                    const priceData = getUnifiedCardPrice(mockCardData, { preferStoredPrice: false });
+                    const price = priceData?.price ? formatPrice(priceData.price) : 'N/A';
+                    
+                    return (
+                      <option key={printing.id} value={printing.id}>
+                        🃏 {printing.set_name} • #{printing.collector_number} • {price}
+                      </option>
+                    );
+                  })}
                 </select>
               )}
             </div>
@@ -996,6 +1137,37 @@ const TradeManagementPage = ({ isNew }) => {
       return sum + (price * quantity);
     }, 0);
   }, [user2Cards]);
+
+  // Navigation functions for modal
+  const navigateToPrevious = () => {
+    const allCards = [...user1Cards, ...user2Cards];
+    if (!modalCard || allCards.length === 0) return;
+    
+    const currentIndex = allCards.findIndex(card => card.id === modalCard.id);
+    if (currentIndex > 0) {
+      const prevCard = allCards[currentIndex - 1];
+      setModalCard({
+        ...prevCard,
+        editing: true,
+        originalAssignment: prevCard.assignedTo
+      });
+    }
+  };
+
+  const navigateToNext = () => {
+    const allCards = [...user1Cards, ...user2Cards];
+    if (!modalCard || allCards.length === 0) return;
+    
+    const currentIndex = allCards.findIndex(card => card.id === modalCard.id);
+    if (currentIndex < allCards.length - 1) {
+      const nextCard = allCards[currentIndex + 1];
+      setModalCard({
+        ...nextCard,
+        editing: true,
+        originalAssignment: nextCard.assignedTo
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -2046,6 +2218,8 @@ const TradeManagementPage = ({ isNew }) => {
         card={modalCard}
         onAddCard={handleAddCard}
         onUpdateCard={handleUpdateCard}
+        onNavigateToPrevious={navigateToPrevious}
+        onNavigateToNext={navigateToNext}
       />
 
       {/* Search Results Modal (triggered by Enter key) */}
