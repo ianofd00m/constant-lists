@@ -1721,11 +1721,17 @@ const TradeManagementPage = ({ isNew }) => {
                     onClick={(e) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
-                      // Open edit modal for this card
+                      // Open edit modal for this card with preserved printing data
+                      console.log('🔍 Opening modal for card:', card);
                       setModalCard({
                         ...card,
                         editing: true,
-                        originalAssignment: 'user1'
+                        originalAssignment: 'user1',
+                        // Explicitly preserve printing data and card properties
+                        printingData: card.printingData,
+                        id: card.printingData?.id || card.id,
+                        set: card.printingData?.set || card.set,
+                        collector_number: card.printingData?.collector_number || card.collector_number
                       });
                       setIsModalOpen(true);
                     }}
@@ -2086,11 +2092,17 @@ const TradeManagementPage = ({ isNew }) => {
                     onClick={(e) => {
                       // Don't open modal if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
-                      // Open edit modal for this card
+                      // Open edit modal for this card with preserved printing data
+                      console.log('🔍 Opening modal for card:', card);
                       setModalCard({
                         ...card,
                         editing: true,
-                        originalAssignment: 'user2'
+                        originalAssignment: 'user2',
+                        // Explicitly preserve printing data and card properties
+                        printingData: card.printingData,
+                        id: card.printingData?.id || card.id,
+                        set: card.printingData?.set || card.set,
+                        collector_number: card.printingData?.collector_number || card.collector_number
                       });
                       setIsModalOpen(true);
                     }}
