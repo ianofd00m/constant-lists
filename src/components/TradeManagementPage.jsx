@@ -8,8 +8,6 @@ import './TradeManagementPage.css';
 
 // TradeCardModal component for adding cards with printing selection and trader assignment
 const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
-  console.log('🔥 DEBUGGING: TradeCardModal render with isOpen:', isOpen, 'card:', card?.name);
-  
   const [selectedPrinting, setSelectedPrinting] = useState(null);
   const [printings, setPrintings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,13 +21,9 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
   const [tempQuantity, setTempQuantity] = useState('1');
 
   useEffect(() => {
-    console.log('🔥 DEBUGGING: TradeCardModal useEffect triggered. isOpen:', isOpen, 'card:', card?.name);
-    
     if (isOpen && card) {
       // Check if we're editing an existing card
       const editing = card.editing || false;
-      console.log('🔥 DEBUGGING: Setting modal state, editing:', editing);
-      
       setIsEditing(editing);
       
       if (editing) {
@@ -128,42 +122,46 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 
   if (!isOpen) return null;
 
-  // Add useEffect for escape key handling - DISABLED to debug infinite loop
-  // useEffect(() => {
-  //   if (!isOpen) return;
+  // Use ref to avoid onClose dependency in useEffect
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  //   const handleKeyDown = (e) => {
-  //     if (e.key === 'Escape') {
-  //       e.preventDefault();
-  //       e.stopPropagation();
-  //       onClose();
-  //     } else if (e.key === 'Enter' && !isEditingQuantity) {
-  //       // Allow enter to trigger update card action, but not during quantity editing
-  //       const target = e.target;
-  //       if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
-  //         e.preventDefault();
-  //         e.stopPropagation();
-  //         // Use setTimeout to avoid calling handleAddCard directly in useEffect
-  //         if (selectedPrinting && assignTo) {
-  //           setTimeout(() => handleAddCard(), 0);
-  //         }
-  //       }
-  //     } else if (e.key === 'ArrowLeft') {
-  //       // Navigation to previous card (when implemented)
-  //       e.preventDefault();
-  //       e.stopPropagation();
-  //       // TODO: Add onNavigateToPrevious prop and logic
-  //     } else if (e.key === 'ArrowRight') {
-  //       // Navigation to next card (when implemented)  
-  //       e.preventDefault();
-  //       e.stopPropagation();
-  //       // TODO: Add onNavigateToNext prop and logic
-  //     }
-  //   };
+  // Add useEffect for escape key handling with stable ref
+  useEffect(() => {
+    if (!isOpen) return;
 
-  //   document.addEventListener('keydown', handleKeyDown);
-  //   return () => document.removeEventListener('keydown', handleKeyDown);
-  // }, [isOpen, onClose]); // Only depend on isOpen and onClose to prevent infinite loops
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onCloseRef.current();
+      } else if (e.key === 'Enter' && !isEditingQuantity) {
+        // Allow enter to trigger update card action, but not during quantity editing
+        const target = e.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          e.stopPropagation();
+          // Use setTimeout to avoid calling handleAddCard directly in useEffect
+          if (selectedPrinting && assignTo) {
+            setTimeout(() => handleAddCard(), 0);
+          }
+        }
+      } else if (e.key === 'ArrowLeft') {
+        // Navigation to previous card (when implemented)
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO: Add onNavigateToPrevious prop and logic
+      } else if (e.key === 'ArrowRight') {
+        // Navigation to next card (when implemented)  
+        e.preventDefault();
+        e.stopPropagation();
+        // TODO: Add onNavigateToNext prop and logic
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isEditingQuantity, selectedPrinting, assignTo]); // Stable dependencies only
 
   return (
     <div 
@@ -561,8 +559,6 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard }) => {
 };
 
 const TradeManagementPage = ({ isNew }) => {
-  console.log('🔥 DEBUGGING: TradeManagementPage render with isNew:', isNew);
-  
   const { tradeId } = useParams();
   const navigate = useNavigate();
   
@@ -643,15 +639,11 @@ const TradeManagementPage = ({ isNew }) => {
   
   // Initialize new trade or load existing
   useEffect(() => {
-    console.log('🔥 DEBUGGING: Trade initialization useEffect triggered. isNew:', isNew, 'tradeId:', tradeId, 'initialized:', tradeInitializedRef.current);
-    
     if (tradeInitializedRef.current) {
-      console.log('🔥 DEBUGGING: Trade already initialized, skipping');
       return;
     }
     
     if (isNew) {
-      console.log('🔥 DEBUGGING: Creating new trade');
       // Create a new trade with stable ID
       const newTradeId = `trade_${Date.now()}`;
       const newTrade = {
@@ -667,7 +659,6 @@ const TradeManagementPage = ({ isNew }) => {
       setLoading(false);
       tradeInitializedRef.current = true;
     } else if (tradeId) {
-      console.log('🔥 DEBUGGING: Loading existing trade');
       // Load existing trade (implement server call here later)
       // For now, create a mock trade
       setTrade({
@@ -683,7 +674,6 @@ const TradeManagementPage = ({ isNew }) => {
       tradeInitializedRef.current = true;
     } else {
       // Fallback - if neither isNew nor tradeId, treat as new trade
-      console.log('🔥 DEBUGGING: Creating fallback trade - no isNew or tradeId provided');
       const fallbackTradeId = `trade_${Date.now()}`;
       const fallbackTrade = {
         id: fallbackTradeId,
@@ -772,20 +762,20 @@ const TradeManagementPage = ({ isNew }) => {
     }, 500);
   }
 
-  // Handle search input changes - DISABLED to debug infinite loop
-  // useEffect(() => {
-  //   if (search.trim()) {
-  //     debouncedSearchRef.current(search);
-  //   } else {
-  //     // Clear immediately when search is empty
-  //     setSearchResults([]);
-  //     setShowDropdown(false);
-  //     setNoResultsMsg('');
-  //     setSearchLoading(false);
-  //     setIsKeyboardNavigation(false);
-  //   }
-  //   return () => debouncedSearchRef.current?.cancel();
-  // }, [search]); // Only depend on search, not the function
+  // Handle search input changes with stable ref
+  useEffect(() => {
+    if (search.trim()) {
+      debouncedSearchRef.current(search);
+    } else {
+      // Clear immediately when search is empty
+      setSearchResults([]);
+      setShowDropdown(false);
+      setNoResultsMsg('');
+      setSearchLoading(false);
+      setIsKeyboardNavigation(false);
+    }
+    return () => debouncedSearchRef.current?.cancel();
+  }, [search]); // Only depend on search, not the function
 
   // Handle modal focus and escape key functionality - DISABLED to debug infinite loop
   // useEffect(() => {
@@ -900,24 +890,11 @@ const TradeManagementPage = ({ isNew }) => {
 
   // Handle card selection from search results
   const handleSearchCardClick = (card) => {
-    console.log('🔥 DEBUGGING: handleSearchCardClick called with card:', card?.name);
-    console.log('🔥 DEBUGGING: About to set modal states');
-    console.trace('🔥 DEBUGGING: Call stack for handleSearchCardClick');
-    
     setModalCard(card);
-    console.log('🔥 DEBUGGING: setModalCard completed');
-    
     setIsModalOpen(true);
-    console.log('🔥 DEBUGGING: setIsModalOpen completed');
-    
     setSearch('');
-    console.log('🔥 DEBUGGING: setSearch completed');
-    
     setShowDropdown(false);
-    console.log('🔥 DEBUGGING: setShowDropdown completed');
-    
     setSearchResults([]);
-    console.log('🔥 DEBUGGING: setSearchResults completed');
     
     console.log('🔥 DEBUGGING: handleSearchCardClick finished');
   };
