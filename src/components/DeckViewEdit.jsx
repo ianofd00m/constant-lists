@@ -2498,11 +2498,17 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Make sure we properly format the object for the CardPreview component
       const previewObject = {
         ...foilInfo, // Include foil information at the top level
+        // Add required ID fields for CardPreview validation
+        id: card.id || card.scryfall_id || card.card?.id || card.card?.scryfall_id,
+        scryfall_id: card.scryfall_id || card.id || card.card?.scryfall_id || card.card?.id,
         // Preserve printing information if available
         printing: card.printing,
         card: {
           ...card,
           ...foilInfo, // Also include foil information in the card object
+          // Add ID fields to nested card object too
+          id: card.id || card.scryfall_id || card.card?.id || card.card?.scryfall_id,
+          scryfall_id: card.scryfall_id || card.id || card.card?.scryfall_id || card.card?.id,
           // Ensure printing information is available in nested card object too
           printing: card.printing,
         },
@@ -2529,8 +2535,12 @@ export default function DeckViewEdit({ isPublic = false }) {
         cardKey,
         cardForHover: {
           name: card.name,
+          id: card.id || card.scryfall_id, // Add required ID for CardPreview validation
+          scryfall_id: card.scryfall_id || card.id, // Add scryfall_id for CardPreview validation
           card: {
             name: card.name,
+            id: card.id || card.scryfall_id, // Add ID to nested card object too
+            scryfall_id: card.scryfall_id || card.id, // Add scryfall_id to nested card object too
             ...(card.image_uris && { image_uris: card.image_uris }),
             ...(card.scryfall_json && { scryfall_json: card.scryfall_json }),
             ...(card.mana_cost && { mana_cost: card.mana_cost }),
@@ -3668,6 +3678,8 @@ export default function DeckViewEdit({ isPublic = false }) {
         // Also call handleCardHover to ensure a consistent update
         handleCardHover({
           name: originalName,
+          id: newPrintingCard.id, // Add required ID for CardPreview validation
+          scryfall_id: newPrintingCard.id, // Add scryfall_id for CardPreview validation
           printing: newPrintingCard.id,
           foil: adjustedFoilStatus, // Include adjusted foil status
           scryfall_json: newPrintingCard,
