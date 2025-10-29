@@ -2227,18 +2227,87 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ 
-                      fontWeight: 'bold',
-                      color: card.foil ? '#d4af37' : '#333',
-                      fontSize: '11px',
-                      flex: 1,
-                      minWidth: '80px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {card.name}
-                    </span>
+                    <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const cardIndex = user1Cards.findIndex(c => c.id === card.id);
+                          handleCardNameClick(card, cardIndex, 'user1');
+                        }}
+                        style={{ 
+                          fontWeight: 'bold',
+                          color: card.foil ? '#d4af37' : '#333',
+                          fontSize: '11px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          display: 'block'
+                        }}
+                        title="Click to see other printings"
+                      >
+                        {card.name}
+                      </span>
+                      
+                      {/* Printing Dropdown */}
+                      {printingDropdowns[`user1-${user1Cards.findIndex(c => c.id === card.id)}`] && availablePrintings[card.name] && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          zIndex: 1000,
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {availablePrintings[card.name].map((printing, pIndex) => (
+                            <div
+                              key={`${printing.id}-${pIndex}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cardIndex = user1Cards.findIndex(c => c.id === card.id);
+                                handlePrintingSelect(printing, cardIndex, 'user1');
+                              }}
+                              style={{
+                                padding: '8px 12px',
+                                borderBottom: pIndex < availablePrintings[card.name].length - 1 ? '1px solid #eee' : 'none',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
+                              }}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'}
+                            >
+                              <img 
+                                src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
+                                alt={printing.set}
+                                style={{ width: '16px', height: '16px', flexShrink: 0 }}
+                                onError={(e) => e.target.style.display = 'none'}
+                              />
+                              <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
+                                {printing.set?.toUpperCase()}
+                              </span>
+                              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#666' }}>
+                                #{printing.collector_number}
+                              </span>
+                              {printing.id === card.scryfall_json?.id && (
+                                <span style={{ color: '#007bff', fontSize: '10px', marginLeft: 'auto' }}>
+                                  ✓ Current
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {card.scryfall_json?.set && (
                       <img 
                         src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
@@ -2623,18 +2692,87 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ 
-                      fontWeight: 'bold',
-                      color: card.foil ? '#d4af37' : '#333',
-                      fontSize: '11px',
-                      flex: 1,
-                      minWidth: '80px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {card.name}
-                    </span>
+                    <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const cardIndex = user2Cards.findIndex(c => c.id === card.id);
+                          handleCardNameClick(card, cardIndex, 'user2');
+                        }}
+                        style={{ 
+                          fontWeight: 'bold',
+                          color: card.foil ? '#d4af37' : '#333',
+                          fontSize: '11px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          display: 'block'
+                        }}
+                        title="Click to see other printings"
+                      >
+                        {card.name}
+                      </span>
+                      
+                      {/* Printing Dropdown */}
+                      {printingDropdowns[`user2-${user2Cards.findIndex(c => c.id === card.id)}`] && availablePrintings[card.name] && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          zIndex: 1000,
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {availablePrintings[card.name].map((printing, pIndex) => (
+                            <div
+                              key={`${printing.id}-${pIndex}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cardIndex = user2Cards.findIndex(c => c.id === card.id);
+                                handlePrintingSelect(printing, cardIndex, 'user2');
+                              }}
+                              style={{
+                                padding: '8px 12px',
+                                borderBottom: pIndex < availablePrintings[card.name].length - 1 ? '1px solid #eee' : 'none',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
+                              }}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'}
+                            >
+                              <img 
+                                src={`https://svgs.scryfall.io/sets/${printing.set.toLowerCase()}.svg`}
+                                alt={printing.set}
+                                style={{ width: '16px', height: '16px', flexShrink: 0 }}
+                                onError={(e) => e.target.style.display = 'none'}
+                              />
+                              <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
+                                {printing.set?.toUpperCase()}
+                              </span>
+                              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#666' }}>
+                                #{printing.collector_number}
+                              </span>
+                              {printing.id === card.scryfall_json?.id && (
+                                <span style={{ color: '#007bff', fontSize: '10px', marginLeft: 'auto' }}>
+                                  ✓ Current
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {card.scryfall_json?.set && (
                       <img 
                         src={`https://svgs.scryfall.io/sets/${card.scryfall_json.set.toLowerCase()}.svg`}
@@ -2964,6 +3102,8 @@ const TradeManagementPage = ({ isNew }) => {
                     fontSize: "16px",
                     outline: "none",
                     transition: "border-color 0.2s ease",
+                    backgroundColor: "white",
+                    color: "#333",
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = "#007bff";
