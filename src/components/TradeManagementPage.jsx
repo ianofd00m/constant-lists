@@ -1133,7 +1133,7 @@ const TradeManagementPage = ({ isNew }) => {
           </div>
 
           {/* Card List */}
-          <div style={{ marginBottom: '20px', minHeight: '400px' }}>
+          <div style={{ marginBottom: '20px', height: '400px', overflowY: 'auto' }}>
             {user1Cards.length === 0 ? (
               <div style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', marginTop: '50px' }}>
                 No cards added yet
@@ -1213,7 +1213,6 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ color: '#666', fontSize: '12px', marginLeft: '2px', marginRight: '6px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
@@ -1221,7 +1220,8 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      marginLeft: '8px'
                     }}>
                       {card.name}
                     </span>
@@ -1244,7 +1244,8 @@ const TradeManagementPage = ({ isNew }) => {
                       color: '#666', 
                       flexShrink: 0,
                       fontFamily: 'monospace',
-                      minWidth: '30px'
+                      minWidth: '25px',
+                      width: '25px'
                     }}>
                       {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
                     </span>
@@ -1268,7 +1269,7 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '40px',
                       textAlign: 'right'
                     }}>
-                      {formatPrice(card.price || 0)}
+                      {formatPrice(card.price || card.scryfall_json?.prices?.usd || 0)}
                     </span>
                   </div>
 
@@ -1476,7 +1477,7 @@ const TradeManagementPage = ({ isNew }) => {
           </div>
 
           {/* Card List */}
-          <div style={{ marginBottom: '20px', minHeight: '400px' }}>
+          <div style={{ marginBottom: '20px', height: '400px', overflowY: 'auto' }}>
             {user2Cards.length === 0 ? (
               <div style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', marginTop: '50px' }}>
                 No cards added yet
@@ -1556,7 +1557,6 @@ const TradeManagementPage = ({ isNew }) => {
                     <span style={{ fontWeight: '500', color: '#333', minWidth: '20px' }}>
                       {card.quantity}
                     </span>
-                    <span style={{ color: '#666', fontSize: '12px', marginLeft: '2px', marginRight: '6px' }}>-</span>
                     <span style={{ 
                       fontWeight: card.foil ? '600' : '500',
                       color: card.foil ? '#d4af37' : '#333',
@@ -1564,7 +1564,8 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '80px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      marginLeft: '8px'
                     }}>
                       {card.name}
                     </span>
@@ -1587,7 +1588,8 @@ const TradeManagementPage = ({ isNew }) => {
                       color: '#666', 
                       flexShrink: 0,
                       fontFamily: 'monospace',
-                      minWidth: '30px'
+                      minWidth: '25px',
+                      width: '25px'
                     }}>
                       {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
                     </span>
@@ -1611,7 +1613,7 @@ const TradeManagementPage = ({ isNew }) => {
                       minWidth: '40px',
                       textAlign: 'right'
                     }}>
-                      {formatPrice(card.price || 0)}
+                      {formatPrice(card.price || card.scryfall_json?.prices?.usd || 0)}
                     </span>
                   </div>
 
