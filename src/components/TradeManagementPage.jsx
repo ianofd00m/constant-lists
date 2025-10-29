@@ -37,7 +37,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
       
       fetchPrintings();
     }
-  }, [isOpen, card]);
+  }, [isOpen, card?.id, card?.name]); // Use stable properties instead of entire card object
 
   const fetchPrintings = async () => {
     if (!card) {
@@ -178,7 +178,7 @@ const TradeCardModal = ({ isOpen, onClose, card, onAddCard, onUpdateCard, onNavi
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onNavigateToPrevious, onNavigateToNext, selectedPrinting, assignTo, quantity, isFoil, isEditing, card, onUpdateCard, onAddCard]); // Include all dependencies
+  }, [isOpen, onClose, onNavigateToPrevious, onNavigateToNext, selectedPrinting, assignTo, quantity, isFoil, isEditing, card?.id, onUpdateCard, onAddCard]); // Use card.id instead of entire card object
 
   return (
     <div 
