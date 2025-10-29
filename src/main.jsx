@@ -136,10 +136,11 @@ import './production-otag-system.js';
   console.log('✅ Production modal fix ready!');
 })();
 
-// Production React State Synchronization System
-// This prevents React state corruption that causes search dropdown issues
+// Production React State Synchronization System - DISABLED
+// This was causing React error #310 by interfering with React's useEffect lifecycle
 function implementReactStateFix() {
-  console.log('🔧 Implementing production React state synchronization system...');
+  console.log('� React state synchronization system disabled to prevent error #310');
+  return; // Early return to disable all functionality
   
   let stateFixActive = true;
   let stateCorruptionDetected = false;
@@ -1537,12 +1538,12 @@ function implementInlineSearchFix() {
 // Apply fixes when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    implementReactStateFix();
+    // DISABLED: implementReactStateFix(); // This was causing React error #310
     setTimeout(implementShowAllResultsFix, 1000); // Delay to ensure React is loaded
     setTimeout(loadSearchModalFix, 1500); // Load search modal fix after other fixes
   });
 } else {
-  implementReactStateFix();
+  // DISABLED: implementReactStateFix(); // This was causing React error #310
   setTimeout(implementShowAllResultsFix, 1000);
   setTimeout(loadSearchModalFix, 1500);
 }
