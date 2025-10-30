@@ -2375,7 +2375,7 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '-2px', // Overlay exactly on top of card
+                          top: '-4px', // Adjust to fix left cutoff
                           left: '-35px', // Your preferred positioning
                           right: '-137px', // Your preferred positioning
                           backgroundColor: 'white',
@@ -2401,7 +2401,7 @@ const TradeManagementPage = ({ isNew }) => {
                             minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
-                              {card.quantity}
+                              {/* No quantity display */}
                             </span>
                             <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                               <span 
@@ -2512,7 +2512,7 @@ const TradeManagementPage = ({ isNew }) => {
                             >
                               {/* Match exact card structure */}
                               <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
-                                {card.quantity}
+                                {/* No quantity display */}
                               </span>
                               <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                                 <span 
@@ -2570,7 +2570,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 minWidth: '40px',
                                 textAlign: 'right'
                               }}>
-                                {printing.prices?.usd ? `$${parseFloat(printing.prices.usd).toFixed(2)}` : '$0.00'}
+                                {formatPrice(getUnifiedCardPrice(printing, { fallbackPrice: '0.00' }).price)}
                               </span>
                             </div>
                           ))}
@@ -2994,7 +2994,7 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '-2px', // Overlay exactly on top of card
+                          top: '-4px', // Adjust to fix left cutoff
                           left: '-35px', // Your preferred positioning
                           right: '-137px', // Your preferred positioning
                           backgroundColor: 'white',
@@ -3020,7 +3020,7 @@ const TradeManagementPage = ({ isNew }) => {
                             minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
-                              {card.quantity}
+                              {/* No quantity display */}
                             </span>
                             <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                               <span 
@@ -3131,7 +3131,7 @@ const TradeManagementPage = ({ isNew }) => {
                             >
                               {/* Match exact card structure */}
                               <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
-                                {card.quantity}
+                                {/* No quantity display */}
                               </span>
                               <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
                                 <span 
@@ -3189,7 +3189,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 minWidth: '40px',
                                 textAlign: 'right'
                               }}>
-                                {printing.prices?.usd ? `$${parseFloat(printing.prices.usd).toFixed(2)}` : '$0.00'}
+                                {formatPrice(getUnifiedCardPrice(printing, { fallbackPrice: '0.00' }).price)}
                               </span>
                             </div>
                           ))}
