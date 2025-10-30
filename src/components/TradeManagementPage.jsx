@@ -2288,8 +2288,10 @@ const TradeManagementPage = ({ isNew }) => {
                     transition: 'all 0.2s ease',
                     border: isActiveCard ? '1px solid #007bff' : '1px solid transparent',
                     backgroundColor: isActiveCard ? '#e3f2fd' : 'transparent',
-                    borderRadius: '4px',
+                    borderRadius: isActiveCard ? '4px 4px 0 0' : '4px', // Open bottom when active
                     padding: isActiveCard ? '2px' : '0',
+                    outline: isActiveCard ? '2px solid #007bff' : 'none',
+                    outlineOffset: isActiveCard ? '1px' : '0',
                     gap: '8px'
                   }}
                   onMouseEnter={() => {
@@ -2367,7 +2369,7 @@ const TradeManagementPage = ({ isNew }) => {
                         {card.name}
                       </span>
                       
-                      {/* Printing Dropdown */}
+                      {/* Printing Dropdown - Seamless Card List */}
                       {printingDropdowns[`user1-${card.id}`] && availablePrintings[card.name] && (
                         <div 
                           data-printing-dropdown="true"
@@ -2379,32 +2381,53 @@ const TradeManagementPage = ({ isNew }) => {
                           } : {
                             top: '100%'
                           }),
-                          left: 0,
-                          width: '300px', // Fixed width for better layout
+                          left: '-2px', // Account for border
+                          right: '-2px', // Match parent width exactly
                           backgroundColor: 'white',
-                          border: '1px solid #ddd',
+                          border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                           zIndex: 1000,
-                          maxHeight: '200px',
-                          overflowY: 'auto'
+                          maxHeight: '300px',
+                          overflowY: 'auto',
+                          marginTop: '-1px' // Seamless connection
                         }}>
-                          {/* Current Selection Header */}
+                          {/* Current Selection - Match Card Layout Exactly */}
                           <div style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#f8f9fa',
-                            borderBottom: '2px solid #007bff',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            color: '#333',
+                            flex: 1,
+                            minWidth: 0,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '6px',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            backgroundColor: '#e3f2fd',
+                            borderBottom: '1px solid #007bff',
+                            padding: '0 6px',
+                            height: '24px' // Match card height
                           }}>
+                            <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
+                              {card.quantity}
+                            </span>
+                            <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                              <span 
+                                style={{
+                                  fontWeight: 'bold',
+                                  color: '#d4af37',
+                                  fontSize: '11px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'block'
+                                }}
+                              >
+                                {card.name}
+                              </span>
+                            </div>
                             <img 
+                              alt={card.scryfall_json?.set}
                               src={`/svgs/${card.scryfall_json?.set}.svg`}
-                              alt={card.scryfall_json?.set_name}
-                              style={{ width: '14px', height: '14px' }}
+                              style={{ width: '14px', height: '14px', flexShrink: 0 }}
                               onError={(e) => { 
                                 if (e.target.src.includes('/svgs/')) { 
                                   const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
@@ -2414,8 +2437,39 @@ const TradeManagementPage = ({ isNew }) => {
                                 } 
                               }}
                             />
-                            <span>Currently: {card.scryfall_json?.set_name} • #{card.scryfall_json?.collector_number}</span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#666', 
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '25px',
+                              width: '25px'
+                            }}>
+                              {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
+                            </span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#666', 
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '25px'
+                            }}>
+                              {card.scryfall_json?.collector_number}
+                            </span>
+                            <span style={{ 
+                              fontSize: '12px', 
+                              color: '#059669', 
+                              fontWeight: '600',
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '40px',
+                              textAlign: 'right'
+                            }}>
+                              {card.price ? `$${parseFloat(card.price).toFixed(2)}` : '$0.00'}
+                            </span>
                           </div>
+                          
+                          {/* Alternative Printings - Same Layout */}
                           {availablePrintings[card.name]
                             .filter(printing => printing.id !== card.scryfall_json?.id)
                             .map((printing, pIndex) => (
@@ -2426,14 +2480,18 @@ const TradeManagementPage = ({ isNew }) => {
                                 handlePrintingSelect(printing, card, 'user1');
                               }}
                               style={{
-                                padding: '8px 12px',
-                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
-                                cursor: 'pointer',
-                                fontSize: '11px',
+                                flex: 1,
+                                minWidth: 0,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
+                                gap: '6px',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                backgroundColor: 'white',
+                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
+                                padding: '0 6px',
+                                height: '24px',
+                                transition: 'background-color 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
                                 e.target.style.backgroundColor = '#f5f5f5';
@@ -2810,8 +2868,10 @@ const TradeManagementPage = ({ isNew }) => {
                     transition: 'all 0.2s ease',
                     border: isActiveCard ? '1px solid #007bff' : '1px solid transparent',
                     backgroundColor: isActiveCard ? '#e3f2fd' : 'transparent',
-                    borderRadius: '4px',
+                    borderRadius: isActiveCard ? '4px 4px 0 0' : '4px', // Open bottom when active
                     padding: isActiveCard ? '2px' : '0',
+                    outline: isActiveCard ? '2px solid #007bff' : 'none',
+                    outlineOffset: isActiveCard ? '1px' : '0',
                     gap: '8px'
                   }}
                   onMouseEnter={() => {
@@ -2901,32 +2961,53 @@ const TradeManagementPage = ({ isNew }) => {
                           } : {
                             top: '100%'
                           }),
-                          left: 0,
-                          width: '300px', // Fixed width for better layout
+                          left: '-2px', // Account for border
+                          right: '-2px', // Match parent width exactly
                           backgroundColor: 'white',
-                          border: '1px solid #ddd',
+                          border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                           zIndex: 1000,
-                          maxHeight: '200px',
-                          overflowY: 'auto'
+                          maxHeight: '300px',
+                          overflowY: 'auto',
+                          marginTop: '-1px' // Seamless connection
                         }}>
-                          {/* Current Selection Header */}
+                          {/* Current Selection - Match Card Layout Exactly */}
                           <div style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#f8f9fa',
-                            borderBottom: '2px solid #007bff',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            color: '#333',
+                            flex: 1,
+                            minWidth: 0,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '6px',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            backgroundColor: '#e3f2fd',
+                            borderBottom: '1px solid #007bff',
+                            padding: '0 6px',
+                            height: '24px' // Match card height
                           }}>
+                            <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
+                              {card.quantity}
+                            </span>
+                            <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                              <span 
+                                style={{
+                                  fontWeight: 'bold',
+                                  color: '#d4af37',
+                                  fontSize: '11px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'block'
+                                }}
+                              >
+                                {card.name}
+                              </span>
+                            </div>
                             <img 
+                              alt={card.scryfall_json?.set}
                               src={`/svgs/${card.scryfall_json?.set}.svg`}
-                              alt={card.scryfall_json?.set_name}
-                              style={{ width: '14px', height: '14px' }}
+                              style={{ width: '14px', height: '14px', flexShrink: 0 }}
                               onError={(e) => { 
                                 if (e.target.src.includes('/svgs/')) { 
                                   const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
@@ -2936,8 +3017,39 @@ const TradeManagementPage = ({ isNew }) => {
                                 } 
                               }}
                             />
-                            <span>Currently: {card.scryfall_json?.set_name} • #{card.scryfall_json?.collector_number}</span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#666', 
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '25px',
+                              width: '25px'
+                            }}>
+                              {card.scryfall_json?.set?.toUpperCase() || 'UNK'}
+                            </span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#666', 
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '25px'
+                            }}>
+                              {card.scryfall_json?.collector_number}
+                            </span>
+                            <span style={{ 
+                              fontSize: '12px', 
+                              color: '#059669', 
+                              fontWeight: '600',
+                              flexShrink: 0,
+                              fontFamily: 'monospace',
+                              minWidth: '40px',
+                              textAlign: 'right'
+                            }}>
+                              {card.price ? `$${parseFloat(card.price).toFixed(2)}` : '$0.00'}
+                            </span>
                           </div>
+                          
+                          {/* Alternative Printings - Same Layout */}
                           {availablePrintings[card.name]
                             .filter(printing => printing.id !== card.scryfall_json?.id)
                             .map((printing, pIndex) => (
