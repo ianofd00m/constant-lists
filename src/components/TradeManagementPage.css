@@ -389,3 +389,19 @@
   color: #ffd700;
   text-shadow: 0 0 2px rgba(255, 215, 0, 0.5);
 }
+
+/* Hide scrollbars for trade containers */
+.trade-container-user1::-webkit-scrollbar,
+.trade-container-user2::-webkit-scrollbar {
+  display: none;
+}
+
+.trade-container-user1::-webkit-scrollbar-track,
+.trade-container-user2::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trade-container-user1::-webkit-scrollbar-thumb,
+.trade-container-user2::-webkit-scrollbar-thumb {
+  background: transparent;
+}

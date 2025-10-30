@@ -651,6 +651,7 @@ const TradeManagementPage = ({ isNew }) => {
   const [printingDropdowns, setPrintingDropdowns] = useState({});
   const [availablePrintings, setAvailablePrintings] = useState({});
   const [dropdownPositions, setDropdownPositions] = useState({});
+  const [activeCard, setActiveCard] = useState(null); // Track which card has active dropdown
   
   // User names (editable)
   const [user1Name, setUser1Name] = useState('Me');
@@ -1155,16 +1156,31 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
-  // Calculate optimal dropdown position to keep it visible
+  // Calculate optimal dropdown position to keep it visible within containers
   const calculateDropdownPosition = (event) => {
     const element = event.currentTarget;
     const rect = element.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
     const dropdownHeight = 200; // max height of dropdown
     
-    // Check if there's enough space below
-    const spaceBelow = viewportHeight - rect.bottom;
-    const shouldShowAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+    // Find the closest scrollable container (trade list container)
+    const container = element.closest('[style*="overflow"], [style*="scroll"]') || 
+                     element.closest('.trade-container') ||
+                     document.body;
+    
+    const containerRect = container.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Check space within container and viewport
+    const spaceBelow = Math.min(
+      containerRect.bottom - rect.bottom,
+      viewportHeight - rect.bottom
+    );
+    const spaceAbove = Math.min(
+      rect.top - containerRect.top,
+      rect.top
+    );
+    
+    const shouldShowAbove = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight;
     
     return {
       position: shouldShowAbove ? 'above' : 'below',
@@ -1202,6 +1218,7 @@ const TradeManagementPage = ({ isNew }) => {
         delete newPos[dropdownKey];
         return newPos;
       });
+      setActiveCard(null);
       return;
     }
     
@@ -1212,7 +1229,8 @@ const TradeManagementPage = ({ isNew }) => {
       [dropdownKey]: position
     }));
     
-    // Close all other dropdowns and open this one IMMEDIATELY for snappy UX
+    // Set this card as active and close all other dropdowns
+    setActiveCard(dropdownKey);
     setPrintingDropdowns({ [dropdownKey]: true });
     
     // Fetch printings in background if not already cached
@@ -2219,7 +2237,16 @@ const TradeManagementPage = ({ isNew }) => {
           </div>
 
           {/* Card List */}
-          <div style={{ marginBottom: '20px', height: '400px', overflowY: 'auto' }}>
+          <div 
+            className="trade-container trade-container-user1"
+            style={{ 
+              marginBottom: '20px', 
+              height: '400px', 
+              overflowY: 'auto',
+              scrollbarWidth: 'none', /* Firefox */
+              msOverflowStyle: 'none' /* IE and Edge */
+            }}
+          >
             {user1Cards.length === 0 ? (
               <div style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', marginTop: '50px' }}>
                 No cards added yet
@@ -2248,6 +2275,7 @@ const TradeManagementPage = ({ isNew }) => {
                 
                 // Handle regular cards
                 const card = item;
+                const isActiveCard = activeCard?.id === card.id && activeCard?.userType === 'user1';
                 return (
                 <div 
                   key={card.id}
@@ -2258,7 +2286,10 @@ const TradeManagementPage = ({ isNew }) => {
                     marginBottom: '5px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
-                    border: '1px solid transparent',
+                    border: isActiveCard ? '1px solid #007bff' : '1px solid transparent',
+                    backgroundColor: isActiveCard ? '#e3f2fd' : 'transparent',
+                    borderRadius: '4px',
+                    padding: isActiveCard ? '2px' : '0',
                     gap: '8px'
                   }}
                   onMouseEnter={() => {
@@ -2358,7 +2389,36 @@ const TradeManagementPage = ({ isNew }) => {
                           maxHeight: '200px',
                           overflowY: 'auto'
                         }}>
-                          {availablePrintings[card.name].map((printing, pIndex) => (
+                          {/* Current Selection Header */}
+                          <div style={{
+                            padding: '8px 12px',
+                            backgroundColor: '#f8f9fa',
+                            borderBottom: '2px solid #007bff',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            color: '#333',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <img 
+                              src={`/svgs/${card.scryfall_json?.set}.svg`}
+                              alt={card.scryfall_json?.set_name}
+                              style={{ width: '14px', height: '14px' }}
+                              onError={(e) => { 
+                                if (e.target.src.includes('/svgs/')) { 
+                                  const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
+                                  e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; 
+                                } else { 
+                                  e.target.style.display = 'none'; 
+                                } 
+                              }}
+                            />
+                            <span>Currently: {card.scryfall_json?.set_name} • #{card.scryfall_json?.collector_number}</span>
+                          </div>
+                          {availablePrintings[card.name]
+                            .filter(printing => printing.id !== card.scryfall_json?.id)
+                            .map((printing, pIndex) => (
                             <div
                               key={`${printing.id}-${pIndex}`}
                               onClick={(e) => {
@@ -2367,7 +2427,7 @@ const TradeManagementPage = ({ isNew }) => {
                               }}
                               style={{
                                 padding: '8px 12px',
-                                borderBottom: pIndex < availablePrintings[card.name].length - 1 ? '1px solid #eee' : 'none',
+                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
                                 cursor: 'pointer',
                                 fontSize: '11px',
                                 display: 'flex',
@@ -2699,7 +2759,16 @@ const TradeManagementPage = ({ isNew }) => {
           </div>
 
           {/* Card List */}
-          <div style={{ marginBottom: '20px', height: '400px', overflowY: 'auto' }}>
+          <div 
+            className="trade-container trade-container-user2"
+            style={{ 
+              marginBottom: '20px', 
+              height: '400px', 
+              overflowY: 'auto',
+              scrollbarWidth: 'none', /* Firefox */
+              msOverflowStyle: 'none' /* IE and Edge */
+            }}
+          >
             {user2Cards.length === 0 ? (
               <div style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', marginTop: '50px' }}>
                 No cards added yet
@@ -2728,6 +2797,7 @@ const TradeManagementPage = ({ isNew }) => {
                 
                 // Handle regular cards
                 const card = item;
+                const isActiveCard = activeCard?.id === card.id && activeCard?.userType === 'user2';
                 return (
                 <div 
                   key={card.id}
@@ -2738,7 +2808,10 @@ const TradeManagementPage = ({ isNew }) => {
                     marginBottom: '5px',
                     cursor: 'grab',
                     transition: 'all 0.2s ease',
-                    border: '1px solid transparent',
+                    border: isActiveCard ? '1px solid #007bff' : '1px solid transparent',
+                    backgroundColor: isActiveCard ? '#e3f2fd' : 'transparent',
+                    borderRadius: '4px',
+                    padding: isActiveCard ? '2px' : '0',
                     gap: '8px'
                   }}
                   onMouseEnter={() => {
@@ -2838,7 +2911,36 @@ const TradeManagementPage = ({ isNew }) => {
                           maxHeight: '200px',
                           overflowY: 'auto'
                         }}>
-                          {availablePrintings[card.name].map((printing, pIndex) => (
+                          {/* Current Selection Header */}
+                          <div style={{
+                            padding: '8px 12px',
+                            backgroundColor: '#f8f9fa',
+                            borderBottom: '2px solid #007bff',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            color: '#333',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <img 
+                              src={`/svgs/${card.scryfall_json?.set}.svg`}
+                              alt={card.scryfall_json?.set_name}
+                              style={{ width: '14px', height: '14px' }}
+                              onError={(e) => { 
+                                if (e.target.src.includes('/svgs/')) { 
+                                  const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
+                                  e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; 
+                                } else { 
+                                  e.target.style.display = 'none'; 
+                                } 
+                              }}
+                            />
+                            <span>Currently: {card.scryfall_json?.set_name} • #{card.scryfall_json?.collector_number}</span>
+                          </div>
+                          {availablePrintings[card.name]
+                            .filter(printing => printing.id !== card.scryfall_json?.id)
+                            .map((printing, pIndex) => (
                             <div
                               key={`${printing.id}-${pIndex}`}
                               onClick={(e) => {
@@ -2847,7 +2949,7 @@ const TradeManagementPage = ({ isNew }) => {
                               }}
                               style={{
                                 padding: '8px 12px',
-                                borderBottom: pIndex < availablePrintings[card.name].length - 1 ? '1px solid #eee' : 'none',
+                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
                                 cursor: 'pointer',
                                 fontSize: '11px',
                                 display: 'flex',
