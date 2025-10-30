@@ -2376,13 +2376,13 @@ const TradeManagementPage = ({ isNew }) => {
                           style={{
                           position: 'absolute',
                           top: '-2px', // Overlay exactly on top of card
-                          left: '-8px', // Extend to full container width
-                          right: '-8px', // Extend to full container width 
+                          left: '-35px', // Your preferred positioning
+                          right: '-137px', // Your preferred positioning
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                          zIndex: 1000,
+                          zIndex: 9999,
                           maxHeight: '300px',
                           overflowY: 'auto'
                         }}>
@@ -2995,13 +2995,13 @@ const TradeManagementPage = ({ isNew }) => {
                           style={{
                           position: 'absolute',
                           top: '-2px', // Overlay exactly on top of card
-                          left: '-8px', // Extend to full container width
-                          right: '-8px', // Extend to full container width 
+                          left: '-35px', // Your preferred positioning
+                          right: '-137px', // Your preferred positioning
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                          zIndex: 1000,
+                          zIndex: 9999,
                           maxHeight: '300px',
                           overflowY: 'auto'
                         }}>
