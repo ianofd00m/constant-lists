@@ -2375,24 +2375,18 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          ...(dropdownPositions[`user1-${card.id}`] ? {
-                            top: dropdownPositions[`user1-${card.id}`].top,
-                            bottom: dropdownPositions[`user1-${card.id}`].bottom
-                          } : {
-                            top: '100%'
-                          }),
-                          left: '-2px', // Account for border
-                          right: '-2px', // Match parent width exactly
+                          top: '-2px', // Overlay exactly on top of card
+                          left: '-2px', // Account for border and padding
+                          right: '-10px', // Match parent width exactly including gaps
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                           zIndex: 1000,
                           maxHeight: '300px',
-                          overflowY: 'auto',
-                          marginTop: '-1px' // Seamless connection
+                          overflowY: 'auto'
                         }}>
-                          {/* Current Selection - Match Card Layout Exactly */}
+                          {/* Current Selection - Overlay Card Layout Exactly */}
                           <div style={{
                             flex: 1,
                             minWidth: 0,
@@ -2403,8 +2397,8 @@ const TradeManagementPage = ({ isNew }) => {
                             cursor: 'pointer',
                             backgroundColor: '#e3f2fd',
                             borderBottom: '1px solid #007bff',
-                            padding: '0 6px',
-                            height: '24px' // Match card height
+                            padding: '0', // Match original card padding exactly  
+                            minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                               {card.quantity}
@@ -2489,8 +2483,8 @@ const TradeManagementPage = ({ isNew }) => {
                                 cursor: 'pointer',
                                 backgroundColor: 'white',
                                 borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
-                                padding: '0 6px',
-                                height: '24px',
+                                padding: '0', // Match card padding exactly
+                                minHeight: '24px', // Match card height exactly
                                 transition: 'background-color 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
@@ -2505,7 +2499,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 });
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white';
+                                e.target.style.backgroundColor = 'white';
                                 // Reset to original card preview on mouse leave
                                 handleCardHover({
                                   ...card,
@@ -2516,23 +2510,68 @@ const TradeManagementPage = ({ isNew }) => {
                                 });
                               }}
                             >
-                              <img 
-                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
-                                alt={printing.set}
-                                style={{ width: '16px', height: '16px', flexShrink: 0 }}
-                                onError={(e) => { if (e.target.src.includes('/svgs/')) { const setCode = e.target.src.split('/').pop().replace('.svg', ''); e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; } else { e.target.style.display = 'none'; } }}
-                              />
-                              <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
-                                {printing.set?.toUpperCase()}
+                              {/* Match exact card structure */}
+                              <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
+                                {card.quantity}
                               </span>
-                              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#666' }}>
-                                #{printing.collector_number}
-                              </span>
-                              {printing.id === card.scryfall_json?.id && (
-                                <span style={{ color: '#007bff', fontSize: '10px', marginLeft: 'auto' }}>
-                                  ✓ Current
+                              <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                                <span 
+                                  style={{
+                                    fontWeight: 'bold',
+                                    color: '#d4af37',
+                                    fontSize: '11px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    display: 'block'
+                                  }}
+                                >
+                                  {printing.name}
                                 </span>
-                              )}
+                              </div>
+                              <img 
+                                alt={printing.set}
+                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
+                                style={{ width: '14px', height: '14px', flexShrink: 0 }}
+                                onError={(e) => { 
+                                  if (e.target.src.includes('/svgs/')) { 
+                                    const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
+                                    e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; 
+                                  } else { 
+                                    e.target.style.display = 'none'; 
+                                  } 
+                                }}
+                              />
+                              <span style={{ 
+                                fontSize: '11px', 
+                                color: '#666', 
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '25px',
+                                width: '25px'
+                              }}>
+                                {printing.set?.toUpperCase() || 'UNK'}
+                              </span>
+                              <span style={{ 
+                                fontSize: '11px', 
+                                color: '#666', 
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '25px'
+                              }}>
+                                {printing.collector_number}
+                              </span>
+                              <span style={{ 
+                                fontSize: '12px', 
+                                color: '#059669', 
+                                fontWeight: '600',
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '40px',
+                                textAlign: 'right'
+                              }}>
+                                {printing.prices?.usd ? `$${parseFloat(printing.prices.usd).toFixed(2)}` : '$0.00'}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -2955,22 +2994,16 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          ...(dropdownPositions[`user2-${card.id}`] ? {
-                            top: dropdownPositions[`user2-${card.id}`].top,
-                            bottom: dropdownPositions[`user2-${card.id}`].bottom
-                          } : {
-                            top: '100%'
-                          }),
-                          left: '-2px', // Account for border
-                          right: '-2px', // Match parent width exactly
+                          top: '-2px', // Overlay exactly on top of card
+                          left: '-2px', // Account for border and padding
+                          right: '-10px', // Match parent width exactly including gaps
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                           zIndex: 1000,
                           maxHeight: '300px',
-                          overflowY: 'auto',
-                          marginTop: '-1px' // Seamless connection
+                          overflowY: 'auto'
                         }}>
                           {/* Current Selection - Match Card Layout Exactly */}
                           <div style={{
@@ -2983,8 +3016,8 @@ const TradeManagementPage = ({ isNew }) => {
                             cursor: 'pointer',
                             backgroundColor: '#e3f2fd',
                             borderBottom: '1px solid #007bff',
-                            padding: '0 6px',
-                            height: '24px' // Match card height
+                            padding: '0', // Match original card padding exactly
+                            minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
                               {card.quantity}
@@ -3060,14 +3093,18 @@ const TradeManagementPage = ({ isNew }) => {
                                 handlePrintingSelect(printing, card, 'user2');
                               }}
                               style={{
-                                padding: '8px 12px',
-                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
-                                cursor: 'pointer',
-                                fontSize: '11px',
+                                flex: 1,
+                                minWidth: 0,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                backgroundColor: printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white'
+                                gap: '6px',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                backgroundColor: 'white',
+                                borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
+                                padding: '0', // Match card padding exactly
+                                minHeight: '24px', // Match card height exactly
+                                transition: 'background-color 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
                                 e.target.style.backgroundColor = '#f5f5f5';
@@ -3081,7 +3118,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 });
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = printing.id === card.scryfall_json?.id ? '#f0f8ff' : 'white';
+                                e.target.style.backgroundColor = 'white';
                                 // Reset to original card preview on mouse leave
                                 handleCardHover({
                                   ...card,
@@ -3092,23 +3129,68 @@ const TradeManagementPage = ({ isNew }) => {
                                 });
                               }}
                             >
-                              <img 
-                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
-                                alt={printing.set}
-                                style={{ width: '16px', height: '16px', flexShrink: 0 }}
-                                onError={(e) => { if (e.target.src.includes('/svgs/')) { const setCode = e.target.src.split('/').pop().replace('.svg', ''); e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; } else { e.target.style.display = 'none'; } }}
-                              />
-                              <span style={{ fontFamily: 'monospace', minWidth: '35px', fontSize: '10px' }}>
-                                {printing.set?.toUpperCase()}
+                              {/* Match exact card structure */}
+                              <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
+                                {card.quantity}
                               </span>
-                              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#666' }}>
-                                #{printing.collector_number}
-                              </span>
-                              {printing.id === card.scryfall_json?.id && (
-                                <span style={{ color: '#007bff', fontSize: '10px', marginLeft: 'auto' }}>
-                                  ✓ Current
+                              <div style={{ position: 'relative', flex: 1, minWidth: '80px' }}>
+                                <span 
+                                  style={{
+                                    fontWeight: 'bold',
+                                    color: '#d4af37',
+                                    fontSize: '11px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    display: 'block'
+                                  }}
+                                >
+                                  {printing.name}
                                 </span>
-                              )}
+                              </div>
+                              <img 
+                                alt={printing.set}
+                                src={`/svgs/${printing.set.toLowerCase()}.svg`}
+                                style={{ width: '14px', height: '14px', flexShrink: 0 }}
+                                onError={(e) => { 
+                                  if (e.target.src.includes('/svgs/')) { 
+                                    const setCode = e.target.src.split('/').pop().replace('.svg', ''); 
+                                    e.target.src = `https://svgs.scryfall.io/sets/${setCode}.svg`; 
+                                  } else { 
+                                    e.target.style.display = 'none'; 
+                                  } 
+                                }}
+                              />
+                              <span style={{ 
+                                fontSize: '11px', 
+                                color: '#666', 
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '25px',
+                                width: '25px'
+                              }}>
+                                {printing.set?.toUpperCase() || 'UNK'}
+                              </span>
+                              <span style={{ 
+                                fontSize: '11px', 
+                                color: '#666', 
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '25px'
+                              }}>
+                                {printing.collector_number}
+                              </span>
+                              <span style={{ 
+                                fontSize: '12px', 
+                                color: '#059669', 
+                                fontWeight: '600',
+                                flexShrink: 0,
+                                fontFamily: 'monospace',
+                                minWidth: '40px',
+                                textAlign: 'right'
+                              }}>
+                                {printing.prices?.usd ? `$${parseFloat(printing.prices.usd).toFixed(2)}` : '$0.00'}
+                              </span>
                             </div>
                           ))}
                         </div>
