@@ -1160,32 +1160,14 @@ const TradeManagementPage = ({ isNew }) => {
   const calculateDropdownPosition = (event) => {
     const element = event.currentTarget;
     const rect = element.getBoundingClientRect();
-    const dropdownHeight = 200; // max height of dropdown
-    
-    // Find the closest scrollable container (trade list container)
-    const container = element.closest('[style*="overflow"], [style*="scroll"]') || 
-                     element.closest('.trade-container') ||
-                     document.body;
-    
-    const containerRect = container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    
-    // Check space within container and viewport
-    const spaceBelow = Math.min(
-      containerRect.bottom - rect.bottom,
-      viewportHeight - rect.bottom
-    );
-    const spaceAbove = Math.min(
-      rect.top - containerRect.top,
-      rect.top
-    );
-    
-    const shouldShowAbove = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
     
     return {
-      position: shouldShowAbove ? 'above' : 'below',
-      top: shouldShowAbove ? 'auto' : '100%',
-      bottom: shouldShowAbove ? '100%' : 'auto'
+      top: rect.top + scrollTop,
+      left: rect.left + scrollLeft,
+      width: rect.width + 172, // Add space for the original right: -137px offset plus left: -35px
+      position: 'fixed'
     };
   };
 
@@ -2243,7 +2225,6 @@ const TradeManagementPage = ({ isNew }) => {
               marginBottom: '20px', 
               height: '400px', 
               overflowY: 'auto',
-              overflowX: 'visible',
               scrollbarWidth: 'none', /* Firefox */
               msOverflowStyle: 'none' /* IE and Edge */
             }}
@@ -2375,10 +2356,10 @@ const TradeManagementPage = ({ isNew }) => {
                         <div 
                           data-printing-dropdown="true"
                           style={{
-                          position: 'absolute',
-                          top: '-4px',
-                          left: '0px',
-                          width: '400px',
+                          position: 'fixed',
+                          top: `${(dropdownPositions[`user1-${card.id}`]?.top || 0) - 4}px`,
+                          left: `${(dropdownPositions[`user1-${card.id}`]?.left || 0) - 35}px`,
+                          width: `${dropdownPositions[`user1-${card.id}`]?.width || 400}px`,
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
@@ -2863,7 +2844,6 @@ const TradeManagementPage = ({ isNew }) => {
               marginBottom: '20px', 
               height: '400px', 
               overflowY: 'auto',
-              overflowX: 'visible',
               scrollbarWidth: 'none', /* Firefox */
               msOverflowStyle: 'none' /* IE and Edge */
             }}
@@ -2995,10 +2975,10 @@ const TradeManagementPage = ({ isNew }) => {
                         <div 
                           data-printing-dropdown="true"
                           style={{
-                          position: 'absolute',
-                          top: '-4px',
-                          left: '0px',
-                          width: '400px',
+                          position: 'fixed',
+                          top: `${(dropdownPositions[`user2-${card.id}`]?.top || 0) - 4}px`,
+                          left: `${(dropdownPositions[`user2-${card.id}`]?.left || 0) - 35}px`,
+                          width: `${dropdownPositions[`user2-${card.id}`]?.width || 400}px`,
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
