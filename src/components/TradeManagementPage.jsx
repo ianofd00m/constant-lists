@@ -2243,6 +2243,7 @@ const TradeManagementPage = ({ isNew }) => {
               marginBottom: '20px', 
               height: '400px', 
               overflowY: 'auto',
+              overflowX: 'visible',
               scrollbarWidth: 'none', /* Firefox */
               msOverflowStyle: 'none' /* IE and Edge */
             }}
@@ -2375,9 +2376,9 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '-4px', // Adjust to fix left cutoff
-                          left: '-35px', // Your preferred positioning
-                          right: '-137px', // Your preferred positioning
+                          top: '-4px',
+                          left: '0px',
+                          width: '400px',
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
@@ -2862,6 +2863,7 @@ const TradeManagementPage = ({ isNew }) => {
               marginBottom: '20px', 
               height: '400px', 
               overflowY: 'auto',
+              overflowX: 'visible',
               scrollbarWidth: 'none', /* Firefox */
               msOverflowStyle: 'none' /* IE and Edge */
             }}
@@ -2994,9 +2996,9 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '-4px', // Adjust to fix left cutoff
-                          left: '-35px', // Your preferred positioning
-                          right: '-137px', // Your preferred positioning
+                          top: '-4px',
+                          left: '0px',
+                          width: '400px',
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
