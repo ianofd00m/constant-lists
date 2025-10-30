@@ -91,20 +91,184 @@ function SortableHeaderCell({ column, index, onSort, sortBy, sortDirection }) {
 // Price cell components (using hooks)
 function CurrentPriceCell({ item }) {
   const [price, setPrice] = useState(null);
+  const [loading, setLoading] = useState(false);
   
   useEffect(() => {
-    if (item.scryfall_json?.id) {
-      getUnifiedCardPrice(item.scryfall_json.id, item.foil).then(priceData => {
-        setPrice(priceData?.price || 0);
-      }).catch(() => {
-        setPrice(0);
+    if (item.scryfall_json || item.printing_id || item.name) {
+      setLoading(true);
+      
+      // Create proper card data object for unified pricing
+      const cardData = {
+        name: item.name,
+        foil: item.foil,
+        scryfall_json: item.scryfall_json || {},
+        // Fallback data if scryfall_json is missing
+        set: item.set,
+        collector_number: item.collector_number,
+        printing_id: item.printing_id
+      };
+      
+      const result = getUnifiedCardPrice(cardData, {
+        preferStoredPrice: false, // Use live Scryfall data
+        fallbackPrice: null,
+        debugLogging: false
       });
+      
+      setPrice(result.price);
+      setLoading(false);
     }
-  }, [item.scryfall_json?.id, item.foil]);
+  }, [item.scryfall_json, item.printing_id, item.foil, item.name]);
   
   return (
     <div style={{ textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>
-      {price !== null ? `$${price.toFixed(2)}` : '...'}
+      {loading ? '...' : price !== null ? `$${parseFloat(price).toFixed(2)}` : 'N/A'}
+    </div>
+  );
+}
+
+// Editable purchase price cell
+function EditablePurchasePriceCell({ item, onUpdate }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(item.purchase_price || '');
+  const [originalValue, setOriginalValue] = useState(item.purchase_price || '');
+  const inputRef = useRef(null);
+  
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select(); // Auto-highlight text
+    }
+  }, [isEditing]);
+  
+  const handleSave = () => {
+    const numericValue = parseFloat(editValue);
+    if (isNaN(numericValue) || numericValue < 0) {
+      toast.error('Please enter a valid price (0 or greater)');
+      return;
+    }
+    
+    // Use purchase_price field to match the database structure
+    onUpdate(item.id, 'purchase_price', numericValue);
+    setIsEditing(false);
+    setEditValue(formatPrice(numericValue));
+  };  const handleCancel = () => {
+    setValue(originalValue);
+    setIsEditing(false);
+  };
+  
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+  
+  if (isEditing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <input
+          ref={inputRef}
+          type="number"
+          min="0"
+          step="0.01"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyPress}
+          onBlur={handleCancel}
+          style={{
+            width: '60px',
+            padding: '2px 4px',
+            fontSize: '12px',
+            border: '1px solid #007bff',
+            borderRadius: 2,
+            textAlign: 'right'
+          }}
+        />
+        <button
+          onClick={handleSave}
+          style={{
+            width: 16,
+            height: 16,
+            padding: 0,
+            border: 'none',
+            borderRadius: 2,
+            backgroundColor: '#28a745',
+            color: 'white',
+            fontSize: '10px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          ✓
+        </button>
+      </div>
+    );
+  }
+  
+  return (
+    <div 
+      style={{ 
+        textAlign: 'right', 
+        fontSize: '12px', 
+        color: '#666',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        borderRadius: 2,
+        minHeight: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end'
+      }}
+      onClick={() => setIsEditing(true)}
+      title="Click to edit purchase price"
+    >
+      {originalValue ? `$${parseFloat(originalValue).toFixed(2)}` : 'Click to add'}
+    </div>
+  );
+}
+
+// Clickable foil toggle cell
+function FoilToggleCell({ item, onUpdate }) {
+  const handleToggle = () => {
+    onUpdate(item.id, 'foil', !item.foil);
+  };
+  
+  return (
+    <div 
+      style={{ 
+        textAlign: 'center',
+        cursor: 'pointer',
+        padding: '4px',
+        borderRadius: 4,
+        backgroundColor: item.foil ? '#fff3cd' : 'transparent',
+        border: '1px solid ' + (item.foil ? '#ffc107' : 'transparent'),
+        minHeight: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={handleToggle}
+      title={`Click to toggle foil status (currently ${item.foil ? 'foil' : 'non-foil'})`}
+    >
+      {item.foil ? (
+        <span style={{ 
+          color: '#ffa500', 
+          fontSize: '11px',
+          fontWeight: 'bold'
+        }}>
+          ✨ FOIL
+        </span>
+      ) : (
+        <span style={{ 
+          color: '#999', 
+          fontSize: '10px'
+        }}>
+          Normal
+        </span>
+      )}
     </div>
   );
 }
@@ -114,14 +278,26 @@ function NetGainCell({ item }) {
   const purchasePrice = parseFloat(item.purchase_price || 0);
   
   useEffect(() => {
-    if (item.scryfall_json?.id && purchasePrice > 0) {
-      getUnifiedCardPrice(item.scryfall_json.id, item.foil).then(priceData => {
-        setCurrentPrice(priceData?.price || 0);
-      }).catch(() => {
-        setCurrentPrice(0);
+    if ((item.scryfall_json || item.name) && purchasePrice > 0) {
+      // Create proper card data object for unified pricing
+      const cardData = {
+        name: item.name,
+        foil: item.foil,
+        scryfall_json: item.scryfall_json || {},
+        set: item.set,
+        collector_number: item.collector_number,
+        printing_id: item.printing_id
+      };
+      
+      const result = getUnifiedCardPrice(cardData, {
+        preferStoredPrice: false,
+        fallbackPrice: null,
+        debugLogging: false
       });
+      
+      setCurrentPrice(parseFloat(result.price) || 0);
     }
-  }, [item.scryfall_json?.id, item.foil, purchasePrice]);
+  }, [item.scryfall_json, item.foil, item.name, purchasePrice]);
   
   if (!purchasePrice || !currentPrice) {
     return <div style={{ textAlign: 'right', fontSize: '12px', color: '#999' }}>-</div>;
@@ -222,7 +398,7 @@ const COLUMN_RENDERERS = {
   
   setName: (item) => (
     <div style={{ fontSize: '13px', color: '#555' }}>
-      {item.set_name || item.edition || '-'}
+      {item.set_name || item.scryfall_json?.set_name || item.edition || (item.set ? item.set.toUpperCase() : '-')}
     </div>
   ),
   
@@ -267,23 +443,20 @@ const COLUMN_RENDERERS = {
     </div>
   ),
   
-  foil: (item) => item.foil ? (
-    <div style={{ 
-      textAlign: 'center',
-      color: '#ffa500', 
-      fontSize: '11px',
-      fontWeight: 'bold'
-    }}>
-      ✨ FOIL
-    </div>
-  ) : null,
+  foil: (item, onUpdate) => (
+    <FoilToggleCell 
+      item={item} 
+      onUpdate={onUpdate}
+    />
+  ),
   
   currentPrice: (item) => <CurrentPriceCell item={item} />,
   
-  purchasePrice: (item) => (
-    <div style={{ textAlign: 'right', fontSize: '12px', color: '#666' }}>
-      {item.purchase_price ? `$${parseFloat(item.purchase_price).toFixed(2)}` : '-'}
-    </div>
+  purchasePrice: (item, onUpdate) => (
+    <EditablePurchasePriceCell 
+      item={item} 
+      onUpdate={onUpdate}
+    />
   ),
   
   netGain: (item) => <NetGainCell item={item} />,
@@ -319,6 +492,13 @@ export default function EnhancedCollectionTable({
   const columnMenuRef = useRef(null);
   
   // Drag and drop sensors
+  // Handle item updates (for editable cells)
+  const handleItemUpdate = (itemId, field, value) => {
+    if (onUpdateItem) {
+      onUpdateItem(itemId, field, value);
+    }
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -713,7 +893,7 @@ export default function EnhancedCollectionTable({
                     >
                       {col.id === 'actions' 
                         ? renderActions(item)
-                        : COLUMN_RENDERERS[col.id]?.(item) || <div>-</div>
+                        : COLUMN_RENDERERS[col.id]?.(item, handleItemUpdate) || <div>-</div>
                       }
                     </td>
                   ))}

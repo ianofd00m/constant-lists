@@ -3,6 +3,12 @@ import { toast } from 'react-toastify';
 import ImportModal from './ImportModal';
 import { storageManager } from '../utils/storageManager';
 import EnhancedCollectionTable from './EnhancedCollectionTable';
+import { 
+  convertToIndividualItems, 
+  needsMigration, 
+  migrateCollection,
+  getCollectionStats 
+} from '../utils/collectionUtils';
 
 // Force cache refresh - no yellow backgrounds
 
@@ -396,35 +402,63 @@ export default function CollectPage() {
   const [collection, setCollection] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Load collection from smart storage
+  // Load collection from smart storage with migration support
   useEffect(() => {
     try {
       console.log('📖 Loading collection with smart storage...');
+      
+      let loadedCollection = null;
       
       // Try chunked storage first
       const chunkedCollection = storageManager.getChunkedItem('cardCollection');
       if (chunkedCollection && chunkedCollection.length > 0) {
         console.log(`✅ Loaded ${chunkedCollection.length} cards from chunked storage`);
-        setCollection(chunkedCollection);
-        return;
+        loadedCollection = chunkedCollection;
+      } else {
+        // Fall back to regular storage
+        const savedCollection = storageManager.getItem('cardCollection');
+        if (savedCollection && savedCollection.length > 0) {
+          console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
+          loadedCollection = savedCollection;
+        }
       }
-
-      // Fall back to regular storage
-      const savedCollection = storageManager.getItem('cardCollection');
-      if (savedCollection && savedCollection.length > 0) {
-        console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
-        setCollection(savedCollection);
+      
+      if (loadedCollection) {
+        // Check if collection needs migration from bundled to individual format
+        if (needsMigration(loadedCollection)) {
+          console.log('🔄 Collection needs migration from bundled to individual items...');
+          const migratedCollection = migrateCollection(loadedCollection);
+          
+          // Save migrated collection
+          const success = storageManager.setItem('cardCollection', migratedCollection, {
+            clearOldData: true
+          });
+          
+          if (success) {
+            setCollection(migratedCollection);
+            toast.success('Collection migrated to individual card format! Each card is now a separate item.');
+          } else {
+            console.error('❌ Failed to save migrated collection');
+            setCollection(loadedCollection); // Use original if migration save fails
+          }
+        } else {
+          setCollection(loadedCollection);
+        }
+        
+        // Show collection stats
+        const collectionStats = getCollectionStats(loadedCollection);
+        console.log('📊 Collection stats:', collectionStats);
       } else {
         console.log('📝 No existing collection found, starting fresh');
       }
 
       // Show storage stats
-      const stats = storageManager.getStats();
-      console.log('📊 Storage stats:', {
-        usage: `${stats.percentage.toFixed(1)}%`,
-        used: `${(stats.used / 1024 / 1024).toFixed(1)}MB`,
-        available: `${(stats.available / 1024 / 1024).toFixed(1)}MB`,
-        items: stats.itemCounts
+      const storageStats = storageManager.getStats();
+      console.log('� Storage stats:', {
+        usage: `${storageStats.percentage.toFixed(1)}%`,
+        used: `${(storageStats.used / 1024 / 1024).toFixed(1)}MB`,
+        available: `${(storageStats.available / 1024 / 1024).toFixed(1)}MB`,
+        items: storageStats.itemCounts
       });
       
     } catch (error) {
@@ -466,17 +500,48 @@ export default function CollectPage() {
   };
 
   const handleQuantityChange = (itemId, newQuantity) => {
-    const updatedCollection = collection.map(item =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
-    );
-    saveCollection(updatedCollection);
-    toast.success('Quantity updated');
+    // For individual items system, quantity changes work differently
+    if (newQuantity < 1) {
+      handleRemoveItem(itemId);
+      return;
+    }
+    
+    if (newQuantity > 1) {
+      // Add more copies of this card
+      const sourceItem = collection.find(item => item.id === itemId);
+      if (sourceItem) {
+        const additionalCopies = [];
+        for (let i = 1; i < newQuantity; i++) {
+          additionalCopies.push({
+            ...sourceItem,
+            id: `${sourceItem.originalId || sourceItem.id}_copy_${Date.now()}_${i}`,
+            copyNumber: (sourceItem.copyNumber || 1) + i,
+            dateAdded: new Date().toISOString()
+          });
+        }
+        
+        const updatedCollection = [...collection, ...additionalCopies];
+        saveCollection(updatedCollection);
+        toast.success(`Added ${newQuantity - 1} more copies of ${sourceItem.name}`);
+      }
+    }
+    // If newQuantity === 1, no change needed (item already represents 1 card)
   };
 
   const handleRemoveItem = (itemId) => {
     const updatedCollection = collection.filter(item => item.id !== itemId);
     saveCollection(updatedCollection);
     toast.success('Card removed from collection');
+  };
+
+  const handleUpdateItem = (itemId, field, value) => {
+    const updatedCollection = collection.map(item => {
+      if (item.id === itemId) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    });
+    saveCollection(updatedCollection);
   };
 
   const handleClearCollection = () => {
@@ -506,44 +571,22 @@ export default function CollectPage() {
     }
 
     try {
-      // Merge with existing collection, handling duplicates
-      const updatedCollection = [...collection];
-      let addedCount = 0;
-      let updatedCount = 0;
-
-      for (const importedCard of importedCards) {
-        // Validate imported card
-        if (!importedCard.name || !importedCard.quantity || importedCard.quantity < 1) {
-          console.warn('Skipping invalid card:', importedCard);
-          continue;
-        }
-
-        // Check for existing card (match by name, set, and foil status)
-        const existingCardIndex = updatedCollection.findIndex(existingCard => 
-          existingCard.name === importedCard.name &&
-          existingCard.set === importedCard.set &&
-          existingCard.foil === importedCard.foil
-        );
-
-        if (existingCardIndex !== -1) {
-          // Update quantity of existing card
-          updatedCollection[existingCardIndex].quantity += importedCard.quantity;
-          updatedCount++;
-        } else {
-          // Add new card to collection
-          updatedCollection.push({
-            ...importedCard,
-            id: importedCard.id || generateUniqueId(importedCard.name, importedCard.set, importedCard.foil),
-            dateAdded: new Date().toISOString()
-          });
-          addedCount++;
-        }
-      }
-
+      console.log('📥 Importing cards as individual items...');
+      
+      // Convert imported cards to individual items (each quantity becomes separate items)
+      const individualImportedCards = convertToIndividualItems(importedCards);
+      
+      // Add all individual cards to collection (no bundling)
+      const updatedCollection = [...collection, ...individualImportedCards];
+      
       saveCollection(updatedCollection);
       
-      const message = `Import complete! Added ${addedCount} new cards, updated ${updatedCount} existing cards.`;
-      toast.success(message);
+      const totalCards = individualImportedCards.length;
+      const uniqueCards = new Set(importedCards.map(card => `${card.name}|${card.set}|${card.foil}`)).size;
+      
+      toast.success(`Import complete! Added ${totalCards} individual cards (${uniqueCards} unique card types).`);
+      
+      console.log(`✅ Import successful: ${totalCards} individual items added`);
 
     } catch (error) {
       console.error('Import error:', error);
@@ -625,6 +668,7 @@ export default function CollectPage() {
         collection={collection}
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveItem}
+        onUpdateItem={handleUpdateItem}
       />
       
       <ImportModal
