@@ -650,6 +650,7 @@ const TradeManagementPage = ({ isNew }) => {
   // Printing dropdown states
   const [printingDropdowns, setPrintingDropdowns] = useState({});
   const [availablePrintings, setAvailablePrintings] = useState({});
+  const [dropdownPositions, setDropdownPositions] = useState({});
   
   // User names (editable)
   const [user1Name, setUser1Name] = useState('Me');
@@ -1154,8 +1155,40 @@ const TradeManagementPage = ({ isNew }) => {
     }
   };
 
+  // Calculate optimal dropdown position to keep it visible
+  const calculateDropdownPosition = (event) => {
+    const element = event.currentTarget;
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 200; // max height of dropdown
+    
+    // Check if there's enough space below
+    const spaceBelow = viewportHeight - rect.bottom;
+    const shouldShowAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+    
+    return {
+      position: shouldShowAbove ? 'above' : 'below',
+      top: shouldShowAbove ? 'auto' : '100%',
+      bottom: shouldShowAbove ? '100%' : 'auto'
+    };
+  };
+
+  // Preload card printings on hover for instant dropdown
+  const preloadCardPrintings = (cardName) => {
+    if (!availablePrintings[cardName]) {
+      fetchCardPrintings({ name: cardName }).then(printings => {
+        setAvailablePrintings(prev => ({
+          ...prev,
+          [cardName]: printings
+        }));
+      }).catch(error => {
+        // Silent fail for preloading
+      });
+    }
+  };
+
   // Handle printing dropdown toggle and fetching
-  const handleCardNameClick = async (card, cardIndex, userType) => {
+  const handleCardNameClick = (card, cardIndex, userType, event) => {
     const dropdownKey = `${userType}-${card.id}`;
     
     // Close if already open
@@ -1164,8 +1197,20 @@ const TradeManagementPage = ({ isNew }) => {
         ...prev,
         [dropdownKey]: false
       }));
+      setDropdownPositions(prev => {
+        const newPos = {...prev};
+        delete newPos[dropdownKey];
+        return newPos;
+      });
       return;
     }
+    
+    // Calculate position for better visibility
+    const position = calculateDropdownPosition(event);
+    setDropdownPositions(prev => ({
+      ...prev,
+      [dropdownKey]: position
+    }));
     
     // Close all other dropdowns and open this one IMMEDIATELY for snappy UX
     setPrintingDropdowns({ [dropdownKey]: true });
@@ -2263,7 +2308,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open dropdown if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Show printing dropdown instead of modal for better UX
-                      handleCardNameClick(card, null, 'user1');
+                      handleCardNameClick(card, null, 'user1', e);
                     }}
                   >
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -2274,7 +2319,7 @@ const TradeManagementPage = ({ isNew }) => {
                         data-card-name="true"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleCardNameClick(card, null, 'user1');
+                          handleCardNameClick(card, null, 'user1', e);
                         }}
                         style={{ 
                           fontWeight: 'bold',
@@ -2297,7 +2342,12 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '100%',
+                          ...(dropdownPositions[`user1-${card.id}`] ? {
+                            top: dropdownPositions[`user1-${card.id}`].top,
+                            bottom: dropdownPositions[`user1-${card.id}`].bottom
+                          } : {
+                            top: '100%'
+                          }),
                           left: 0,
                           width: '300px', // Fixed width for better layout
                           backgroundColor: 'white',
@@ -2738,7 +2788,7 @@ const TradeManagementPage = ({ isNew }) => {
                       // Don't open dropdown if clicking control buttons
                       if (e.target.closest('.trade-controls')) return;
                       // Show printing dropdown instead of modal for better UX
-                      handleCardNameClick(card, null, 'user2');
+                      handleCardNameClick(card, null, 'user2', e);
                     }}
                   >
                     <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -2749,7 +2799,7 @@ const TradeManagementPage = ({ isNew }) => {
                         data-card-name="true"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleCardNameClick(card, null, 'user2');
+                          handleCardNameClick(card, null, 'user2', e);
                         }}
                         style={{ 
                           fontWeight: 'bold',
@@ -2772,7 +2822,12 @@ const TradeManagementPage = ({ isNew }) => {
                           data-printing-dropdown="true"
                           style={{
                           position: 'absolute',
-                          top: '100%',
+                          ...(dropdownPositions[`user2-${card.id}`] ? {
+                            top: dropdownPositions[`user2-${card.id}`].top,
+                            bottom: dropdownPositions[`user2-${card.id}`].bottom
+                          } : {
+                            top: '100%'
+                          }),
                           left: 0,
                           width: '300px', // Fixed width for better layout
                           backgroundColor: 'white',
