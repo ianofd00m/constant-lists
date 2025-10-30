@@ -22,6 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { toast } from 'react-toastify';
 import { getUnifiedCardPrice } from '../utils/UnifiedPricing';
 
 // Sortable header cell component
@@ -230,11 +231,222 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
   );
 }
 
-// Clickable foil toggle cell
+// Editable purchase date cell
+function EditablePurchaseDateCell({ item, onUpdate }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US');
+  };
+
+  const parseDate = (input) => {
+    if (!input) return null;
+    
+    // Remove any non-numeric characters except /
+    const clean = input.replace(/[^0-9/]/g, '');
+    
+    // Try different date formats
+    const formats = [
+      // MM/DD/YYYY, MM/DD/YY
+      /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/,
+      // MMDDYYYY, MMDDYY  
+      /^(\d{2})(\d{2})(\d{2,4})$/,
+      // MDDYYYY, MDYYYY, MDDYY, MDYY
+      /^(\d{1})(\d{1,2})(\d{2,4})$/,
+      // YYYYMMDD, YYYYMMD
+      /^(\d{4})(\d{1,2})(\d{1,2})$/,
+      // YYMMDD, YYMMD, YYMDD, YYMD
+      /^(\d{2})(\d{1,2})(\d{1,2})$/
+    ];
+
+    let month, day, year;
+    
+    for (let i = 0; i < formats.length; i++) {
+      const match = clean.match(formats[i]);
+      if (match) {
+        if (i === 0) { // MM/DD/YYYY or MM/DD/YY
+          month = parseInt(match[1]);
+          day = parseInt(match[2]);
+          year = parseInt(match[3]);
+        } else if (i <= 2) { // MMDDYYYY, MMDDYY, MDDYYYY, etc.
+          month = parseInt(match[1]);
+          day = parseInt(match[2]);
+          year = parseInt(match[3]);
+        } else { // YYYY/YY first formats
+          year = parseInt(match[1]);
+          month = parseInt(match[2]);
+          day = parseInt(match[3]);
+        }
+        break;
+      }
+    }
+
+    if (!month || !day || !year) return null;
+    
+    // Convert 2-digit years to 4-digit
+    if (year < 100) {
+      year = year < 50 ? 2000 + year : 1900 + year;
+    }
+    
+    // Validate ranges
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    
+    const date = new Date(year, month - 1, day);
+    return isNaN(date.getTime()) ? null : date.toISOString();
+  };
+
+  const originalValue = item.purchase_date || item.dateAdded;
+
+  const handleSave = () => {
+    const parsedDate = parseDate(editValue);
+    if (!parsedDate && editValue.trim()) {
+      toast.error('Please enter a valid date');
+      return;
+    }
+    
+    onUpdate(item.id, 'purchase_date', parsedDate);
+    setIsEditing(false);
+    setEditValue('');
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValue('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleCancel}
+          placeholder="MM/DD/YYYY"
+          style={{
+            width: '90px',
+            padding: '2px 4px',
+            border: '1px solid #007bff',
+            borderRadius: 2,
+            fontSize: '11px'
+          }}
+          autoFocus
+          onFocus={(e) => e.target.select()}
+        />
+        <button
+          onClick={handleSave}
+          style={{
+            width: '16px',
+            height: '16px',
+            border: 'none',
+            borderRadius: 2,
+            backgroundColor: '#28a745',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          ✓
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      style={{ 
+        textAlign: 'center', 
+        fontSize: '11px', 
+        color: '#666',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        borderRadius: 2,
+        minHeight: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={() => {
+        setEditValue(formatDate(originalValue));
+        setIsEditing(true);
+      }}
+      title="Click to edit purchase date"
+    >
+      {originalValue ? formatDate(originalValue) : 'Click to add'}
+    </div>
+  );
+}
+
+// Clickable foil toggle cell with rainbow shimmer star
 function FoilToggleCell({ item, onUpdate }) {
   const handleToggle = () => {
     onUpdate(item.id, 'foil', !item.foil);
   };
+  
+  // Create dynamic CSS for animation
+  const createRainbowAnimation = () => {
+    const styleId = 'foil-rainbow-animation';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes rainbow-shimmer {
+          0% { 
+            background-position: 0% 50%; 
+            filter: hue-rotate(0deg) drop-shadow(0 0 3px rgba(255,255,255,0.8));
+          }
+          25% { 
+            background-position: 100% 50%; 
+            filter: hue-rotate(90deg) drop-shadow(0 0 3px rgba(255,255,255,0.8));
+          }
+          50% { 
+            background-position: 100% 100%; 
+            filter: hue-rotate(180deg) drop-shadow(0 0 3px rgba(255,255,255,0.8));
+          }
+          75% { 
+            background-position: 0% 100%; 
+            filter: hue-rotate(270deg) drop-shadow(0 0 3px rgba(255,255,255,0.8));
+          }
+          100% { 
+            background-position: 0% 0%; 
+            filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(255,255,255,0.8));
+          }
+        }
+        .foil-star {
+          background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000);
+          background-size: 400% 400%;
+          background-clip: text;
+          -webkit-background-clip: text;
+          color: transparent;
+          animation: rainbow-shimmer 2s ease-in-out infinite;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  };
+  
+  // Add animation CSS when component mounts
+  React.useEffect(() => {
+    if (item.foil) {
+      createRainbowAnimation();
+    }
+  }, [item.foil]);
   
   return (
     <div 
@@ -242,9 +454,6 @@ function FoilToggleCell({ item, onUpdate }) {
         textAlign: 'center',
         cursor: 'pointer',
         padding: '4px',
-        borderRadius: 4,
-        backgroundColor: item.foil ? '#fff3cd' : 'transparent',
-        border: '1px solid ' + (item.foil ? '#ffc107' : 'transparent'),
         minHeight: '20px',
         display: 'flex',
         alignItems: 'center',
@@ -253,22 +462,16 @@ function FoilToggleCell({ item, onUpdate }) {
       onClick={handleToggle}
       title={`Click to toggle foil status (currently ${item.foil ? 'foil' : 'non-foil'})`}
     >
-      {item.foil ? (
-        <span style={{ 
-          color: '#ffa500', 
-          fontSize: '11px',
-          fontWeight: 'bold'
-        }}>
-          ✨ FOIL
-        </span>
-      ) : (
-        <span style={{ 
-          color: '#999', 
-          fontSize: '10px'
-        }}>
-          Normal
-        </span>
-      )}
+      <span 
+        className={item.foil ? 'foil-star' : ''}
+        style={{ 
+          fontSize: '16px',
+          fontWeight: 'bold',
+          color: item.foil ? 'transparent' : '#333'
+        }}
+      >
+        {item.foil ? '★' : '☆'}
+      </span>
     </div>
   );
 }
@@ -332,6 +535,7 @@ const DEFAULT_COLUMNS = {
   foil: { id: 'foil', title: 'Foil', visible: true, width: '70px', sortable: true },
   currentPrice: { id: 'currentPrice', title: 'Price', visible: false, width: '80px', sortable: true },
   purchasePrice: { id: 'purchasePrice', title: 'Paid', visible: false, width: '80px', sortable: true },
+  purchaseDate: { id: 'purchaseDate', title: 'Purchase Date', visible: false, width: '110px', sortable: true },
   netGain: { id: 'netGain', title: 'Gain %', visible: false, width: '80px', sortable: true },
   dateAdded: { id: 'dateAdded', title: 'Added', visible: false, width: '100px', sortable: true },
   actions: { id: 'actions', title: 'Actions', visible: true, width: '120px', sortable: false, fixed: true }
@@ -454,6 +658,13 @@ const COLUMN_RENDERERS = {
   
   purchasePrice: (item, onUpdate) => (
     <EditablePurchasePriceCell 
+      item={item} 
+      onUpdate={onUpdate}
+    />
+  ),
+  
+  purchaseDate: (item, onUpdate) => (
+    <EditablePurchaseDateCell 
       item={item} 
       onUpdate={onUpdate}
     />
@@ -624,26 +835,6 @@ export default function EnhancedCollectionTable({
       gap: 4 
     }}>
       <button 
-        onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-        style={{
-          width: 18,
-          height: 18,
-          border: '1px solid #ddd',
-          borderRadius: 2,
-          backgroundColor: '#fff',
-          cursor: 'pointer',
-          fontSize: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          lineHeight: 1,
-          color: '#000',
-          fontWeight: 'bold'
-        }}
-      >
-        -
-      </button>
-      <button 
         onClick={() => onQuantityChange(item.id, item.quantity + 1)}
         style={{
           width: 18,
@@ -660,6 +851,7 @@ export default function EnhancedCollectionTable({
           color: '#000',
           fontWeight: 'bold'
         }}
+        title="Add another copy of this card"
       >
         +
       </button>
@@ -703,11 +895,11 @@ export default function EnhancedCollectionTable({
             onChange={(e) => setFilterText(e.target.value)}
             style={{
               padding: '8px 12px',
-              border: '1px solid #555',
+              border: '1px solid #ddd',
               borderRadius: 4,
               fontSize: 14,
-              backgroundColor: '#2c2c2c',
-              color: 'white',
+              backgroundColor: 'white',
+              color: 'black',
               minWidth: '200px'
             }}
           />
@@ -718,11 +910,11 @@ export default function EnhancedCollectionTable({
             onChange={(e) => setSortBy(e.target.value)}
             style={{
               padding: '8px 12px',
-              border: '1px solid #555',
+              border: '1px solid #ddd',
               borderRadius: 4,
               fontSize: 14,
-              backgroundColor: '#2c2c2c',
-              color: 'white',
+              backgroundColor: 'white',
+              color: 'black',
               minWidth: '150px'
             }}
           >
@@ -741,10 +933,10 @@ export default function EnhancedCollectionTable({
             onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
             style={{
               padding: '8px 12px',
-              border: '1px solid #555',
+              border: '1px solid #ddd',
               borderRadius: 4,
-              backgroundColor: '#2c2c2c',
-              color: 'white',
+              backgroundColor: '#f8f9fa',
+              color: 'black',
               cursor: 'pointer',
               fontSize: 14
             }}
@@ -758,10 +950,10 @@ export default function EnhancedCollectionTable({
               onClick={() => setShowColumnMenu(!showColumnMenu)}
               style={{
                 padding: '8px 12px',
-                border: '1px solid #555',
+                border: '1px solid #ddd',
                 borderRadius: 4,
-                backgroundColor: '#2c2c2c',
-                color: 'white',
+                backgroundColor: '#f8f9fa',
+                color: 'black',
                 cursor: 'pointer',
                 fontSize: 14
               }}
