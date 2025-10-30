@@ -8,6 +8,7 @@ import { parseCameraText } from '../utils/cameraParser';
 import { parseScryfallJSON, parseScryfallCollection } from '../utils/scryfallParser';
 import { parseDek, convertDekToCollection } from '../utils/dekParser';
 import { parseSimpleText, convertSimpleTextToCollection } from '../utils/simpleTextParser';
+import { documentParser, getSupportedFormats, isFormatSupported } from '../utils/documentParser';
 
 function getRarityColor(rarity) {
   const colors = {
@@ -62,10 +63,11 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
     const fileName = file.name.toLowerCase();
     const fileExtension = fileName.split('.').pop();
 
-    // Validate file type and size
-    const allowedExtensions = ['csv', 'txt', 'dek', 'json'];
-    if (!allowedExtensions.includes(fileExtension)) {
-      toast.error(`Please select a supported file type: ${allowedExtensions.join(', ')}`);
+    // Validate file type and size using comprehensive format checker
+    if (!isFormatSupported(fileName)) {
+      const supportedFormats = getSupportedFormats();
+      const allExtensions = Object.values(supportedFormats).flat();
+      toast.error(`Unsupported file type. Supported formats: ${allExtensions.join(', ')}`);
       return;
     }
 
@@ -74,35 +76,8 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target.result;
-      
-      // Route to appropriate parser based on file extension
-      switch (fileExtension) {
-        case 'csv':
-          setCsvData(content);
-          processCSVData(content);
-          break;
-        case 'txt':
-          setTextData(content);
-          processTextData(content);
-          break;
-        case 'dek':
-          processDeKData(content);
-          break;
-        case 'json':
-          setJsonData(content);
-          processJSONData(content);
-          break;
-        default:
-          toast.error('Unsupported file type');
-      }
-    };
-    reader.onerror = () => {
-      toast.error('Error reading file. Please try again.');
-    };
-    reader.readAsText(file);
+    // Use comprehensive document parser for all file types
+    processDocumentFile(file, fileExtension);
   };
 
   const handleJSONFileUpload = async (event) => {
@@ -212,6 +187,43 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
     } catch (error) {
       console.error('DEK parsing error:', error);
       toast.error(`DEK parsing failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const processDocumentFile = async (file, fileExtension) => {
+    setIsProcessing(true);
+    try {
+      // Use comprehensive document parser
+      const parsed = await documentParser.parseDocument(file);
+      setPreviewData(parsed);
+      setShowPreview(true);
+      
+      const formatName = fileExtension.toUpperCase();
+      toast.success(`Parsed ${parsed.length} cards from ${formatName} file`);
+      
+      // Update appropriate data field for display
+      if (['csv'].includes(fileExtension)) {
+        setCsvData(`Imported from ${file.name}`);
+      } else if (['txt', 'rtf', 'md', 'html', 'xml'].includes(fileExtension)) {
+        setTextData(`Imported from ${file.name}`);
+      } else if (['json'].includes(fileExtension)) {
+        setJsonData(`Imported from ${file.name}`);
+      }
+      
+    } catch (error) {
+      console.error(`${fileExtension.toUpperCase()} parsing error:`, error);
+      toast.error(`${fileExtension.toUpperCase()} parsing failed: ${error.message}`);
+      
+      // Provide helpful suggestions based on file type
+      if (['xlsx', 'xls', 'ods', 'numbers'].includes(fileExtension)) {
+        toast.info('💡 Tip: For best results with spreadsheets, export as CSV first');
+      } else if (['docx', 'doc', 'odt', 'pages'].includes(fileExtension)) {
+        toast.info('💡 Tip: For better accuracy, copy text content and use Text Import');
+      } else if (fileExtension === 'pdf') {
+        toast.info('💡 Tip: Copy text from PDF and use Text Import for best results');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -352,7 +364,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
             style={tabStyle(activeTab === 'csv')} 
             onClick={() => setActiveTab('csv')}
           >
-            📄 File Upload
+            � Universal Upload
           </button>
           <button 
             style={tabStyle(activeTab === 'text')} 
@@ -377,19 +389,20 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
         {/* File Upload Tab */}
         {activeTab === 'csv' && (
           <div>
-            <h3>Upload Files</h3>
+            <h3>Upload Files - Universal Format Support</h3>
             <p style={{ color: '#666', marginBottom: 16 }}>
-              <strong>Supported formats:</strong> CSV, TXT, DEK (XML), JSON<br />
-              <strong>CSV sources:</strong> <strong>Moxfield</strong>, <strong>Archidekt</strong>, <strong>EchoMTG</strong>, <strong>MTGGoldfish</strong>, <strong>Deckbox</strong>, and more.<br />
-              <strong>JSON sources:</strong> Scryfall API exports, deck exports<br />
-              <strong>DEK files:</strong> XML deck format from various deck builders<br />
-              <strong>All data preserved:</strong> Quantities, Names, Sets, Foil, Condition, Language, Signed, Artist Proof, Altered Art, Misprints, Promos, Prices, Tradelist/Wishlist counts, Notes, Tags, and more!
+              <strong>📄 Document Formats:</strong> Word (.docx, .doc), OpenDocument (.odt), Apple Pages (.pages), RTF, Markdown (.md), HTML, XML, LaTeX (.tex)<br />
+              <strong>📊 Spreadsheet Formats:</strong> Excel (.xlsx, .xlsm, .xlsb, .xls), OpenDocument (.ods), Apple Numbers (.numbers), CSV<br />
+              <strong>📋 Text Formats:</strong> Plain Text (.txt), Rich Text (.rtf), Markdown (.md)<br />
+              <strong>🔗 Data Formats:</strong> JSON (Scryfall), DEK (XML deck format), PDF (experimental)<br />
+              <strong>🏆 Platform Support:</strong> <strong>Moxfield</strong>, <strong>Archidekt</strong>, <strong>EchoMTG</strong>, <strong>MTGGoldfish</strong>, <strong>Deckbox</strong>, and virtually any platform<br />
+              <strong>💎 All data preserved:</strong> Quantities, Names, Sets, Foil, Condition, Language, Signed, Artist Proof, Altered Art, Misprints, Promos, Prices, Tradelist/Wishlist counts, Notes, Tags, and more!
             </p>
             
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.txt,.dek,.json"
+              accept=".csv,.txt,.dek,.json,.docx,.doc,.odt,.pages,.rtf,.md,.pdf,.html,.htm,.xml,.tex,.xlsx,.xlsm,.xlsb,.xls,.ods,.numbers"
               onChange={handleFileUpload}
               style={{
                 marginBottom: 16,

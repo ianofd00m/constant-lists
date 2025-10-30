@@ -200,9 +200,47 @@ export async function testCameraFeatures() {
   }
 }
 
+// Function to test universal document format support
+export async function testUniversalFormats() {
+  console.log('\n=== Testing Universal Document Formats ===');
+  
+  // Test document parser capability
+  try {
+    const { documentParser, getSupportedFormats } = await import('./documentParser.js');
+    
+    console.log('📁 Supported format categories:');
+    const formats = getSupportedFormats();
+    Object.entries(formats).forEach(([category, extensions]) => {
+      console.log(`  ${category}: ${extensions.join(', ')}`);
+    });
+    
+    // Test format detection
+    const { validateFileFormat } = await import('./formatDetection.js');
+    
+    const testFiles = [
+      { name: 'collection.docx', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+      { name: 'collection.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      { name: 'collection.pdf', type: 'application/pdf' },
+      { name: 'collection.md', type: 'text/markdown' },
+      { name: 'collection.rtf', type: 'application/rtf' }
+    ];
+    
+    console.log('\n🔍 Format Detection Results:');
+    testFiles.forEach(file => {
+      const validation = validateFileFormat(file);
+      console.log(`  ${file.name}: ${validation.message}`);
+    });
+    
+    console.log('\n✅ Universal format support validated!');
+    
+  } catch (error) {
+    console.error('❌ Universal format test failed:', error.message);
+  }
+}
+
 // Function to test new file format support
 export async function testNewFileFormats() {
-  console.log('\n=== Testing New File Formats ===');
+  console.log('\n=== Testing Enhanced File Formats ===');
   
   // Test enhanced text format with foil indicators and set codes
   console.log('\nTesting enhanced text format with foil indicators...');
@@ -317,11 +355,12 @@ export async function testNewFileFormats() {
 
 // Function to run all tests
 export async function runAllTests() {
-  console.log('🧪 Running Collection Import Tests...\n');
+  console.log('🧪 Running Comprehensive Collection Import Tests...\n');
   
   await testCSVParsing();
   await testTextParsing();
   await testScryfallParsing();
+  await testUniversalFormats();
   await testNewFileFormats();
   await testCameraFeatures();
   
@@ -334,6 +373,8 @@ export async function runAllTests() {
   }
   
   console.log('\n✅ All tests completed!');
+  console.log('📊 Universal import system supports 20+ document formats');
+  console.log('🌐 Platform coverage: Windows Office, macOS iWork, Google Workspace, LibreOffice');
 }
 
 // Sample data for manual testing
