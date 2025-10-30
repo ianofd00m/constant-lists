@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import ImportModal from './ImportModal';
+import { storageManager } from '../utils/storageManager';
 
 // Force cache refresh - no yellow backgrounds
 
@@ -394,27 +395,72 @@ export default function CollectPage() {
   const [collection, setCollection] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Load collection from localStorage
+  // Load collection from smart storage
   useEffect(() => {
     try {
-      const savedCollection = localStorage.getItem('cardCollection');
-      if (savedCollection) {
-        setCollection(JSON.parse(savedCollection));
+      console.log('📖 Loading collection with smart storage...');
+      
+      // Try chunked storage first
+      const chunkedCollection = storageManager.getChunkedItem('cardCollection');
+      if (chunkedCollection && chunkedCollection.length > 0) {
+        console.log(`✅ Loaded ${chunkedCollection.length} cards from chunked storage`);
+        setCollection(chunkedCollection);
+        return;
       }
+
+      // Fall back to regular storage
+      const savedCollection = storageManager.getItem('cardCollection');
+      if (savedCollection && savedCollection.length > 0) {
+        console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
+        setCollection(savedCollection);
+      } else {
+        console.log('📝 No existing collection found, starting fresh');
+      }
+
+      // Show storage stats
+      const stats = storageManager.getStats();
+      console.log('📊 Storage stats:', {
+        usage: `${stats.percentage.toFixed(1)}%`,
+        used: `${(stats.used / 1024 / 1024).toFixed(1)}MB`,
+        available: `${(stats.available / 1024 / 1024).toFixed(1)}MB`,
+        items: stats.itemCounts
+      });
+      
     } catch (error) {
-      console.error('Error loading collection:', error);
-      toast.error('Error loading collection');
+      console.error('❌ Error loading collection:', error);
+      toast.error('Error loading collection - using empty collection');
     }
   }, []);
 
-  // Save collection to localStorage whenever it changes
+  // Save collection using smart storage with quota management
   const saveCollection = (newCollection) => {
     try {
-      localStorage.setItem('cardCollection', JSON.stringify(newCollection));
-      setCollection(newCollection);
+      console.log(`💾 Saving collection with ${newCollection.length} cards...`);
+      
+      // Use smart storage with compression and quota management
+      const success = storageManager.setItem('cardCollection', newCollection, {
+        clearOldData: true // Clear old data if needed to make space
+      });
+
+      if (success) {
+        setCollection(newCollection);
+        console.log('✅ Collection saved successfully');
+        
+        // Show success toast with storage info
+        const stats = storageManager.getStats();
+        toast.success(`Collection saved! Storage: ${stats.percentage.toFixed(1)}% used`);
+      } else {
+        throw new Error('Smart storage failed to save collection');
+      }
+      
     } catch (error) {
-      console.error('Error saving collection:', error);
-      toast.error('Error saving collection');
+      console.error('❌ Error saving collection:', error);
+      
+      if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+        toast.error('Collection too large for browser storage. Try exporting to file instead.');
+      } else {
+        toast.error('Error saving collection: ' + error.message);
+      }
     }
   };
 

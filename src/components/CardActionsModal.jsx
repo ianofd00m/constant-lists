@@ -6,6 +6,7 @@ import PrintingPreferences from '../utils/PrintingPreferences';
 import PrintingCache from '../utils/PrintingCache';
 import OracleTagsIntegration from './OracleTagsIntegration';
 import { getUnifiedCardPrice, formatPrice } from '../utils/UnifiedPricing';
+import { storageManager } from '../utils/storageManager';
 // import OtagIntegration from './OtagIntegration'; // Temporarily commented out to debug
 
 // Basic land preferred printings (consistent with DeckViewEdit)
@@ -884,7 +885,7 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
   // Function to get collection status for a specific printing
   const getCollectionStatus = useCallback((printing) => {
     try {
-      const collection = JSON.parse(localStorage.getItem('cardCollection') || '[]');
+      const collection = storageManager.getChunkedItem('cardCollection') || [];
       
       // Check for exact printing matches
       const foilCount = collection

@@ -6,6 +6,7 @@ import App from './App.jsx'
 // Import utilities for global debugging access
 import PrintingPreferences from './utils/PrintingPreferences'
 import PrintingCache from './utils/PrintingCache'
+import { storageDebugger } from './utils/storageDebugger'
 
 console.log('main.jsx loaded');
 

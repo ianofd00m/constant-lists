@@ -9,6 +9,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { storageManager } from "../utils/storageManager";
 import "react-toastify/dist/ReactToastify.css";
 import CardActionsModal from "./CardActionsModal";
 import "./CardActionsModal.css";
@@ -1130,8 +1131,8 @@ DeckCardRow.displayName = "DeckCardRow";
 // Helper function to get collection status for a card
 const getCollectionStatus = (cardData) => {
   try {
-    // Get collection from localStorage
-    const collection = JSON.parse(localStorage.getItem('cardCollection') || '[]');
+    // Get collection from smart storage
+    const collection = storageManager.getChunkedItem('cardCollection') || [];
     
     // Create a map for faster lookup: printing_id + foil -> quantity
     const collectionMap = new Map();
@@ -7542,8 +7543,8 @@ export default function DeckViewEdit({ isPublic = false }) {
       
       // console.log('[AddToCollection] Final collection item:', collectionItem);
 
-      // Get existing collection from localStorage
-      const existingCollection = JSON.parse(localStorage.getItem('cardCollection') || '[]');
+      // Get existing collection from smart storage
+      const existingCollection = storageManager.getChunkedItem('cardCollection') || [];
       
       // Check if this exact printing/foil combination already exists
       const existingIndex = existingCollection.findIndex(item => 
@@ -7561,8 +7562,14 @@ export default function DeckViewEdit({ isPublic = false }) {
         toast.success(`Added ${collectionItem.name} (${foilStatus ? 'Foil' : 'Non-foil'}) to collection!`);
       }
       
-      // Save updated collection
-      localStorage.setItem('cardCollection', JSON.stringify(existingCollection));
+      // Save updated collection using smart storage
+      const success = storageManager.setItem('cardCollection', existingCollection, {
+        clearOldData: true
+      });
+      if (!success) {
+        toast.error('Failed to save collection - storage may be full');
+        return;
+      }
       
       // Force re-render of collection status grouping if currently grouped by collection status
       if (groupBy === 'collectionStatus') {
@@ -7591,8 +7598,8 @@ export default function DeckViewEdit({ isPublic = false }) {
       let failureCount = 0;
       const selectedCardIds = Array.from(selectedCards);
       
-      // Get existing collection from localStorage
-      const existingCollection = JSON.parse(localStorage.getItem('cardCollection') || '[]');
+      // Get existing collection from smart storage
+      const existingCollection = storageManager.getChunkedItem('cardCollection') || [];
       
       selectedCardIds.forEach(cardId => {
         try {
@@ -7646,8 +7653,14 @@ export default function DeckViewEdit({ isPublic = false }) {
         }
       });
       
-      // Save updated collection
-      localStorage.setItem('cardCollection', JSON.stringify(existingCollection));
+      // Save updated collection using smart storage
+      const success = storageManager.setItem('cardCollection', existingCollection, {
+        clearOldData: true
+      });
+      if (!success) {
+        toast.error('Failed to save bulk collection - storage may be full');
+        return;
+      }
       
       // Force re-render if grouped by collection status
       if (groupBy === 'collectionStatus') {
