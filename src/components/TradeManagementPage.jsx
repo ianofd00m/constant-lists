@@ -2376,8 +2376,8 @@ const TradeManagementPage = ({ isNew }) => {
                           style={{
                           position: 'absolute',
                           top: '-2px', // Overlay exactly on top of card
-                          left: '-2px', // Account for border and padding
-                          right: '-10px', // Match parent width exactly including gaps
+                          left: '-8px', // Extend to full container width
+                          right: '-8px', // Extend to full container width 
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
@@ -2397,7 +2397,7 @@ const TradeManagementPage = ({ isNew }) => {
                             cursor: 'pointer',
                             backgroundColor: '#e3f2fd',
                             borderBottom: '1px solid #007bff',
-                            padding: '0', // Match original card padding exactly  
+                            padding: '0 8px', // Add padding to align with card content
                             minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -2483,7 +2483,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 cursor: 'pointer',
                                 backgroundColor: 'white',
                                 borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
-                                padding: '0', // Match card padding exactly
+                                padding: '0 8px', // Add padding to align with card content
                                 minHeight: '24px', // Match card height exactly
                                 transition: 'background-color 0.2s ease'
                               }}
@@ -2995,8 +2995,8 @@ const TradeManagementPage = ({ isNew }) => {
                           style={{
                           position: 'absolute',
                           top: '-2px', // Overlay exactly on top of card
-                          left: '-2px', // Account for border and padding
-                          right: '-10px', // Match parent width exactly including gaps
+                          left: '-8px', // Extend to full container width
+                          right: '-8px', // Extend to full container width 
                           backgroundColor: 'white',
                           border: '1px solid #007bff',
                           borderRadius: '4px',
@@ -3016,7 +3016,7 @@ const TradeManagementPage = ({ isNew }) => {
                             cursor: 'pointer',
                             backgroundColor: '#e3f2fd',
                             borderBottom: '1px solid #007bff',
-                            padding: '0', // Match original card padding exactly
+                            padding: '0 8px', // Add padding to align with card content
                             minHeight: '24px' // Match card height exactly
                           }}>
                             <span style={{ fontWeight: 'bold', color: '#333', minWidth: '20px', fontSize: '11px' }}>
@@ -3102,7 +3102,7 @@ const TradeManagementPage = ({ isNew }) => {
                                 cursor: 'pointer',
                                 backgroundColor: 'white',
                                 borderBottom: pIndex < availablePrintings[card.name].filter(p => p.id !== card.scryfall_json?.id).length - 1 ? '1px solid #eee' : 'none',
-                                padding: '0', // Match card padding exactly
+                                padding: '0 8px', // Add padding to align with card content
                                 minHeight: '24px', // Match card height exactly
                                 transition: 'background-color 0.2s ease'
                               }}
