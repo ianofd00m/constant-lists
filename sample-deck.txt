@@ -1,0 +1,19 @@
+2 Questing Beast
+3 Surrak, the Hunt Caller
+3 Steel Leaf Champion
+4 Strangleroot Geist
+4 Elvish Mystic
+2 Garruk's Uprising
+4 Aspect of Hydra
+19 Forest
+4 Yorvo, Lord of Garenbrig
+4 Vines of Vastwood
+3 Ghalta, Primal Hunger
+4 Llanowar Elves
+4 Lovestruck Beast
+
+// Sideboard
+2 Tormod's Crypt
+3 Veil of Summer
+1 Ancient Grudge
+2 Scavenging Ooze

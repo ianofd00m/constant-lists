@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Deck xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <NetDeckID>0</NetDeckID>
+  <PreconstructedDeckID>0</PreconstructedDeckID>
+  <Cards CatID="78482" Quantity="2" Sideboard="false" Name="Questing Beast"/>
+  <Cards CatID="56146" Quantity="3" Sideboard="false" Name="Surrak, the Hunt Caller"/>
+  <Cards CatID="67829" Quantity="3" Sideboard="false" Name="Steel Leaf Champion"/>
+  <Cards CatID="43153" Quantity="4" Sideboard="false" Name="Strangleroot Geist"/>
+  <Cards CatID="88021" Quantity="4" Sideboard="false" Name="Elvish Mystic"/>
+  <Cards CatID="81599" Quantity="2" Sideboard="false" Name="Garruk's Uprising"/>
+  <Cards CatID="51557" Quantity="4" Sideboard="false" Name="Aspect of Hydra"/>
+  <Cards CatID="91496" Quantity="19" Sideboard="false" Name="Forest"/>
+  <Cards CatID="78514" Quantity="4" Sideboard="false" Name="Yorvo, Lord of Garenbrig"/>
+  <Cards CatID="57150" Quantity="4" Sideboard="false" Name="Vines of Vastwood"/>
+  <Cards CatID="133470" Quantity="3" Sideboard="false" Name="Ghalta, Primal Hunger"/>
+  <Cards CatID="68161" Quantity="4" Sideboard="false" Name="Llanowar Elves"/>
+  <Cards CatID="101202" Quantity="4" Sideboard="false" Name="Lovestruck Beast"/>
+  <Cards CatID="12345" Quantity="2" Sideboard="true" Name="Tormod's Crypt"/>
+  <Cards CatID="12346" Quantity="3" Sideboard="true" Name="Veil of Summer"/>
+</Deck>

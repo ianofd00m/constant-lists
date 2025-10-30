@@ -27,6 +27,7 @@
     "react-toastify": "^11.0.5",
     "redis": "^5.5.6",
     "stream-json": "^1.9.1",
+    "tesseract.js": "^6.0.1",
     "typesense": "^2.0.3",
     "vite": "^6.3.5"
   },

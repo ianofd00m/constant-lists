@@ -1,0 +1,40 @@
+// Enhanced Condition & Language Examples
+
+// TCGPlayer Standard Conditions
+4 Lightning Bolt - Alpha - Near Mint
+2 Black Lotus - Beta - Lightly Played
+1 Ancestral Recall - Alpha - Moderately Played
+1 Time Walk - Alpha - Heavily Played
+1 Timetwister - Alpha - Damaged
+
+// Additional Condition Variations
+1 Mox Pearl - Beta - Excellent
+1 Mox Sapphire - Beta - Very Fine
+1 Mox Ruby - Beta - Slightly Played
+1 Mox Emerald - Beta - Worn
+1 Mox Jet - Beta - Fair
+
+// Language Examples
+4 Lightning Bolt - French
+2 Black Lotus - Japanese
+1 Ancestral Recall - German
+1 Time Walk - Spanish
+1 Timetwister - Italian
+1 Mox Pearl - Portuguese
+1 Mox Sapphire - Korean
+1 Mox Ruby - Chinese
+1 Mox Emerald - Russian
+1 Chaos Orb - Phyrexian
+
+// Combined Examples with Set Codes, Foil, Condition, and Language
+1 Hazezon, Shaper of Sand (DMC) 32 *F* - Near Mint - English
+1 Lightning Bolt (LEA) 161 - Lightly Played - French
+1 Black Lotus (LEA) 232 - Near Mint - Japanese
+1 Ancestral Recall (LEA) 162 *F* - Moderately Played - German
+
+// Short Form Conditions (as commonly used)
+4 Sol Ring - NM
+2 Command Tower - LP
+1 Rhystic Study - MP
+1 Smothering Tithe - HP
+1 Cyclonic Rift - DMG

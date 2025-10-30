@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import ImportModal from './ImportModal';
 
 // Force cache refresh - no yellow backgrounds
 
@@ -391,6 +392,7 @@ function CollectionList({ collection, onQuantityChange, onRemove }) {
 
 export default function CollectPage() {
   const [collection, setCollection] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Load collection from localStorage
   useEffect(() => {
@@ -431,10 +433,84 @@ export default function CollectPage() {
   };
 
   const handleClearCollection = () => {
-    if (window.confirm('Are you sure you want to clear your entire collection? This cannot be undone.')) {
-      saveCollection([]);
-      toast.success('Collection cleared');
+    const totalCards = collection.reduce((sum, item) => sum + item.quantity, 0);
+    const uniqueCards = collection.length;
+    
+    const confirmMessage = `Are you sure you want to delete your entire collection?\n\nThis will permanently remove:\n• ${totalCards} total cards\n• ${uniqueCards} unique cards\n\nThis action cannot be undone!`;
+    
+    if (window.confirm(confirmMessage)) {
+      // Double confirmation for safety
+      if (window.confirm('Final confirmation: Delete everything? This is your last chance to cancel.')) {
+        try {
+          saveCollection([]);
+          toast.success(`Collection cleared! Removed ${totalCards} cards.`);
+        } catch (error) {
+          console.error('Error clearing collection:', error);
+          toast.error('Failed to clear collection. Please try again.');
+        }
+      }
     }
+  };
+
+  const handleImport = (importedCards) => {
+    if (!importedCards || importedCards.length === 0) {
+      toast.error('No cards to import');
+      return;
+    }
+
+    try {
+      // Merge with existing collection, handling duplicates
+      const updatedCollection = [...collection];
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      for (const importedCard of importedCards) {
+        // Validate imported card
+        if (!importedCard.name || !importedCard.quantity || importedCard.quantity < 1) {
+          console.warn('Skipping invalid card:', importedCard);
+          continue;
+        }
+
+        // Check for existing card (match by name, set, and foil status)
+        const existingCardIndex = updatedCollection.findIndex(existingCard => 
+          existingCard.name === importedCard.name &&
+          existingCard.set === importedCard.set &&
+          existingCard.foil === importedCard.foil
+        );
+
+        if (existingCardIndex !== -1) {
+          // Update quantity of existing card
+          updatedCollection[existingCardIndex].quantity += importedCard.quantity;
+          updatedCount++;
+        } else {
+          // Add new card to collection
+          updatedCollection.push({
+            ...importedCard,
+            id: importedCard.id || generateUniqueId(importedCard.name, importedCard.set, importedCard.foil),
+            dateAdded: new Date().toISOString()
+          });
+          addedCount++;
+        }
+      }
+
+      saveCollection(updatedCollection);
+      
+      const message = `Import complete! Added ${addedCount} new cards, updated ${updatedCount} existing cards.`;
+      toast.success(message);
+
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error(`Import failed: ${error.message}`);
+    }
+  };
+
+  const generateUniqueId = (name, set, foil) => {
+    const parts = [
+      name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
+      set || 'unknown',
+      foil ? 'foil' : 'normal'
+    ];
+    return parts.join('-') + '-' + Date.now() + '-' + Math.random().toString(36).substring(7);
   };
 
   return (
@@ -453,6 +529,48 @@ export default function CollectPage() {
         background: '#ffffff'
       }}>
         <h1 style={{ margin: 0 }}>Your Collection</h1>
+        
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            onClick={() => setShowImportModal(true)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            📥 Import Collection
+          </button>
+          
+          {collection.length > 0 && (
+            <button
+              onClick={handleClearCollection}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🗑️ Delete Collection
+            </button>
+          )}
+        </div>
       </div>
       
       <CollectionSummary collection={collection} />
@@ -460,6 +578,12 @@ export default function CollectPage() {
         collection={collection}
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveItem}
+      />
+      
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
       />
     </div>
   );
