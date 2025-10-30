@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import ImportModal from './ImportModal';
 import { storageManager } from '../utils/storageManager';
+import EnhancedCollectionTable from './EnhancedCollectionTable';
 
 // Force cache refresh - no yellow backgrounds
 
@@ -620,7 +621,7 @@ export default function CollectPage() {
       </div>
       
       <CollectionSummary collection={collection} />
-      <CollectionList 
+      <EnhancedCollectionTable 
         collection={collection}
         onQuantityChange={handleQuantityChange}
         onRemove={handleRemoveItem}
