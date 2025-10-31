@@ -117,7 +117,11 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/research" element={<ResearchPage />} />
           <Route path="/build" element={<BuildPageWithAuth />} />
-          <Route path="/collect" element={<CollectPage />} />
+          <Route path="/collect" element={
+            <RequireAuth>
+              <CollectPage />
+            </RequireAuth>
+          } />
           <Route path="/trade" element={<TradePage />} />
           <Route path="/trade/new" element={<TradeManagementPage isNew={true} />} />
           <Route path="/trades/:tradeId" element={<TradeManagementPage />} />
