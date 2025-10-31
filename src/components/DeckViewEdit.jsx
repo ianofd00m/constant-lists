@@ -6540,6 +6540,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       return;
     }
 
+    // CRITICAL: Validate cards array to prevent forEach errors
+    if (!Array.isArray(cards)) {
+      console.error('[FOREACH DEBUG] handleUpdateCard: cards is not an array:', typeof cards, cards);
+      toast.error("Failed to update card: Invalid deck data");
+      return;
+    }
+
     try {
       // Handle fresh price data updates from modal (non-intrusive background update)
       if (updates.freshPriceDataOnly && updates.scryfall_json) {
