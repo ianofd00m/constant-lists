@@ -47,6 +47,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewData, setPreviewData] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [enrichCards, setEnrichCards] = useState(true);
   
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -112,7 +113,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
 
     setIsProcessing(true);
     try {
-      const parsed = await parseCSV(data);
+      const parsed = await parseCSV(data, { enrichData: enrichCards });
       setPreviewData(parsed);
       setShowPreview(true);
       toast.success(`Parsed ${parsed.length} cards from CSV`);
@@ -132,7 +133,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
       // Try enhanced text parser first, then fallback to simple text parser
       let parsed;
       try {
-        parsed = await parseText(data);
+        parsed = await parseText(data, { enrichData: enrichCards });
       } catch {
         // If enhanced parser fails, try simple text parser
         const simpleCards = await parseSimpleText(data);
@@ -158,9 +159,9 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
       // Try collection format first, then standard format
       let parsed;
       try {
-        parsed = await parseScryfallCollection(data);
+        parsed = await parseScryfallCollection(data, { enrichData: enrichCards });
       } catch {
-        parsed = await parseScryfallJSON(data);
+        parsed = await parseScryfallJSON(data, { enrichData: enrichCards });
       }
       
       setPreviewData(parsed);
@@ -196,7 +197,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
     setIsProcessing(true);
     try {
       // Use comprehensive document parser
-      const parsed = await documentParser.parseDocument(file);
+      const parsed = await documentParser.parseDocument(file, { enrichData: enrichCards });
       setPreviewData(parsed);
       setShowPreview(true);
       
@@ -221,7 +222,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
         toast.info('💡 Tip: For best results with spreadsheets, export as CSV first');
       } else if (['docx', 'doc', 'odt', 'pages'].includes(fileExtension)) {
         toast.info('💡 Tip: For better accuracy, copy text content and use Text Import');
-      } else if (fileExtension === 'pdf') {
+      } else if (['docx', 'doc', 'odt', 'pages'].includes(fileExtension)) {
         toast.info('💡 Tip: Copy text from PDF and use Text Import for best results');
       }
     } finally {
@@ -272,7 +273,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
       setIsProcessing(true);
       try {
         const text = await parseCameraText(blob);
-        const parsed = await parseText(text);
+        const parsed = await parseText(text, { enrichData: enrichCards });
         setPreviewData(parsed);
         setShowPreview(true);
         toast.success(`Captured and parsed ${parsed.length} cards`);
@@ -303,6 +304,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
     setPreviewData([]);
     setShowPreview(false);
     setActiveTab('csv');
+    setEnrichCards(true); // Reset to default true
     onClose();
   };
 
@@ -384,6 +386,48 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
           >
             📷 Camera Scan
           </button>
+        </div>
+
+        {/* Enrichment Options */}
+        <div style={{ 
+          marginBottom: 20,
+          padding: 12,
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #e9ecef',
+          borderRadius: 6,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}>
+          <input
+            type="checkbox"
+            id="enrichCards"
+            checked={enrichCards}
+            onChange={(e) => setEnrichCards(e.target.checked)}
+            style={{
+              width: 16,
+              height: 16,
+              accentColor: '#007bff'
+            }}
+          />
+          <label 
+            htmlFor="enrichCards" 
+            style={{ 
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#333'
+            }}
+          >
+            ✨ Enrich card data with complete information
+          </label>
+          <div style={{ 
+            fontSize: 12,
+            color: '#666',
+            marginLeft: 'auto'
+          }}>
+            Adds missing type, colors, set names via Scryfall API
+          </div>
         </div>
 
         {/* File Upload Tab */}

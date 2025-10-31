@@ -181,7 +181,7 @@ function generateCardId(name, set, foil, collectorNumber) {
 }
 
 // Parse Scryfall collection format (with quantities)
-export async function parseScryfallCollection(jsonInput) {
+export async function parseScryfallCollection(jsonInput, options = {}) {
   if (!jsonInput || !jsonInput.trim()) {
     throw new Error('JSON input is empty');
   }
@@ -217,11 +217,16 @@ export async function parseScryfallCollection(jsonInput) {
     }
   } else {
     // Fall back to standard parsing
-    return parseScryfallJSON(jsonInput);
+    return parseScryfallJSON(jsonInput, options);
   }
 
   if (cards.length === 0) {
     throw new Error('No valid cards found in collection data');
+  }
+
+  // Apply enrichment if requested
+  if (options.enrichData) {
+    return await processImportedCards(cards);
   }
 
   return cards;

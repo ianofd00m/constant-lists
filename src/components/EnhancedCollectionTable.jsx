@@ -1366,42 +1366,6 @@ export default function EnhancedCollectionTable({
             }}
           />
           
-          {/* Clear Collection Button */}
-          {collection.length > 0 && (
-            <button
-              onClick={() => {
-                if (window.confirm('⚠️ Are you sure you want to clear your entire collection?\n\nThis will permanently delete all cards and cannot be undone.')) {
-                  // Clear localStorage collection data
-                  localStorage.removeItem('cardCollection');
-                  localStorage.removeItem('cardCollection_meta');
-                  
-                  // Clear any chunked storage
-                  Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('cardCollection_chunk_')) {
-                      localStorage.removeItem(key);
-                    }
-                  });
-                  
-                  // Refresh the page to update the UI
-                  window.location.reload();
-                }
-              }}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                fontSize: 14,
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-              title="Clear entire collection"
-            >
-              🗑️ Clear Collection
-            </button>
-          )}
-          
           {/* Sort Dropdown - Dark background with white text */}
           <select 
             value={sortBy} 
