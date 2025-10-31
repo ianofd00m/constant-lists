@@ -119,11 +119,11 @@ function CurrentPriceCell({ item }) {
       const result = getUnifiedCardPrice(cardData, {
         preferStoredPrice: false, // Use live Scryfall data
         fallbackPrice: null,
-        debugLogging: true // Enable debugging temporarily
+        debugLogging: false // Disabled verbose pricing debug logs
       });
       
-      console.log(`[PRICE DEBUG] ${item.name}: result=${JSON.stringify(result)}, hasScryfall=${!!item.scryfall_json}`);
-      console.log(`[PRICE DEBUG] Item structure:`, JSON.stringify(item, null, 2));
+      // console.log(`[PRICE DEBUG] ${item.name}: result=${JSON.stringify(result)}, hasScryfall=${!!item.scryfall_json}`);
+      // console.log(`[PRICE DEBUG] Item structure:`, JSON.stringify(item, null, 2));
       
       setPrice(result.price);
       setLoading(false);
@@ -763,10 +763,10 @@ function NetGainCell({ item }) {
       const result = getUnifiedCardPrice(cardData, {
         preferStoredPrice: false,
         fallbackPrice: null,
-        debugLogging: true // Enable debugging to see what's happening
+        debugLogging: false // Disabled verbose pricing debug logs
       });
       
-      console.log(`[GAIN DEBUG] ${item.name}: price=${result.price}, purchasePrice=${purchasePrice}`);
+      // console.log(`[GAIN DEBUG] ${item.name}: price=${result.price}, purchasePrice=${purchasePrice}`);
       
       const priceValue = parseFloat(result.price);
       setCurrentPrice(isNaN(priceValue) ? null : priceValue);

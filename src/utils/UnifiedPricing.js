@@ -154,7 +154,7 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
   const {
     preferStoredPrice = true,
     fallbackPrice = null,
-    debugLogging = false
+    debugLogging = false  // FORCE DEBUG LOGGING OFF - too verbose
   } = options;
   
   if (!cardData || typeof cardData !== 'object') {
@@ -169,9 +169,9 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
   }
   
   const cardName = findNestedValue(cardData, 'name') || 'Unknown Card';
-  const debugLog = debugLogging ? console.log : () => {};
+  const debugLog = () => {}; // Force debug logging off - too verbose
   
-  debugLog(`[UNIFIED PRICING] Processing: ${cardName}`);
+  // debugLog(`[UNIFIED PRICING] Processing: ${cardName}`);
   
   // Step 1: Check for stored modal price (highest priority if preferStoredPrice is true)
   if (preferStoredPrice) {
@@ -373,9 +373,10 @@ export const formatPrice = (price, options = {}) => {
 /**
  * Convenience function for getting price with debug logging
  * Useful for development and troubleshooting
+ * TEMPORARILY DISABLED - too verbose for normal use
  */
 export const debugGetCardPrice = (cardData, options = {}) => {
-  return getUnifiedCardPrice(cardData, { ...options, debugLogging: true });
+  return getUnifiedCardPrice(cardData, { ...options, debugLogging: false }); // Force off
 };
 
 export default {
