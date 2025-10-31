@@ -830,38 +830,17 @@ const COLUMN_RENDERERS = {
   ),
   
   colorIdentity: (item) => {
-    // Debug logging to see what data we have
-    console.log('Color Identity Debug - item:', {
-      name: item.name,
-      color_identity: item.color_identity,
-      colorIdentity: item.colorIdentity,
-      scryfall_json: item.scryfall_json ? {
-        color_identity: item.scryfall_json.color_identity,
-        hasData: !!item.scryfall_json
-      } : null,
-      card: item.card ? {
-        color_identity: item.card.color_identity,
-        scryfall_json: item.card.scryfall_json ? {
-          color_identity: item.card.scryfall_json.color_identity
-        } : null
-      } : null,
-      allKeys: Object.keys(item)
-    });
-    
-    // Try multiple possible data sources for color identity
+    // Use the 'colors' field since 'color_identity' doesn't exist in this data structure
     let colors = [];
     
-    // Check various possible data locations
-    if (item.color_identity && Array.isArray(item.color_identity)) {
-      colors = item.color_identity;
-    } else if (item.colorIdentity && Array.isArray(item.colorIdentity)) {
-      colors = item.colorIdentity;
-    } else if (item.scryfall_json?.color_identity && Array.isArray(item.scryfall_json.color_identity)) {
-      colors = item.scryfall_json.color_identity;
-    } else if (item.card?.color_identity && Array.isArray(item.card.color_identity)) {
-      colors = item.card.color_identity;
-    } else if (item.card?.scryfall_json?.color_identity && Array.isArray(item.card.scryfall_json.color_identity)) {
-      colors = item.card.scryfall_json.color_identity;
+    // Parse colors field - it might be a string or array
+    if (item.colors) {
+      if (Array.isArray(item.colors)) {
+        colors = item.colors;
+      } else if (typeof item.colors === 'string') {
+        // Split string into individual color characters
+        colors = item.colors.split('');
+      }
     }
     
     const colorMap = {
@@ -901,38 +880,8 @@ const COLUMN_RENDERERS = {
   },
   
   cardType: (item) => {
-    // Debug logging to see what data we have
-    console.log('Card Type Debug - item:', {
-      name: item.name,
-      type_line: item.type_line,
-      type: item.type,
-      scryfall_json: item.scryfall_json ? {
-        type_line: item.scryfall_json.type_line,
-        hasData: !!item.scryfall_json
-      } : null,
-      card: item.card ? {
-        type_line: item.card.type_line,
-        scryfall_json: item.card.scryfall_json ? {
-          type_line: item.card.scryfall_json.type_line
-        } : null
-      } : null,
-      allKeys: Object.keys(item)
-    });
-    
-    // Try multiple possible data sources for type line
-    let typeLine = '';
-    
-    if (item.type_line) {
-      typeLine = item.type_line;
-    } else if (item.type) {
-      typeLine = item.type;
-    } else if (item.scryfall_json?.type_line) {
-      typeLine = item.scryfall_json.type_line;
-    } else if (item.card?.type_line) {
-      typeLine = item.card.type_line;
-    } else if (item.card?.scryfall_json?.type_line) {
-      typeLine = item.card.scryfall_json.type_line;
-    }
+    // Use the 'card_type' field since 'type_line' doesn't exist in this data structure
+    let typeLine = item.card_type || '';
     
     // Extract main type from type line
     let mainType = '';
@@ -1005,38 +954,27 @@ const COLUMN_RENDERERS = {
   ),
   
   setName: (item) => {
-    // Debug logging to see what data we have
-    console.log('Set Name Debug - item:', {
-      name: item.name,
-      set: item.set,
-      set_name: item.set_name,
-      edition: item.edition,
-      scryfall_json: item.scryfall_json ? {
-        set_name: item.scryfall_json.set_name,
-        hasData: !!item.scryfall_json
-      } : null,
-      card: item.card ? {
-        set_name: item.card.set_name,
-        scryfall_json: item.card.scryfall_json ? {
-          set_name: item.card.scryfall_json.set_name
-        } : null
-      } : null,
-      allKeys: Object.keys(item)
-    });
-    
-    // Try multiple possible data sources for set name
+    // Use 'edition' field for set name since 'set_name' equals the set code
     let setName = '';
     
-    if (item.set_name && item.set_name !== item.set) {
-      setName = item.set_name;
-    } else if (item.scryfall_json?.set_name && item.scryfall_json.set_name !== item.set) {
-      setName = item.scryfall_json.set_name;
-    } else if (item.card?.set_name && item.card.set_name !== item.set) {
-      setName = item.card.set_name;
-    } else if (item.card?.scryfall_json?.set_name && item.card.scryfall_json.set_name !== item.set) {
-      setName = item.card.scryfall_json.set_name;
-    } else if (item.edition && item.edition !== item.set) {
+    // First try edition field, then fall back to set_name if it's different from set code
+    if (item.edition && item.edition !== item.set) {
       setName = item.edition;
+    } else if (item.set_name && item.set_name !== item.set) {
+      setName = item.set_name;
+    }
+    
+    // Map common set codes to full names as fallback
+    const setNameMap = {
+      'DSC': 'Dominaria Supplement Cards',
+      'RNA': 'Ravnica Allegiance', 
+      '2X2': 'Double Masters 2022',
+      'THS': 'Theros',
+      'C13': 'Commander 2013'
+    };
+    
+    if (!setName && item.set && setNameMap[item.set]) {
+      setName = setNameMap[item.set];
     }
     
     return (
