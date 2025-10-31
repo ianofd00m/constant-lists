@@ -1,55 +1,80 @@
-// ULTRA AGGRESSIVE FOREACH PROTECTION
-(function installUltraForEachProtection() {
-  console.log('[ULTRA FOREACH] Installing ultra forEach protection...');
+// NUCLEAR FOREACH PROTECTION - Multiple fallback strategies
+(function installNuclearForEachProtection() {
+  console.log('[NUCLEAR FOREACH] Installing nuclear forEach protection...');
   
-  // Method 1: Standard prototype patch
-  const originalForEach = Array.prototype.forEach;
-  Array.prototype.forEach = function(callback, thisArg) {
-    if (!Array.isArray(this)) {
-      console.error('[ULTRA FOREACH] Non-array forEach detected:', {
-        type: typeof this,
-        value: this,
-        constructor: this?.constructor?.name,
-        isNull: this === null,
-        isUndefined: this === undefined,
-        hasLength: this && 'length' in this,
-        length: this?.length
+  // Strategy 1: Patch the original method that was stored in HTML
+  const htmlOriginal = window.__originalForEach || Array.prototype.forEach;
+  
+  // Strategy 2: Override ALL possible forEach references
+  const forEachMethods = [
+    Array.prototype.forEach,
+    window.__originalForEach,
+    [].forEach,
+    Array.from([]).forEach
+  ].filter(Boolean);
+  
+  const safeForEach = function(callback, thisArg) {
+    const context = this;
+    if (!Array.isArray(context)) {
+      console.error('[NUCLEAR FOREACH] Non-array forEach detected:', {
+        type: typeof context,
+        value: context,
+        constructor: context?.constructor?.name,
+        isNull: context === null,
+        isUndefined: context === undefined,
+        hasLength: context && 'length' in context,
+        length: context?.length,
+        toString: typeof context?.toString === 'function' ? context.toString() : '[toString unavailable]'
       });
       console.trace();
       
-      // Try to convert if array-like
-      if (this && typeof this.length === 'number' && this.length >= 0) {
-        console.warn('[ULTRA FOREACH] Converting to array');
-        return originalForEach.call(Array.from(this), callback, thisArg);
+      // Try multiple conversion strategies
+      if (context && typeof context.length === 'number' && context.length >= 0) {
+        console.warn('[NUCLEAR FOREACH] Attempting array conversion...');
+        try {
+          return htmlOriginal.call(Array.from(context), callback, thisArg);
+        } catch (conversionError) {
+          console.error('[NUCLEAR FOREACH] Array.from failed:', conversionError);
+          try {
+            return htmlOriginal.call([...context], callback, thisArg);
+          } catch (spreadError) {
+            console.error('[NUCLEAR FOREACH] Spread operator failed:', spreadError);
+          }
+        }
       }
       
-      console.warn('[ULTRA FOREACH] Preventing crash - returning undefined');
+      console.warn('[NUCLEAR FOREACH] All conversion attempts failed - returning undefined');
       return;
     }
-    return originalForEach.call(this, callback, thisArg);
+    return htmlOriginal.call(context, callback, thisArg);
   };
   
-  // Method 2: Override global error handler to catch and suppress
-  window.addEventListener('error', function(event) {
-    if (event.error && event.error.message && event.error.message.includes('forEach is not a function')) {
-      console.error('[ULTRA FOREACH] Caught global forEach error:', event.error);
-      console.error('[ULTRA FOREACH] Error location:', event.filename, 'line:', event.lineno);
-      console.error('[ULTRA FOREACH] Preventing page crash');
-      event.preventDefault(); // Prevent the error from crashing the page
-      return false;
-    }
-  });
+  // Override Array.prototype.forEach
+  Array.prototype.forEach = safeForEach;
   
-  // Method 3: Promise rejection handler for async forEach errors
-  window.addEventListener('unhandledrejection', function(event) {
-    if (event.reason && event.reason.message && event.reason.message.includes('forEach is not a function')) {
-      console.error('[ULTRA FOREACH] Caught unhandled forEach promise rejection:', event.reason);
-      console.error('[ULTRA FOREACH] Preventing promise crash');
-      event.preventDefault();
-    }
-  });
+  // Override any cached references
+  if (window.__originalForEach) {
+    window.__originalForEach = safeForEach;
+  }
   
-  console.log('[ULTRA FOREACH] Ultra forEach protection installed');
+  // Strategy 3: Monkey patch Object.defineProperty to catch property assignments
+  const originalDefineProperty = Object.defineProperty;
+  Object.defineProperty = function(obj, prop, descriptor) {
+    if (prop === 'forEach' && descriptor && descriptor.value) {
+      console.log('[NUCLEAR FOREACH] Intercepting forEach property definition');
+      const originalValue = descriptor.value;
+      descriptor.value = function(callback, thisArg) {
+        if (!Array.isArray(this)) {
+          console.error('[NUCLEAR FOREACH] Intercepted forEach on non-array via defineProperty');
+          return safeForEach.call(this, callback, thisArg);
+        }
+        return originalValue.call(this, callback, thisArg);
+      };
+    }
+    return originalDefineProperty.call(this, obj, prop, descriptor);
+  };
+  
+  console.log('[NUCLEAR FOREACH] Nuclear forEach protection installed');
 })();
 
 import { StrictMode } from 'react'
