@@ -8,18 +8,22 @@ const scryfallCache = new Map();
 
 // Rate limiting and retry configuration
 const RATE_LIMIT = {
-  maxRequestsPerSecond: 8, // Conservative limit (Scryfall allows 10/sec)
-  maxConcurrent: 3,        // Maximum concurrent requests
-  retryAttempts: 3,        // Number of retry attempts
-  baseDelay: 125,          // Base delay between requests (ms)
-  retryDelay: 1000,        // Delay for retries (ms)
-  backoffMultiplier: 2     // Exponential backoff multiplier
+  maxRequestsPerSecond: 9.5, // Closer to Scryfall's 10/sec limit but safe
+  maxConcurrent: 5,          // Increase concurrent requests (Scryfall can handle this)
+  retryAttempts: 2,          // Reduce retries (most 404s won't succeed anyway)
+  baseDelay: 105,            // Slightly faster base delay (9.5 req/sec)
+  retryDelay: 800,           // Faster retry delay
+  backoffMultiplier: 1.8     // Less aggressive backoff
 };
 
 // Track active requests for rate limiting
 let activeRequests = 0;
 let lastRequestTime = 0;
 let requestQueue = [];
+
+// Session-level cache for cards (survives multiple imports in same session)
+const sessionCache = new Map();
+let cacheHits = 0;
 
 /**
  * Enriches a card with complete data from Scryfall API
@@ -36,18 +40,56 @@ export async function enrichCardData(card) {
     return card;
   }
 
+  // Check session cache first (huge time saver for duplicates)
+  const cacheKey = `${card.name}|${card.set}|${card.collector_number}`;
+  const cachedCard = sessionCache.get(cacheKey);
+  if (cachedCard) {
+    cacheHits++;
+    return { ...cachedCard, quantity: card.quantity }; // Preserve original quantity
+  }
+
   try {
     // Try to get data from Scryfall API
     const scryfallData = await fetchCardFromScryfall(card);
     
     if (scryfallData) {
-      return mergeCardData(card, scryfallData);
+      const enrichedCard = mergeCardData(card, scryfallData);
+      
+      // Cache the result for future use (without quantity to avoid conflicts)
+      const cacheVersion = { ...enrichedCard };
+      delete cacheVersion.quantity;
+      sessionCache.set(cacheKey, cacheVersion);
+      
+      return enrichedCard;
     }
   } catch (error) {
-    console.warn(`Failed to enrich card data for ${card.name}:`, error.message);
+    if (error.message.includes('Card not found')) {
+      // 404 - card doesn't exist with this exact printing
+      console.log(`📝 ${card.name} (${card.set}/${card.collector_number}) not found in Scryfall, using basic data`);
+      
+      // Return card with basic data structure for consistency
+      return {
+        ...card,
+        enrichment_status: 'not_found',
+        enrichment_note: 'Card printing not found in Scryfall database'
+      };
+    } else {
+      // Other API errors (network, rate limit, etc.)
+      console.warn(`⚠️ Failed to enrich ${card.name}:`, error.message);
+      
+      return {
+        ...card,
+        enrichment_status: 'failed',
+        enrichment_note: `API error: ${error.message}`
+      };
+    }
   }
 
-  return card;
+  return {
+    ...card,
+    enrichment_status: 'no_data',
+    enrichment_note: 'No additional data available'
+  };
 }
 
 /**
@@ -100,7 +142,14 @@ async function processQueue() {
     resolve(result);
     
   } catch (error) {
-    // Implement exponential backoff for retries
+    // Handle 404s differently - they're expected for some cards
+    if (error.message.includes('404') || (error.response && error.response.status === 404)) {
+      console.log(`ℹ️ Card not found in Scryfall: ${context.cardName || 'unknown'} - this is normal for some promotional/limited cards`);
+      reject(new Error(`Card not found: ${context.cardName || 'unknown'}`));
+      return;
+    }
+    
+    // Implement exponential backoff for retries (network issues, rate limits)
     if (attempts < RATE_LIMIT.retryAttempts && 
         (error.message.includes('Failed to fetch') || 
          error.message.includes('CORS') || 
@@ -114,6 +163,7 @@ async function processQueue() {
         processQueue();
       }, backoffDelay);
     } else {
+      console.warn(`❌ API call failed permanently: ${error.message}`);
       reject(error);
     }
   } finally {
@@ -132,11 +182,11 @@ async function processQueue() {
  */
 export async function enrichCardsBatch(cards, onProgress, options = {}) {
   const {
-    batchSize = 25,           // Smaller batches for better error handling
-    maxConcurrent = 3,        // Control concurrency
-    enableRetries = true,     // Enable retry logic
-    progressInterval = 50,    // Update progress every N cards
-    isLargeImport = false     // Optimize for very large imports (>5000 cards)
+    batchSize = isLargeImport ? 40 : 25,  // Larger batches for big imports
+    maxConcurrent = 5,                     // Increased concurrency 
+    enableRetries = true,                  // Enable retry logic
+    progressInterval = isLargeImport ? 200 : 50, // Less frequent progress updates for large imports
+    isLargeImport = false                  // Optimize for very large imports (>5000 cards)
   } = options;
 
   const enrichedCards = [];
@@ -147,16 +197,23 @@ export async function enrichCardsBatch(cards, onProgress, options = {}) {
   const uniqueCards = deduplicateCards(cards);
   console.log(`📊 Processing ${uniqueCards.length} unique cards (${cards.length} total)`);
 
-  // Adjust settings for very large imports
+  // Optimize settings for very large imports
+  let adjustedBatchSize = batchSize;
+  let adjustedProgressInterval = progressInterval;
+  
   if (isLargeImport && cards.length > 5000) {
-    console.log('🔧 Optimizing for large import (>5000 cards)');
-    options.batchSize = Math.min(batchSize, 15); // Smaller batches
-    options.progressInterval = Math.max(progressInterval, 100); // Less frequent updates
+    console.log('� Optimizing for large import (>5000 cards) - using aggressive performance settings');
+    adjustedBatchSize = 50; // Larger batches for better throughput
+    adjustedProgressInterval = Math.max(progressInterval, 250); // Less frequent updates
+    
+    // Log performance expectations
+    const estimatedTime = Math.ceil(uniqueCards.length / (RATE_LIMIT.maxRequestsPerSecond * 60));
+    console.log(`📊 Estimated processing time: ~${estimatedTime} minutes for ${uniqueCards.length} unique cards`);
   }
 
-  // Process cards in smaller batches with better error handling
-  for (let i = 0; i < uniqueCards.length; i += batchSize) {
-    const batch = uniqueCards.slice(i, i + batchSize);
+  // Process cards in optimized batches
+  for (let i = 0; i < uniqueCards.length; i += adjustedBatchSize) {
+    const batch = uniqueCards.slice(i, i + adjustedBatchSize);
     
     try {
       // Use Promise.allSettled for better error handling
@@ -172,18 +229,43 @@ export async function enrichCardsBatch(cards, onProgress, options = {}) {
         ))
       );
 
-      // Process results
+      // Process results with better error categorization
       for (let j = 0; j < results.length; j++) {
         const result = results[j];
         const originalCard = batch[j];
         
         if (result.status === 'fulfilled') {
-          enrichedCards.push(result.value);
+          const enrichedCard = result.value;
+          enrichedCards.push(enrichedCard);
+          
+          // Track enrichment issues for reporting
+          if (enrichedCard.enrichment_status === 'not_found') {
+            errors.push({
+              card: originalCard.name,
+              type: '404_not_found',
+              error: 'Card printing not in Scryfall database (normal for some promotional cards)'
+            });
+          } else if (enrichedCard.enrichment_status === 'failed') {
+            errors.push({
+              card: originalCard.name,
+              type: 'api_error', 
+              error: enrichedCard.enrichment_note
+            });
+          }
         } else {
-          // Keep original card data if enrichment fails
-          enrichedCards.push(originalCard);
+          // Enrichment completely failed
+          const isNotFound = result.reason?.message?.includes('Card not found') || 
+                           result.reason?.message?.includes('404');
+          
+          enrichedCards.push({
+            ...originalCard,
+            enrichment_status: isNotFound ? 'not_found' : 'failed',
+            enrichment_note: result.reason?.message || 'Unknown enrichment error'
+          });
+          
           errors.push({
             card: originalCard.name,
+            type: isNotFound ? '404_not_found' : 'api_error',
             error: result.reason?.message || 'Unknown error'
           });
         }
@@ -191,30 +273,33 @@ export async function enrichCardsBatch(cards, onProgress, options = {}) {
         processed++;
         
         // Update progress periodically
-        if (processed % progressInterval === 0 || processed === uniqueCards.length) {
+        if (processed % adjustedProgressInterval === 0 || processed === uniqueCards.length) {
           if (onProgress) {
             onProgress(processed, uniqueCards.length, {
               enriched: processed - errors.length,
               errors: errors.length,
-              cacheHits: scryfallCache.size
+              cacheHits: cacheHits,
+              cacheSize: sessionCache.size
             });
           }
         }
       }
 
-      // Small delay between batches
-      if (i + batchSize < uniqueCards.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      // Minimal delay between batches for large imports
+      if (i + adjustedBatchSize < uniqueCards.length) {
+        const batchDelay = isLargeImport ? 50 : 200; // Much faster for large imports
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
       }
 
     } catch (batchError) {
-      console.error(`❌ Batch error processing cards ${i}-${i + batchSize}:`, batchError);
+      console.error(`❌ Batch error processing cards ${i}-${i + adjustedBatchSize}:`, batchError);
       
       // Add failed cards as-is
       for (const card of batch) {
         enrichedCards.push(card);
         errors.push({
           card: card.name,
+          type: 'batch_error',
           error: batchError.message
         });
       }
@@ -224,8 +309,39 @@ export async function enrichCardsBatch(cards, onProgress, options = {}) {
   // Restore original quantities for duplicate cards
   const finalCards = restoreCardQuantities(cards, enrichedCards);
 
+  // Generate comprehensive error summary
   if (errors.length > 0) {
-    console.warn(`⚠️ ${errors.length} cards failed to enrich:`, errors.slice(0, 5));
+    const errorTypes = errors.reduce((acc, error) => {
+      acc[error.type] = (acc[error.type] || 0) + 1;
+      return acc;
+    }, {});
+
+    console.log(`📊 Import Summary for ${cards.length} cards:`);
+    console.log(`   ✅ Successfully processed: ${finalCards.length - errors.length}`);
+    console.log(`   🚀 Cache hits: ${cacheHits} (saved ${cacheHits} API calls)`);
+    console.log(`   💾 Session cache size: ${sessionCache.size} unique cards`);
+    
+    if (errorTypes['404_not_found']) {
+      console.log(`   📝 Cards not found in Scryfall: ${errorTypes['404_not_found']} (normal for promotional/limited cards)`);
+    }
+    
+    if (errorTypes['api_error']) {
+      console.log(`   ❌ API errors: ${errorTypes['api_error']}`);
+    }
+
+    // Show a few examples of 404s for user awareness
+    const notFoundCards = errors.filter(e => e.type === '404_not_found').slice(0, 3);
+    if (notFoundCards.length > 0) {
+      console.log(`   📋 Example cards not found: ${notFoundCards.map(e => e.card).join(', ')}`);
+    }
+    
+    // Performance metrics
+    const actualApiCalls = uniqueCards.length - cacheHits;
+    const timeSaved = cacheHits * 0.11; // ~110ms per API call saved
+    console.log(`   ⚡ Performance: ${actualApiCalls} API calls made, saved ~${timeSaved.toFixed(1)}s with caching`);
+  } else {
+    console.log(`✅ All ${cards.length} cards processed successfully!`);
+    console.log(`🚀 Cache performance: ${cacheHits} hits, ${sessionCache.size} entries`);
   }
 
   return finalCards;
@@ -247,6 +363,22 @@ function hasCompleteData(card) {
 }
 
 /**
+ * Normalizes collector numbers for Scryfall API compatibility
+ * EchoMTG exports "018" but Scryfall uses "18"
+ * @param {string} collectorNumber - The collector number to normalize
+ * @returns {string} - Normalized collector number
+ */
+function normalizeCollectorNumber(collectorNumber) {
+  if (!collectorNumber || typeof collectorNumber !== 'string') {
+    return collectorNumber;
+  }
+  
+  // Remove leading zeros, but keep letters and special characters
+  // "018" -> "18", "018a" -> "18a", "★001" -> "★1"
+  return collectorNumber.replace(/^0+([0-9])/, '$1');
+}
+
+/**
  * Fetches card data from Scryfall API with caching and improved error handling
  * @param {Object} card - The card to lookup
  * @returns {Object|null} - Scryfall card data or null if not found
@@ -264,7 +396,14 @@ async function fetchCardFromScryfall(card) {
   
   // Try specific printing first (most accurate)
   if (card.set && card.collector_number) {
-    scryfallUrl = `https://api.scryfall.com/cards/${card.set.toLowerCase()}/${card.collector_number}`;
+    // Normalize collector number - remove leading zeros for Scryfall
+    const normalizedNumber = normalizeCollectorNumber(card.collector_number);
+    
+    if (normalizedNumber !== card.collector_number) {
+      console.log(`🔧 Normalizing collector number for ${card.name}: "${card.collector_number}" -> "${normalizedNumber}"`);
+    }
+    
+    scryfallUrl = `https://api.scryfall.com/cards/${card.set.toLowerCase()}/${normalizedNumber}`;
   } 
   // Fallback to exact name search
   else if (card.name) {
@@ -290,8 +429,33 @@ async function fetchCardFromScryfall(card) {
     }
     
     if (!response.ok) {
-      // If specific printing fails, try name search
+      // If specific printing fails, try fallback strategies
       if (card.set && card.collector_number && response.status === 404) {
+        const originalNumber = card.collector_number;
+        const normalizedNumber = normalizeCollectorNumber(originalNumber);
+        
+        console.log(`🔍 Card not found: ${card.name} (${card.set}/${originalNumber})`);
+        
+        // Try with original collector number if we normalized it
+        if (originalNumber !== normalizedNumber) {
+          console.log(`   🔄 Trying original collector number: ${originalNumber}`);
+          const fallbackUrl = `https://api.scryfall.com/cards/${card.set.toLowerCase()}/${originalNumber}`;
+          
+          try {
+            const fallbackResponse = await fetch(fallbackUrl);
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+              console.log(`   ✅ Found with original collector number!`);
+              scryfallCache.set(cacheKey, fallbackData);
+              return fallbackData;
+            }
+          } catch (fallbackError) {
+            console.log(`   ❌ Original collector number also failed`);
+          }
+        }
+        
+        // Final fallback: name search
+        console.log(`   🔄 Trying name-only search for: ${card.name}`);
         return await fetchCardByName(card.name);
       }
       

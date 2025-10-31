@@ -429,15 +429,29 @@ export default function CollectPage() {
         
         // Try chunked storage first
         const chunkedCollection = await storageManager.getItemChunked('cardCollections');
+        console.log('🔍 Chunked storage check:', {
+          hasData: !!chunkedCollection,
+          hasCollections: !!(chunkedCollection?.collections),
+          collectionsLength: chunkedCollection?.collections?.length || 0
+        });
+        
         if (chunkedCollection?.collections && chunkedCollection.collections.length > 0) {
           console.log(`✅ Loaded ${chunkedCollection.collections.length} cards from chunked storage`);
           loadedCollection = chunkedCollection.collections;
         } else {
           // Fall back to regular storage
           const savedCollection = storageManager.getItem('cardCollection');
+          console.log('🔍 Regular storage check:', {
+            hasData: !!savedCollection,
+            isArray: Array.isArray(savedCollection),
+            length: savedCollection?.length || 0
+          });
+          
           if (savedCollection && savedCollection.length > 0) {
             console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
             loadedCollection = savedCollection;
+          } else {
+            console.log('📝 No existing collection found, starting fresh');
           }
         }
 
@@ -496,6 +510,12 @@ export default function CollectPage() {
       // Use enhanced storage for large collections, regular for small
       if (newCollection.length > 2000) {
         await storageManager.setItemChunked('cardCollections', { collections: newCollection });
+        // Also save to regular storage as fallback for page reload consistency
+        try {
+          storageManager.setItem('cardCollection', newCollection, { clearOldData: false });
+        } catch (fallbackError) {
+          console.log('📝 Regular storage fallback failed (expected for large collections)');
+        }
       } else {
         const success = storageManager.setItem('cardCollection', newCollection, {
           clearOldData: true // Clear old data if needed to make space
@@ -567,6 +587,36 @@ export default function CollectPage() {
       return item;
     });
     await saveCollection(updatedCollection);
+  };
+
+  // Force reload collection from storage (debug function)
+  const handleReloadCollection = async () => {
+    try {
+      console.log('🔄 Force reloading collection from storage...');
+      
+      // Try chunked storage first
+      const chunkedCollection = await storageManager.getItemChunked('cardCollections');
+      if (chunkedCollection?.collections && chunkedCollection.collections.length > 0) {
+        console.log(`✅ Force loaded ${chunkedCollection.collections.length} cards from chunked storage`);
+        setCollection(chunkedCollection.collections);
+        toast.success(`Reloaded ${chunkedCollection.collections.length} cards from storage!`);
+        return;
+      }
+
+      // Fall back to regular storage
+      const savedCollection = storageManager.getItem('cardCollection');
+      if (savedCollection && savedCollection.length > 0) {
+        console.log(`✅ Force loaded ${savedCollection.length} cards from regular storage`);
+        setCollection(savedCollection);
+        toast.success(`Reloaded ${savedCollection.length} cards from storage!`);
+        return;
+      }
+
+      toast.info('No collection found in storage');
+    } catch (error) {
+      console.error('❌ Failed to reload collection:', error);
+      toast.error('Failed to reload collection');
+    }
   };
 
   const handleClearCollection = async () => {
@@ -680,6 +730,10 @@ export default function CollectPage() {
       // Use enhanced storage for large collections
       await saveCollectionWithProgress(updatedCollection, isLargeImport);
       
+      // Ensure the UI reflects the new collection immediately
+      setCollection(updatedCollection);
+      console.log(`🔄 UI updated with ${updatedCollection.length} total cards`);
+      
       // Complete
       if (isLargeImport) {
         const compressionStats = storageManager.getItem('cardCollections_metadata');
@@ -741,6 +795,11 @@ export default function CollectPage() {
 
       // Use enhanced storage manager for large collections
       await storageManager.setItemChunked('cardCollections', { collections: collectionData });
+      
+      // Also save to regular storage as fallback for smaller collections
+      if (collectionData.length < 2000) {
+        storageManager.setItem('cardCollection', collectionData, { clearOldData: false });
+      }
       
       setCollection(collectionData);
       
@@ -805,6 +864,25 @@ export default function CollectPage() {
             }}
           >
             📥 Import Collection
+          </button>
+
+          <button
+            onClick={handleReloadCollection}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            🔄 Reload
           </button>
           
           {collection.length > 0 && (
