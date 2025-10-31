@@ -30,17 +30,19 @@ const originalForEach = Array.prototype.forEach;
 let debugMode = false;
 
 const enableForEachDebugging = () => {
-  if (debugMode) return;
-  debugMode = true;
+  console.log('[DEBUG] forEach debugging disabled to prevent interference');
+  // DISABLED - was causing issues with minified code
+  // if (debugMode) return;
+  // debugMode = true;
   
-  Array.prototype.forEach = function(callback, thisArg) {
-    if (!Array.isArray(this)) {
-      console.error('[FOREACH DEBUG] forEach called on non-array:', typeof this, this);
-      console.trace('Stack trace:');
-      throw new TypeError('forEach called on non-array');
-    }
-    return originalForEach.call(this, callback, thisArg);
-  };
+  // Array.prototype.forEach = function(callback, thisArg) {
+  //   if (!Array.isArray(this)) {
+  //     console.error('[FOREACH DEBUG] forEach called on non-array:', typeof this, this);
+  //     console.trace('Stack trace:');
+  //     throw new TypeError('forEach called on non-array');
+  //   }
+  //   return originalForEach.call(this, callback, thisArg);
+  // };
 };
 
 const disableForEachDebugging = () => {
@@ -1535,15 +1537,15 @@ GridCard.displayName = "GridCard";
 export default function DeckViewEdit({ isPublic = false }) {
   const { id } = useParams();
 
-  // Enable forEach debugging for this component
-  useEffect(() => {
-    console.log('[DEBUG] Enabling forEach debugging...');
-    enableForEachDebugging();
-    return () => {
-      console.log('[DEBUG] Disabling forEach debugging...');
-      disableForEachDebugging();
-    };
-  }, []);
+  // Enable forEach debugging for this component (DISABLED - was causing interference)
+  // useEffect(() => {
+  //   console.log('[DEBUG] Enabling forEach debugging...');
+  //   enableForEachDebugging();
+  //   return () => {
+  //     console.log('[DEBUG] Disabling forEach debugging...');
+  //     disableForEachDebugging();
+  //   };
+  // }, []);
 
   // Debug: Log the deck ID being accessed
   // console.log('[DeckViewEdit] Attempting to load deck ID:', id);
@@ -6275,62 +6277,85 @@ export default function DeckViewEdit({ isPublic = false }) {
 
   // Only sort cards within each group, not the groups themselves
   const groupedAndSortedCards = useMemo(() => {
-    let cardGroups;
-    // CRITICAL FIX: Always prefer cards state over deck.cards to prevent stale data
-    const cardsToGroup = cards || deck?.cards || [];
-    
-    if (cardsToGroup.length === 0) {
-      return [];
-    }
+    try {
+      let cardGroups;
+      // CRITICAL FIX: Always prefer cards state over deck.cards to prevent stale data
+      const cardsToGroup = cards || deck?.cards || [];
+      
+      if (cardsToGroup.length === 0) {
+        return [];
+      }
 
-    const commanderNamesForGrouping = Array.isArray(commanderNames) ? commanderNames : [];
-    
-    console.log('[FOREACH DEBUG] groupedAndSortedCards useMemo:', {
-      cards: cards?.length,
-      cardsToGroup: cardsToGroup?.length,
-      commanderNames: commanderNames,
-      commanderNamesForGrouping: commanderNamesForGrouping,
-      groupBy: groupBy
-    });
-
-    if (groupBy === "type") {
-      cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
-    } else if (groupBy === "manaValue") {
-      cardGroups = groupCardsByManaValue(
-        cardsToGroup,
-        commanderNamesForGrouping,
-      );
-    } else if (groupBy === "colorIdentity") {
-      cardGroups = groupCardsByColorIdentity(
-        cardsToGroup,
-        commanderNamesForGrouping,
-      );
-    } else if (groupBy === "collectionStatus") {
-      cardGroups = groupCardsByCollectionStatus(
-        cardsToGroup,
-        commanderNamesForGrouping,
-      );
-    } else {
-      // Fallback: default to grouping by type if groupBy is unrecognized
-      cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
-    }
-
-    // Sort cards within each group only - ensure cardGroups is an array
-    if (Array.isArray(cardGroups)) {
-      cardGroups.forEach((group) => {
-        if (!Array.isArray(group.cards)) {
-          console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
-          group.cards = [];
-        }
-        group.cards = sortCards([...group.cards], sortBy);
+      const commanderNamesForGrouping = Array.isArray(commanderNames) ? commanderNames : [];
+      
+      console.log('[FOREACH DEBUG] groupedAndSortedCards useMemo:', {
+        cards: cards?.length,
+        cardsToGroup: cardsToGroup?.length,
+        commanderNames: commanderNames,
+        commanderNamesForGrouping: commanderNamesForGrouping,
+        groupBy: groupBy
       });
-    } else {
-      // Fallback if cardGroups is not an array
-      console.error('[FOREACH DEBUG] cardGroups is not an array in groupedAndSortedCards:', typeof cardGroups, cardGroups);
-      cardGroups = [];
-    }
 
-    return cardGroups;
+      if (groupBy === "type") {
+        cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
+      } else if (groupBy === "manaValue") {
+        cardGroups = groupCardsByManaValue(
+          cardsToGroup,
+          commanderNamesForGrouping,
+        );
+      } else if (groupBy === "colorIdentity") {
+        cardGroups = groupCardsByColorIdentity(
+          cardsToGroup,
+          commanderNamesForGrouping,
+        );
+      } else if (groupBy === "collectionStatus") {
+        cardGroups = groupCardsByCollectionStatus(
+          cardsToGroup,
+          commanderNamesForGrouping,
+        );
+      } else {
+        // Fallback: default to grouping by type if groupBy is unrecognized
+        cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
+      }
+
+      console.log('[FOREACH DEBUG] cardGroups after grouping:', {
+        cardGroups: cardGroups,
+        isArray: Array.isArray(cardGroups),
+        length: cardGroups?.length,
+        firstGroup: cardGroups?.[0]
+      });
+
+      // Sort cards within each group only - ensure cardGroups is an array
+      if (Array.isArray(cardGroups)) {
+        cardGroups.forEach((group, index) => {
+          console.log('[FOREACH DEBUG] Processing group', index, ':', {
+            group: group,
+            cards: group?.cards,
+            isCardsArray: Array.isArray(group?.cards)
+          });
+          if (!Array.isArray(group.cards)) {
+            console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
+            group.cards = [];
+          }
+          try {
+            group.cards = sortCards([...group.cards], sortBy);
+          } catch (error) {
+            console.error('[FOREACH DEBUG] Error in sortCards:', error, 'group.cards:', group.cards);
+            throw error;
+          }
+        });
+      } else {
+        // Fallback if cardGroups is not an array
+        console.error('[FOREACH DEBUG] cardGroups is not an array in groupedAndSortedCards:', typeof cardGroups, cardGroups);
+        cardGroups = [];
+      }
+
+      return cardGroups;
+    } catch (error) {
+      console.error('[FOREACH DEBUG] Error in groupedAndSortedCards useMemo:', error);
+      console.error('[FOREACH DEBUG] Error stack:', error.stack);
+      throw error; // Re-throw to see the full error
+    }
   }, [cards, groupBy, sortBy, commanderNames, collectionUpdateCounter]);
   
   // Navigation functions for CardActionsModal
