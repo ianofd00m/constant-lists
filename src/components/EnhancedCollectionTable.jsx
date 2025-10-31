@@ -830,6 +830,24 @@ const COLUMN_RENDERERS = {
   ),
   
   colorIdentity: (item) => {
+    // Debug logging to see what data we have
+    console.log('Color Identity Debug - item:', {
+      name: item.name,
+      color_identity: item.color_identity,
+      colorIdentity: item.colorIdentity,
+      scryfall_json: item.scryfall_json ? {
+        color_identity: item.scryfall_json.color_identity,
+        hasData: !!item.scryfall_json
+      } : null,
+      card: item.card ? {
+        color_identity: item.card.color_identity,
+        scryfall_json: item.card.scryfall_json ? {
+          color_identity: item.card.scryfall_json.color_identity
+        } : null
+      } : null,
+      allKeys: Object.keys(item)
+    });
+    
     // Try multiple possible data sources for color identity
     let colors = [];
     
@@ -883,6 +901,24 @@ const COLUMN_RENDERERS = {
   },
   
   cardType: (item) => {
+    // Debug logging to see what data we have
+    console.log('Card Type Debug - item:', {
+      name: item.name,
+      type_line: item.type_line,
+      type: item.type,
+      scryfall_json: item.scryfall_json ? {
+        type_line: item.scryfall_json.type_line,
+        hasData: !!item.scryfall_json
+      } : null,
+      card: item.card ? {
+        type_line: item.card.type_line,
+        scryfall_json: item.card.scryfall_json ? {
+          type_line: item.card.scryfall_json.type_line
+        } : null
+      } : null,
+      allKeys: Object.keys(item)
+    });
+    
     // Try multiple possible data sources for type line
     let typeLine = '';
     
@@ -969,6 +1005,25 @@ const COLUMN_RENDERERS = {
   ),
   
   setName: (item) => {
+    // Debug logging to see what data we have
+    console.log('Set Name Debug - item:', {
+      name: item.name,
+      set: item.set,
+      set_name: item.set_name,
+      edition: item.edition,
+      scryfall_json: item.scryfall_json ? {
+        set_name: item.scryfall_json.set_name,
+        hasData: !!item.scryfall_json
+      } : null,
+      card: item.card ? {
+        set_name: item.card.set_name,
+        scryfall_json: item.card.scryfall_json ? {
+          set_name: item.card.scryfall_json.set_name
+        } : null
+      } : null,
+      allKeys: Object.keys(item)
+    });
+    
     // Try multiple possible data sources for set name
     let setName = '';
     
