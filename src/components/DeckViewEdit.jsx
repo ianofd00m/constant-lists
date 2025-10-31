@@ -402,6 +402,11 @@ function groupCardsByType(cards, commanderNames = []) {
   // Apply consolidation to each type group using a simplified groupCards logic
   Object.keys(typeMap).forEach(type => {
     const cardsInType = typeMap[type];
+    if (!Array.isArray(cardsInType)) {
+      console.error('[FOREACH DEBUG] cardsInType is not an array in groupCardsByType:', typeof cardsInType, cardsInType, 'Type:', type);
+      typeMap[type] = [];
+      return;
+    }
     const consolidatedMap = {};
     
     try {
@@ -644,7 +649,10 @@ function groupCards(cards) {
 
 // Function to preload all card images
 const preloadCardImages = (cards, preloadedImagesMap) => {
-  if (!Array.isArray(cards)) return;
+  if (!Array.isArray(cards)) {
+    console.error('[FOREACH DEBUG] preloadCardImages: cards is not an array:', typeof cards, cards);
+    return;
+  }
 
   // Extract unique cards to avoid loading duplicates
   const uniqueCards = new Map();
@@ -6310,10 +6318,15 @@ export default function DeckViewEdit({ isPublic = false }) {
     // Sort cards within each group only - ensure cardGroups is an array
     if (Array.isArray(cardGroups)) {
       cardGroups.forEach((group) => {
+        if (!Array.isArray(group.cards)) {
+          console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
+          group.cards = [];
+        }
         group.cards = sortCards([...group.cards], sortBy);
       });
     } else {
       // Fallback if cardGroups is not an array
+      console.error('[FOREACH DEBUG] cardGroups is not an array in groupedAndSortedCards:', typeof cardGroups, cardGroups);
       cardGroups = [];
     }
 
