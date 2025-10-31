@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Collection Table Columns</title>
+</head>
+<body>
+    <h2>Collection Table Column Reset</h2>
+    <p>Current localStorage columns:</p>
+    <pre id="current"></pre>
+    
+    <button onclick="resetColumns()">Reset to Default Columns</button>
+    <button onclick="showColumns()">Show Current Columns</button>
+    
+    <script>
+    function showColumns() {
+        const saved = localStorage.getItem('collection-table-columns');
+        document.getElementById('current').textContent = saved || 'No saved columns found';
+    }
+    
+    function resetColumns() {
+        localStorage.removeItem('collection-table-columns');
+        alert('Column configuration reset! Refresh your collection page.');
+        showColumns();
+    }
+    
+    // Show current state on load
+    showColumns();
+    </script>
+</body>
+</html>

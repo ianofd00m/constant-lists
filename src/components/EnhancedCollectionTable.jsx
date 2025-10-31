@@ -1108,6 +1108,12 @@ export default function EnhancedCollectionTable({
     }));
   };
   
+  // Reset columns to default configuration
+  const resetColumns = () => {
+    setColumns(DEFAULT_COLUMNS);
+    localStorage.removeItem('collection-table-columns');
+  };
+  
   // Handle sorting
   const handleSort = (columnId) => {
     if (!columns[columnId]?.sortable) return;
@@ -1286,26 +1292,51 @@ export default function EnhancedCollectionTable({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '8px 12px',
+                      padding: '8px 16px', // More padding for better spacing
                       cursor: col.fixed ? 'default' : 'pointer',
                       fontSize: '14px',
                       color: col.fixed ? '#999' : '#333',
-                      backgroundColor: col.visible ? '#f8f9fa' : 'transparent'
+                      backgroundColor: col.visible ? '#f8f9fa' : 'transparent',
+                      position: 'relative'
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={col.visible}
-                      onChange={() => toggleColumn(col.id)}
-                      disabled={col.fixed}
-                      style={{ 
-                        marginRight: 12, // More spacing between checkbox and label
-                        width: 16,
-                        height: 16,
-                        accentColor: '#007bff', // Modern checkbox color
-                        cursor: col.fixed ? 'not-allowed' : 'pointer'
-                      }}
-                    />
+                    <div style={{ 
+                      position: 'relative',
+                      marginRight: 16, // Space between checkbox and label
+                      display: 'inline-block'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={col.visible}
+                        onChange={() => toggleColumn(col.id)}
+                        disabled={col.fixed}
+                        style={{ 
+                          width: 16,
+                          height: 16,
+                          cursor: col.fixed ? 'not-allowed' : 'pointer',
+                          appearance: 'none',
+                          WebkitAppearance: 'none',
+                          border: '2px solid #ddd',
+                          borderRadius: '3px',
+                          backgroundColor: col.visible ? '#007bff' : 'white',
+                          outline: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      />
+                      {col.visible && (
+                        <span style={{
+                          position: 'absolute',
+                          left: '4px',
+                          top: '1px',
+                          width: '4px',
+                          height: '8px',
+                          border: 'solid white',
+                          borderWidth: '0 2px 2px 0',
+                          transform: 'rotate(45deg)',
+                          pointerEvents: 'none'
+                        }} />
+                      )}
+                    </div>
                     {col.title}
                     {col.fixed && (
                       <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#999' }}>
@@ -1314,6 +1345,27 @@ export default function EnhancedCollectionTable({
                     )}
                   </label>
                 ))}
+                
+                <div style={{ 
+                  borderTop: '1px solid #eee',
+                  padding: '8px 12px'
+                }}>
+                  <button
+                    onClick={resetColumns}
+                    style={{
+                      width: '100%',
+                      padding: '6px 12px',
+                      backgroundColor: '#f8f9fa',
+                      border: '1px solid #ddd',
+                      borderRadius: '3px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      color: '#666'
+                    }}
+                  >
+                    Reset to Defaults
+                  </button>
+                </div>
               </div>
             )}
           </div>
