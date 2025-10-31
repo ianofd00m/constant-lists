@@ -1,7 +1,9 @@
 // Scryfall JSON Parser - Handles Scryfall API JSON data and bulk data exports
 // Supports single cards, search results, and bulk data formats
 
-export async function parseScryfallJSON(jsonInput) {
+import { processImportedCards } from './cardDataEnrichment.js';
+
+export async function parseScryfallJSON(jsonInput, options = {}) {
   if (!jsonInput || !jsonInput.trim()) {
     throw new Error('JSON input is empty');
   }
@@ -45,6 +47,12 @@ export async function parseScryfallJSON(jsonInput) {
 
   if (cards.length === 0) {
     throw new Error('No valid cards found in JSON data');
+  }
+
+  // Scryfall data is already complete, but process for consistency
+  const { enrichData = false, showProgress = false } = options;
+  if (enrichData) {
+    return await processImportedCards(cards, { showProgress, skipEnrichment: true });
   }
 
   return cards;

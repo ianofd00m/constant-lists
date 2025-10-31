@@ -1,10 +1,17 @@
 // Text Parser - Handles free-form text input with various card list formats
 // Supports formats like "4x Lightning Bolt", "1 Black Lotus (LEA)", "Mox Pearl - Alpha - Near Mint"
 
-export async function parseText(textInput) {
+import { processImportedCards } from './cardDataEnrichment.js';
+
+export async function parseText(textInput, options = {}) {
   if (!textInput || !textInput.trim()) {
     throw new Error('Text input is empty');
   }
+
+  const { 
+    enrichData = true,
+    showProgress = true 
+  } = options;
 
   const lines = textInput
     .split(/\r?\n/)
@@ -24,6 +31,11 @@ export async function parseText(textInput) {
 
   if (cards.length === 0) {
     throw new Error('No valid cards found in text');
+  }
+
+  // Enrich cards with complete data from Scryfall
+  if (enrichData) {
+    return await processImportedCards(cards, { showProgress });
   }
 
   return cards;

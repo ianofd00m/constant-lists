@@ -1,7 +1,9 @@
 // CSV Parser - Handles multiple CSV formats from different MTG collection sites
 // Supports Moxfield, Archidekt, MTGGoldfish, Deckbox, and more
 
-export async function parseCSV(csvText) {
+import { processImportedCards } from './cardDataEnrichment.js';
+
+export async function parseCSV(csvText, options = {}) {
   if (!csvText || !csvText.trim()) {
     throw new Error('CSV data is empty');
   }
@@ -38,6 +40,12 @@ export async function parseCSV(csvText) {
 
   if (cards.length === 0) {
     throw new Error('No valid cards found in CSV');
+  }
+
+  // Enrich card data if requested
+  const { enrichData = false, showProgress = true } = options;
+  if (enrichData) {
+    return await processImportedCards(cards, showProgress);
   }
 
   return cards;

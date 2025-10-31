@@ -830,17 +830,43 @@ const COLUMN_RENDERERS = {
   ),
   
   colorIdentity: (item) => {
-    // Use the 'colors' field since 'color_identity' doesn't exist in this data structure
+    // Use enriched data first, then fallback to legacy fields
     let colors = [];
     
-    // Parse colors field - it might be a string or array
-    if (item.colors) {
+    // Try enriched data first (proper field names)
+    if (item.color_identity && Array.isArray(item.color_identity)) {
+      colors = item.color_identity;
+    }
+    // Try scryfall_json as fallback
+    else if (item.scryfall_json?.color_identity && Array.isArray(item.scryfall_json.color_identity)) {
+      colors = item.scryfall_json.color_identity;
+    }
+    // Legacy fallback to colors field
+    else if (item.colors && item.colors !== '' && item.colors !== 'colors') {
       if (Array.isArray(item.colors)) {
         colors = item.colors;
       } else if (typeof item.colors === 'string') {
-        // Split string into individual color characters
-        colors = item.colors.split('');
+        colors = item.colors.split('').filter(c => c.trim() !== '');
       }
+    }
+    
+    // If no colors found, show colorless symbol or placeholder
+    if (!colors || colors.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img 
+            src="/svgs/c.svg"
+            alt="Colorless"
+            title="Colorless"
+            style={{ width: '14px', height: '14px' }}
+            onError={(e) => {
+              // Fallback to text if SVG doesn't load
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = '<span style="fontSize: 12px; color: #999;">C</span>';
+            }}
+          />
+        </div>
+      );
     }
     
     const colorMap = {
@@ -880,8 +906,30 @@ const COLUMN_RENDERERS = {
   },
   
   cardType: (item) => {
-    // Use the 'card_type' field since 'type_line' doesn't exist in this data structure
-    let typeLine = item.card_type || '';
+    // Use enriched data first, then fallback to legacy fields
+    let typeLine = '';
+    
+    // Try enriched data first (proper field names)
+    if (item.type_line && item.type_line !== '') {
+      typeLine = item.type_line;
+    }
+    // Try scryfall_json as fallback
+    else if (item.scryfall_json?.type_line && item.scryfall_json.type_line !== '') {
+      typeLine = item.scryfall_json.type_line;
+    }
+    // Legacy fallback to card_type field
+    else if (item.card_type && item.card_type !== '' && item.card_type !== 'card_type') {
+      typeLine = item.card_type;
+    }
+    
+    // If no type found, show placeholder
+    if (!typeLine) {
+      return (
+        <div style={{ fontSize: '12px', color: '#999', textAlign: 'center' }}>
+          Unknown
+        </div>
+      );
+    }
     
     // Extract main type from type line
     let mainType = '';
@@ -954,14 +1002,20 @@ const COLUMN_RENDERERS = {
   ),
   
   setName: (item) => {
-    // Use 'edition' field for set name since 'set_name' equals the set code
+    // Use enriched data first, then fallback to legacy fields
     let setName = '';
     
-    // First try edition field, then fall back to set_name if it's different from set code
-    if (item.edition && item.edition !== item.set) {
-      setName = item.edition;
-    } else if (item.set_name && item.set_name !== item.set) {
+    // Try enriched data first (proper field names)
+    if (item.set_name && item.set_name !== '' && item.set_name !== item.set) {
       setName = item.set_name;
+    }
+    // Try scryfall_json as fallback
+    else if (item.scryfall_json?.set_name && item.scryfall_json.set_name !== '') {
+      setName = item.scryfall_json.set_name;
+    }
+    // Try edition field (legacy)
+    else if (item.edition && item.edition !== item.set) {
+      setName = item.edition;
     }
     
     // Map common set codes to full names as fallback
@@ -979,7 +1033,7 @@ const COLUMN_RENDERERS = {
     
     return (
       <div style={{ fontSize: '13px', color: '#555' }}>
-        {setName || '-'}
+        {setName || 'Unknown'}
       </div>
     );
   },
@@ -1311,6 +1365,42 @@ export default function EnhancedCollectionTable({
               minWidth: '200px'
             }}
           />
+          
+          {/* Clear Collection Button */}
+          {collection.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm('⚠️ Are you sure you want to clear your entire collection?\n\nThis will permanently delete all cards and cannot be undone.')) {
+                  // Clear localStorage collection data
+                  localStorage.removeItem('cardCollection');
+                  localStorage.removeItem('cardCollection_meta');
+                  
+                  // Clear any chunked storage
+                  Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('cardCollection_chunk_')) {
+                      localStorage.removeItem(key);
+                    }
+                  });
+                  
+                  // Refresh the page to update the UI
+                  window.location.reload();
+                }
+              }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                fontSize: 14,
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+              title="Clear entire collection"
+            >
+              🗑️ Clear Collection
+            </button>
+          )}
           
           {/* Sort Dropdown - Dark background with white text */}
           <select 

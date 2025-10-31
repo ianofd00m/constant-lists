@@ -1,6 +1,8 @@
 // Universal Document Parser - Handles multiple document formats
 // Supports Word, PDF, RTF, Markdown, HTML, XML and other text-based formats
 
+import { processImportedCards } from './cardDataEnrichment.js';
+
 export class DocumentParser {
   constructor() {
     this.supportedFormats = [
@@ -15,7 +17,7 @@ export class DocumentParser {
     ];
   }
 
-  async parseDocument(file) {
+  async parseDocument(file, options = {}) {
     if (!file) {
       throw new Error('No file provided');
     }
@@ -29,42 +31,42 @@ export class DocumentParser {
       // Route to appropriate parser based on file extension and MIME type
       switch (extension.toLowerCase()) {
         case 'docx':
-          return await this.parseWordDocx(file);
+          return await this.parseWordDocx(file, options);
         case 'doc':
-          return await this.parseWordDoc(file);
+          return await this.parseWordDoc(file, options);
         case 'odt':
-          return await this.parseOpenDocument(file);
+          return await this.parseOpenDocument(file, options);
         case 'pages':
-          return await this.parseApplePages(file);
+          return await this.parseApplePages(file, options);
         case 'rtf':
-          return await this.parseRTF(file);
+          return await this.parseRTF(file, options);
         case 'md':
-          return await this.parseMarkdown(file);
+          return await this.parseMarkdown(file, options);
         case 'pdf':
-          return await this.parsePDF(file);
+          return await this.parsePDF(file, options);
         case 'html':
         case 'htm':
-          return await this.parseHTML(file);
+          return await this.parseHTML(file, options);
         case 'xml':
-          return await this.parseXML(file);
+          return await this.parseXML(file, options);
         case 'tex':
-          return await this.parseLaTeX(file);
+          return await this.parseLaTeX(file, options);
         case 'xlsx':
         case 'xlsm':
         case 'xlsb':
-          return await this.parseExcel(file);
+          return await this.parseExcel(file, options);
         case 'xls':
-          return await this.parseExcelLegacy(file);
+          return await this.parseExcelLegacy(file, options);
         case 'ods':
-          return await this.parseOpenSpreadsheet(file);
+          return await this.parseOpenSpreadsheet(file, options);
         case 'numbers':
-          return await this.parseAppleNumbers(file);
+          return await this.parseAppleNumbers(file, options);
         case 'csv':
-          return await this.parseCSVFile(file);
+          return await this.parseCSVFile(file, options);
         case 'txt':
-          return await this.parsePlainText(file);
+          return await this.parsePlainText(file, options);
         default:
-          return await this.parseFallback(file);
+          return await this.parseFallback(file, options);
       }
     } catch (error) {
       console.error(`Error parsing ${extension} file:`, error);
@@ -77,12 +79,12 @@ export class DocumentParser {
   }
 
   // Microsoft Word .docx parser
-  async parseWordDocx(file) {
+  async parseWordDocx(file, options = {}) {
     try {
       // For now, extract as text and parse with text parser
       // In production, would use mammoth.js or docx library
       const text = await this.extractTextFromBinary(file);
-      return await this.parseExtractedText(text, 'docx');
+      return await this.parseExtractedText(text, 'docx', options);
     } catch (error) {
       throw new Error(`DOCX parsing failed: ${error.message}`);
     }
@@ -243,31 +245,44 @@ export class DocumentParser {
   }
 
   // CSV file parser (wrapper)
-  async parseCSVFile(file) {
+  async parseCSVFile(file, options = {}) {
     try {
       const content = await this.readAsText(file);
       const { parseCSV } = await import('./csvParser.js');
-      return await parseCSV(content);
+      return await parseCSV(content, options);
     } catch (error) {
       throw new Error(`CSV parsing failed: ${error.message}`);
     }
   }
 
   // Plain text parser (wrapper)
-  async parsePlainText(file) {
+  // Plain text parser
+  async parsePlainText(file, options = {}) {
     try {
-      const content = await this.readAsText(file);
+      const text = await file.text();
+      
+      // Try enhanced text parser first
       const { parseText } = await import('./textParser.js');
-      return await parseText(content);
-    } catch (error) {
-      // Fallback to simple text parser
-      try {
+      const result = await parseText(text, options);
+      
+      // If enhanced parser fails, try simple parser
+      if (!result || result.length === 0) {
         const { parseSimpleText } = await import('./simpleTextParser.js');
-        const simpleResult = await parseSimpleText(content);
-        return this.convertSimpleTextToCards(simpleResult);
-      } catch (fallbackError) {
-        throw new Error(`Text parsing failed: ${error.message}`);
+        const simpleResult = await parseSimpleText(text);
+        const cardsWithSource = this.convertSimpleTextToCards(simpleResult);
+        
+        // Enrich card data if requested
+        const { enrichData = false, showProgress = true } = options;
+        if (enrichData) {
+          return await processImportedCards(cardsWithSource, showProgress);
+        }
+
+        return cardsWithSource;
       }
+      
+      return result;
+    } catch (error) {
+      throw new Error(`TXT parsing failed: ${error.message}`);
     }
   }
 
@@ -386,7 +401,7 @@ export class DocumentParser {
       .trim();
   }
 
-  async parseExtractedText(text, sourceFormat) {
+  async parseExtractedText(text, sourceFormat, options = {}) {
     if (!text || !text.trim()) {
       throw new Error(`No text content extracted from ${sourceFormat.toUpperCase()} file`);
     }
@@ -394,20 +409,36 @@ export class DocumentParser {
     try {
       // Try enhanced text parser first
       const { parseText } = await import('./textParser.js');
-      const result = await parseText(text);
+      const result = await parseText(text, options);
       
       // Add source format information
-      return result.map(card => ({
+      const cardsWithSource = result.map(card => ({
         ...card,
         source: `${sourceFormat}_import`,
         originalFormat: sourceFormat
       }));
+
+      // Enrich card data if requested
+      const { enrichData = false, showProgress = true } = options;
+      if (enrichData) {
+        return await processImportedCards(cardsWithSource, showProgress);
+      }
+
+      return cardsWithSource;
     } catch (error) {
       // Fallback to simple text parser
       try {
         const { parseSimpleText } = await import('./simpleTextParser.js');
         const simpleResult = await parseSimpleText(text);
-        return this.convertSimpleTextToCards(simpleResult, sourceFormat);
+        const cardsWithSource = this.convertSimpleTextToCards(simpleResult, sourceFormat);
+        
+        // Enrich card data if requested
+        const { enrichData = false, showProgress = true } = options;
+        if (enrichData) {
+          return await processImportedCards(cardsWithSource, showProgress);
+        }
+
+        return cardsWithSource;
       } catch (fallbackError) {
         throw new Error(`Failed to parse extracted text: ${error.message}`);
       }
