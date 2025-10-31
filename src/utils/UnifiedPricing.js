@@ -200,16 +200,15 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
   const scryfallData = findNestedValue(cardData, 'scryfall_json') || {};
   const prices = scryfallData.prices || findNestedValue(cardData, 'prices') || {};
   
-  if (!prices || Object.keys(prices).length === 0) {
+  // Check for basic land and prepare fallback data
+  const typeLine = findNestedValue(cardData, 'type_line') || '';
+  const isBasicLand = typeLine.toLowerCase().includes('basic land') || 
+                     BASIC_LAND_PRINTINGS[cardName];
+  
+  const hasPriceData = prices && Object.keys(prices).length > 0;
+  
+  if (!hasPriceData) {
     debugLog(`[UNIFIED PRICING] No price data found for ${cardName}`);
-    return {
-      price: fallbackPrice,
-      source: 'no_price_data',
-      cardType: 'unknown',
-      finishType: 'normal',
-      isValid: false,
-      metadata: { cardName, error: 'No price data available' }
-    };
   }
   
   // Step 3: Determine foil status and card characteristics
@@ -227,55 +226,52 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
   let price = null;
   let source = 'not_found';
   
-  // Handle foil-only cards (always use foil pricing regardless of explicit foil flag)
-  if (isFoilOnly) {
-    switch (finish.type) {
-      case 'etched':
-        price = prices.usd_etched || prices.usd_foil || prices.usd || null;
-        source = 'foil_only_etched';
-        break;
-      case 'special_foil':
-        price = prices.usd_foil || prices.usd || null;
-        source = 'foil_only_special';
-        break;
-      default:
-        price = prices.usd_foil || prices.usd || null;
-        source = 'foil_only_regular';
+  // Only try to extract pricing if we have price data
+  if (hasPriceData) {
+    // Handle foil-only cards (always use foil pricing regardless of explicit foil flag)
+    if (isFoilOnly) {
+      switch (finish.type) {
+        case 'etched':
+          price = prices.usd_etched || prices.usd_foil || prices.usd || null;
+          source = 'foil_only_etched';
+          break;
+        case 'special_foil':
+          price = prices.usd_foil || prices.usd || null;
+          source = 'foil_only_special';
+          break;
+        default:
+          price = prices.usd_foil || prices.usd || null;
+          source = 'foil_only_regular';
+      }
     }
-  }
-  // Handle explicitly foil cards
-  else if (isFoil) {
-    switch (finish.type) {
-      case 'etched':
-        price = prices.usd_etched || prices.usd_foil || prices.usd || null;
-        source = 'explicit_foil_etched';
-        break;
-      case 'special_foil':
-        price = prices.usd_foil || prices.usd || null;
-        source = 'explicit_foil_special';
-        break;
-      default:
-        price = prices.usd_foil || prices.usd || null;
-        source = 'explicit_foil_regular';
+    // Handle explicitly foil cards
+    else if (isFoil) {
+      switch (finish.type) {
+        case 'etched':
+          price = prices.usd_etched || prices.usd_foil || prices.usd || null;
+          source = 'explicit_foil_etched';
+          break;
+        case 'special_foil':
+          price = prices.usd_foil || prices.usd || null;
+          source = 'explicit_foil_special';
+          break;
+        default:
+          price = prices.usd_foil || prices.usd || null;
+          source = 'explicit_foil_regular';
+      }
     }
-  }
-  // Handle non-foil cards
-  else {
-    price = prices.usd || null;
-    source = 'regular_usd';
+    // Handle non-foil cards
+    else {
+      price = prices.usd || null;
+      source = 'regular_usd';
+    }
   }
   
-  // Step 5: Basic land fallback
-  if (!price) {
-    const typeLine = findNestedValue(cardData, 'type_line') || '';
-    const isBasicLand = typeLine.toLowerCase().includes('basic land') || 
-                       BASIC_LAND_PRINTINGS[cardName];
-    
-    if (isBasicLand) {
-      price = '0.10';
-      source = 'basic_land_fallback';
-      debugLog(`[UNIFIED PRICING] Applied basic land fallback: $${price}`);
-    }
+  // Step 5: Basic land fallback (already handled above for empty price data case)
+  if (!price && isBasicLand) {
+    price = '0.10';
+    source = 'basic_land_fallback';
+    debugLog(`[UNIFIED PRICING] Applied basic land fallback: $${price}`);
   }
   
   // Step 6: Legacy fallback search
@@ -288,12 +284,43 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
       debugLog(`[UNIFIED PRICING] Applied legacy fallback: $${price}`);
     }
   }
+
+  // Step 6.5: Reasonable fallback for common cards without pricing
+  if (!price && !isBasicLand) {
+    // For cards without any pricing data, use a small fallback
+    // This prevents "N/A" from showing everywhere while still indicating missing data
+    const typeLine = findNestedValue(cardData, 'type_line') || '';
+    
+    // Different fallbacks based on card type
+    if (typeLine.toLowerCase().includes('token')) {
+      price = '0.00';
+      source = 'token_fallback';
+      debugLog(`[UNIFIED PRICING] Applied token fallback: $${price}`);
+    } else if (typeLine.toLowerCase().includes('basic land')) {
+      // This should already be handled above, but just in case
+      price = '0.10';
+      source = 'basic_land_secondary_fallback';
+      debugLog(`[UNIFIED PRICING] Applied basic land secondary fallback: $${price}`);
+    } else {
+      // For other cards, use a minimal fallback to indicate "needs pricing data"
+      price = '0.25';
+      source = 'generic_fallback';
+      debugLog(`[UNIFIED PRICING] Applied generic fallback (missing data): $${price}`);
+    }
+  }
   
   // Step 7: Final fallback
   if (!price && fallbackPrice) {
     price = fallbackPrice;
     source = 'provided_fallback';
     debugLog(`[UNIFIED PRICING] Applied provided fallback: $${price}`);
+  }
+  
+  // Step 8: Last resort fallback - prevent N/A when no other options
+  if (!price && !fallbackPrice) {
+    // If we still don't have a price, we need to return null to show N/A
+    // This preserves the behavior where cards without data show N/A
+    debugLog(`[UNIFIED PRICING] No price available for ${cardName}`);
   }
   
   const finalPrice = price;

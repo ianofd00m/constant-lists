@@ -66,7 +66,6 @@ function SortableHeaderCell({ column, index, onSort, sortBy, sortDirection }) {
         userSelect: 'none',
         border: isDragging ? '2px dashed #1976d2' : '1px solid #dee2e6'
       }}
-      onClick={() => column.sortable && onSort(column.id)}
       {...attributes}
       {...(column.fixed ? {} : listeners)}
     >
@@ -75,14 +74,21 @@ function SortableHeaderCell({ column, index, onSort, sortBy, sortDirection }) {
         ['quantity', 'setIcon', 'foil', 'rarity', 'condition', 'language', 'cardNumber'].includes(column.id) ? 'center' : 
         ['currentPrice', 'purchasePrice', 'netGain', 'actions'].includes(column.id) ? 'flex-end' : 'flex-start'
       }}>
-        {column.title}
+        <span onClick={(e) => {
+          if (column.sortable) {
+            e.stopPropagation();
+            onSort(column.id);
+          }
+        }} style={{ cursor: column.sortable ? 'pointer' : 'default' }}>
+          {column.title}
+          {column.sortable && sortBy === column.id && (
+            <span style={{ marginLeft: 4 }}>
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </span>
+          )}
+        </span>
         {!column.fixed && (
           <span style={{ opacity: 0.5, fontSize: '10px' }}>⋮⋮</span>
-        )}
-        {column.sortable && sortBy === column.id && (
-          <span style={{ marginLeft: 4 }}>
-            {sortDirection === 'asc' ? '↑' : '↓'}
-          </span>
         )}
       </div>
     </th>
@@ -112,8 +118,11 @@ function CurrentPriceCell({ item }) {
       const result = getUnifiedCardPrice(cardData, {
         preferStoredPrice: false, // Use live Scryfall data
         fallbackPrice: null,
-        debugLogging: false
+        debugLogging: true // Enable debugging temporarily
       });
+      
+      console.log(`[PRICE DEBUG] ${item.name}: result=${JSON.stringify(result)}, hasScryfall=${!!item.scryfall_json}`);
+      console.log(`[PRICE DEBUG] Item structure:`, JSON.stringify(item, null, 2));
       
       setPrice(result.price);
       setLoading(false);
@@ -122,7 +131,7 @@ function CurrentPriceCell({ item }) {
   
   return (
     <div style={{ textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>
-      {loading ? '...' : price !== null && price !== undefined ? `$${parseFloat(price).toFixed(2)}` : '$0.25'}
+      {loading ? '...' : (price !== null && price !== undefined && price !== '') ? `$${parseFloat(price).toFixed(2)}` : 'N/A'}
     </div>
   );
 }
@@ -148,8 +157,21 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
   }, [isEditing]);
   
   const handleSave = () => {
-    const numericValue = parseFloat(editValue);
-    if (isNaN(numericValue) || numericValue < 0) {
+    // Convert ATM-style input to decimal
+    // 1234 -> 12.34, 375 -> 3.75, 1 -> 0.01, 0 -> 0.00
+    let numericValue = 0;
+    if (editValue && editValue !== '0') {
+      const digits = editValue.replace(/\D/g, '');
+      if (digits.length === 0) {
+        numericValue = 0;
+      } else if (digits.length === 1) {
+        numericValue = parseInt(digits) / 100; // 1 -> 0.01
+      } else {
+        numericValue = parseInt(digits) / 100; // 1234 -> 12.34
+      }
+    }
+    
+    if (numericValue < 0) {
       toast.error('Please enter a valid price (0 or greater)');
       return;
     }
@@ -178,12 +200,15 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <input
           ref={inputRef}
-          type="number"
-          min="0"
-          step="0.01"
+          type="text"
           value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
+          onChange={(e) => {
+            // ATM-style entry - only allow digits
+            const value = e.target.value.replace(/\D/g, '');
+            setEditValue(value);
+          }}
           onKeyDown={handleKeyPress}
+          placeholder="0"
           style={{
             width: '60px',
             padding: '2px 4px',
@@ -192,7 +217,9 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
             borderRadius: 2,
             textAlign: 'right',
             backgroundColor: 'white',
-            color: 'black'
+            color: 'black',
+            // Remove number input arrows
+            MozAppearance: 'textfield'
           }}
         />
         <button
@@ -233,7 +260,13 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
         justifyContent: 'flex-end'
       }}
       onClick={() => {
-        setEditValue(originalValue ? originalValue.toString() : '');
+        // Convert current price to ATM format (12.34 -> 1234)
+        if (originalValue && originalValue > 0) {
+          const atmValue = Math.round(originalValue * 100).toString();
+          setEditValue(atmValue);
+        } else {
+          setEditValue('');
+        }
         setIsEditing(true);
       }}
       title="Click to edit purchase price"
@@ -488,12 +521,214 @@ function FoilToggleCell({ item, onUpdate }) {
   );
 }
 
+// Editable condition cell with dropdown
+function EditableConditionCell({ item, onUpdate }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(item.condition || 'NM');
+  const dropdownRef = useRef(null);
+  
+  const conditions = [
+    { value: 'M', label: 'Mint (M)' },
+    { value: 'NM', label: 'Near Mint (NM)' },
+    { value: 'LP', label: 'Lightly Played (LP)' },
+    { value: 'MP', label: 'Moderately Played (MP)' },
+    { value: 'HP', label: 'Heavily Played (HP)' },
+    { value: 'DMG', label: 'Damaged (DMG)' }
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsEditing(false);
+      }
+    }
+    
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isEditing]);
+
+  const handleSelect = (condition) => {
+    onUpdate(item.id, 'condition', condition);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div ref={dropdownRef} style={{ position: 'relative', textAlign: 'center' }}>
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'white',
+          border: '1px solid #ccc',
+          borderRadius: 4,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          minWidth: '150px'
+        }}>
+          {conditions.map((condition) => (
+            <div
+              key={condition.value}
+              onClick={() => handleSelect(condition.value)}
+              style={{
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                borderBottom: '1px solid #eee',
+                backgroundColor: condition.value === editValue ? '#e3f2fd' : 'white',
+                color: '#333'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = condition.value === editValue ? '#e3f2fd' : 'white'}
+            >
+              {condition.label}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      style={{ 
+        textAlign: 'center', 
+        fontSize: '11px', 
+        color: '#666',
+        cursor: 'pointer',
+        padding: '4px 8px',
+        borderRadius: 2
+      }}
+      onClick={() => {
+        setEditValue(item.condition || 'NM');
+        setIsEditing(true);
+      }}
+      onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+      title="Click to change condition"
+    >
+      {item.condition || 'NM'}
+    </div>
+  );
+}
+
+// Editable language cell with dropdown
+function EditableLanguageCell({ item, onUpdate }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(item.language || 'English');
+  const dropdownRef = useRef(null);
+  
+  const languages = [
+    { value: 'English', label: 'English', code: 'EN' },
+    { value: 'Spanish', label: 'Spanish', code: 'ES' },
+    { value: 'French', label: 'French', code: 'FR' },
+    { value: 'German', label: 'German', code: 'DE' },
+    { value: 'Italian', label: 'Italian', code: 'IT' },
+    { value: 'Portuguese', label: 'Portuguese', code: 'PT' },
+    { value: 'Japanese', label: 'Japanese', code: 'JP' },
+    { value: 'Korean', label: 'Korean', code: 'KO' },
+    { value: 'Russian', label: 'Russian', code: 'RU' },
+    { value: 'Simplified Chinese', label: 'Simplified Chinese', code: 'ZH' },
+    { value: 'Traditional Chinese', label: 'Traditional Chinese', code: 'TW' }
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsEditing(false);
+      }
+    }
+    
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isEditing]);
+
+  const handleSelect = (language) => {
+    onUpdate(item.id, 'language', language);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div ref={dropdownRef} style={{ position: 'relative', textAlign: 'center' }}>
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'white',
+          border: '1px solid #ccc',
+          borderRadius: 4,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          minWidth: '160px',
+          maxHeight: '200px',
+          overflowY: 'auto'
+        }}>
+          {languages.map((language) => (
+            <div
+              key={language.value}
+              onClick={() => handleSelect(language.value)}
+              style={{
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                borderBottom: '1px solid #eee',
+                backgroundColor: language.value === editValue ? '#e3f2fd' : 'white',
+                color: '#333',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = language.value === editValue ? '#e3f2fd' : 'white'}
+            >
+              <span>{language.label}</span>
+              <span style={{ fontSize: '10px', color: '#999' }}>{language.code}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const currentLang = languages.find(lang => lang.value === (item.language || 'English'));
+  const displayCode = currentLang ? currentLang.code : 'EN';
+
+  return (
+    <div 
+      style={{ 
+        textAlign: 'center', 
+        fontSize: '11px', 
+        color: '#666',
+        cursor: 'pointer',
+        padding: '4px 8px',
+        borderRadius: 2
+      }}
+      onClick={() => {
+        setEditValue(item.language || 'English');
+        setIsEditing(true);
+      }}
+      onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+      title="Click to change language"
+    >
+      {displayCode}
+    </div>
+  );
+}
+
 function NetGainCell({ item }) {
   const [currentPrice, setCurrentPrice] = useState(null);
   const purchasePrice = parseFloat(item.purchase_price || 0);
   
   useEffect(() => {
-    if ((item.scryfall_json || item.name) && purchasePrice > 0) {
+    if (item.scryfall_json || item.printing_id || item.name) {
       // Create proper card data object for unified pricing
       const cardData = {
         name: item.name,
@@ -507,14 +742,18 @@ function NetGainCell({ item }) {
       const result = getUnifiedCardPrice(cardData, {
         preferStoredPrice: false,
         fallbackPrice: null,
-        debugLogging: false
+        debugLogging: true // Enable debugging to see what's happening
       });
       
-      setCurrentPrice(parseFloat(result.price) || 0);
+      console.log(`[GAIN DEBUG] ${item.name}: price=${result.price}, purchasePrice=${purchasePrice}`);
+      
+      const priceValue = parseFloat(result.price);
+      setCurrentPrice(isNaN(priceValue) ? null : priceValue);
     }
-  }, [item.scryfall_json, item.foil, item.name, purchasePrice]);
+  }, [item.scryfall_json, item.printing_id, item.foil, item.name, purchasePrice]);
   
-  if (!purchasePrice || !currentPrice) {
+  // Check if we have valid data for calculation
+  if (!purchasePrice || purchasePrice <= 0 || currentPrice === null || currentPrice <= 0) {
     return <div style={{ textAlign: 'right', fontSize: '12px', color: '#999' }}>-</div>;
   }
   
@@ -647,16 +886,18 @@ const COLUMN_RENDERERS = {
     );
   },
   
-  condition: (item) => (
-    <div style={{ textAlign: 'center', fontSize: '11px', color: '#666' }}>
-      {item.condition || 'NM'}
-    </div>
+  condition: (item, onUpdate) => (
+    <EditableConditionCell 
+      item={item} 
+      onUpdate={onUpdate}
+    />
   ),
   
-  language: (item) => (
-    <div style={{ textAlign: 'center', fontSize: '11px', color: '#666' }}>
-      {item.language ? item.language.substring(0, 2).toUpperCase() : 'EN'}
-    </div>
+  language: (item, onUpdate) => (
+    <EditableLanguageCell 
+      item={item} 
+      onUpdate={onUpdate}
+    />
   ),
   
   foil: (item, onUpdate) => (
@@ -785,6 +1026,10 @@ export default function EnhancedCollectionTable({
       if (sortBy === 'currentPrice' || sortBy === 'purchasePrice') {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
+      } else if (sortBy === 'cardNumber') {
+        // Numeric sorting for card numbers
+        aVal = parseInt(aVal) || 0;
+        bVal = parseInt(bVal) || 0;
       } else if (sortBy === 'dateAdded' || sortBy === 'purchaseDate') {
         aVal = new Date(aVal).getTime() || 0;
         bVal = new Date(bVal).getTime() || 0;
