@@ -6234,12 +6234,20 @@ export default function DeckViewEdit({ isPublic = false }) {
         cardsToGroup,
         commanderNamesForGrouping,
       );
+    } else {
+      // Fallback: default to grouping by type if groupBy is unrecognized
+      cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
     }
 
-    // Sort cards within each group only
-    cardGroups.forEach((group) => {
-      group.cards = sortCards([...group.cards], sortBy);
-    });
+    // Sort cards within each group only - ensure cardGroups is an array
+    if (Array.isArray(cardGroups)) {
+      cardGroups.forEach((group) => {
+        group.cards = sortCards([...group.cards], sortBy);
+      });
+    } else {
+      // Fallback if cardGroups is not an array
+      cardGroups = [];
+    }
 
     return cardGroups;
   }, [cards, groupBy, sortBy, commanderNames, collectionUpdateCounter]);
