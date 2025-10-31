@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import ImportModal from './ImportModal';
+import CollectionImportProgress from './CollectionImportProgress';
 import { storageManager } from '../utils/storageManager';
+import { enrichCardsBatch } from '../utils/cardDataEnrichment';
 import EnhancedCollectionTable from './EnhancedCollectionTable';
 import { 
   convertToIndividualItems, 
@@ -401,29 +403,45 @@ function CollectionList({ collection, onQuantityChange, onRemove }) {
 export default function CollectPage() {
   const [collection, setCollection] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  
+  // Enhanced import progress tracking
+  const [importProgress, setImportProgress] = useState({
+    isVisible: false,
+    phase: 'preparing',
+    current: 0,
+    total: 0,
+    message: '',
+    errors: [],
+    isPaused: false,
+    canPause: true,
+    estimatedTimeRemaining: null,
+    storageUsed: null,
+    compressionRatio: null
+  });
 
   // Load collection from smart storage with migration support
   useEffect(() => {
-    try {
-      console.log('📖 Loading collection with smart storage...');
-      
-      let loadedCollection = null;
-      
-      // Try chunked storage first
-      const chunkedCollection = storageManager.getChunkedItem('cardCollection');
-      if (chunkedCollection && chunkedCollection.length > 0) {
-        console.log(`✅ Loaded ${chunkedCollection.length} cards from chunked storage`);
-        loadedCollection = chunkedCollection;
-      } else {
-        // Fall back to regular storage
-        const savedCollection = storageManager.getItem('cardCollection');
-        if (savedCollection && savedCollection.length > 0) {
-          console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
-          loadedCollection = savedCollection;
+    const loadCollection = async () => {
+      try {
+        console.log('📖 Loading collection with smart storage...');
+        
+        let loadedCollection = null;
+        
+        // Try chunked storage first
+        const chunkedCollection = await storageManager.getItemChunked('cardCollections');
+        if (chunkedCollection?.collections && chunkedCollection.collections.length > 0) {
+          console.log(`✅ Loaded ${chunkedCollection.collections.length} cards from chunked storage`);
+          loadedCollection = chunkedCollection.collections;
+        } else {
+          // Fall back to regular storage
+          const savedCollection = storageManager.getItem('cardCollection');
+          if (savedCollection && savedCollection.length > 0) {
+            console.log(`✅ Loaded ${savedCollection.length} cards from regular storage`);
+            loadedCollection = savedCollection;
+          }
         }
-      }
-      
-      if (loadedCollection) {
+
+        if (loadedCollection) {
         // Check if collection needs migration from bundled to individual format
         if (needsMigration(loadedCollection)) {
           console.log('🔄 Collection needs migration from bundled to individual items...');
@@ -460,33 +478,40 @@ export default function CollectPage() {
         available: `${(storageStats.available / 1024 / 1024).toFixed(1)}MB`,
         items: storageStats.itemCounts
       });
-      
-    } catch (error) {
-      console.error('❌ Error loading collection:', error);
-      toast.error('Error loading collection - using empty collection');
-    }
+        
+      } catch (error) {
+        console.error('❌ Error loading collection:', error);
+        toast.error('Error loading collection - using empty collection');
+      }
+    };
+
+    loadCollection();
   }, []);
 
   // Save collection using smart storage with quota management
-  const saveCollection = (newCollection) => {
+  const saveCollection = async (newCollection) => {
     try {
       console.log(`💾 Saving collection with ${newCollection.length} cards...`);
       
-      // Use smart storage with compression and quota management
-      const success = storageManager.setItem('cardCollection', newCollection, {
-        clearOldData: true // Clear old data if needed to make space
-      });
-
-      if (success) {
-        setCollection(newCollection);
-        console.log('✅ Collection saved successfully');
-        
-        // Show success toast with storage info
-        const stats = storageManager.getStats();
-        toast.success(`Collection saved! Storage: ${stats.percentage.toFixed(1)}% used`);
+      // Use enhanced storage for large collections, regular for small
+      if (newCollection.length > 2000) {
+        await storageManager.setItemChunked('cardCollections', { collections: newCollection });
       } else {
-        throw new Error('Smart storage failed to save collection');
+        const success = storageManager.setItem('cardCollection', newCollection, {
+          clearOldData: true // Clear old data if needed to make space
+        });
+
+        if (!success) {
+          throw new Error('Smart storage failed to save collection');
+        }
       }
+
+      setCollection(newCollection);
+      console.log('✅ Collection saved successfully');
+      
+      // Show success toast with storage info
+      const stats = storageManager.getStats();
+      toast.success(`Collection saved! Storage: ${stats.percentage.toFixed(1)}% used`);
       
     } catch (error) {
       console.error('❌ Error saving collection:', error);
@@ -499,7 +524,7 @@ export default function CollectPage() {
     }
   };
 
-  const handleQuantityChange = (itemId, newQuantity) => {
+  const handleQuantityChange = async (itemId, newQuantity) => {
     // For individual items system, quantity changes work differently
     if (newQuantity < 1) {
       handleRemoveItem(itemId);
@@ -521,30 +546,30 @@ export default function CollectPage() {
         }
         
         const updatedCollection = [...collection, ...additionalCopies];
-        saveCollection(updatedCollection);
+        await saveCollection(updatedCollection);
         toast.success(`Added ${newQuantity - 1} more copies of ${sourceItem.name}`);
       }
     }
     // If newQuantity === 1, no change needed (item already represents 1 card)
   };
 
-  const handleRemoveItem = (itemId) => {
+  const handleRemoveItem = async (itemId) => {
     const updatedCollection = collection.filter(item => item.id !== itemId);
-    saveCollection(updatedCollection);
+    await saveCollection(updatedCollection);
     toast.success('Card removed from collection');
   };
 
-  const handleUpdateItem = (itemId, field, value) => {
+  const handleUpdateItem = async (itemId, field, value) => {
     const updatedCollection = collection.map(item => {
       if (item.id === itemId) {
         return { ...item, [field]: value };
       }
       return item;
     });
-    saveCollection(updatedCollection);
+    await saveCollection(updatedCollection);
   };
 
-  const handleClearCollection = () => {
+  const handleClearCollection = async () => {
     const totalCards = collection.reduce((sum, item) => sum + item.quantity, 0);
     const uniqueCards = collection.length;
     
@@ -554,7 +579,7 @@ export default function CollectPage() {
       // Double confirmation for safety
       if (window.confirm('Final confirmation: Delete everything? This is your last chance to cancel.')) {
         try {
-          saveCollection([]);
+          await saveCollection([]);
           toast.success(`Collection cleared! Removed ${totalCards} cards.`);
         } catch (error) {
           console.error('Error clearing collection:', error);
@@ -564,33 +589,175 @@ export default function CollectPage() {
     }
   };
 
-  const handleImport = (importedCards) => {
+  const handleImport = async (importedCards) => {
     if (!importedCards || importedCards.length === 0) {
       toast.error('No cards to import');
       return;
     }
 
+    const isLargeImport = importedCards.length > 1000;
+    const totalCards = importedCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
+
+    if (isLargeImport) {
+      console.log(`� Starting large collection import: ${importedCards.length} unique cards, ${totalCards} total items`);
+      
+      // Initialize progress tracking
+      setImportProgress({
+        isVisible: true,
+        phase: 'preparing',
+        current: 0,
+        total: totalCards,
+        message: 'Preparing import...',
+        errors: [],
+        isPaused: false,
+        canPause: true,
+        estimatedTimeRemaining: null,
+        storageUsed: null,
+        compressionRatio: null
+      });
+    }
+
     try {
-      console.log('📥 Importing cards as individual items...');
-      
-      // Convert imported cards to individual items (each quantity becomes separate items)
-      const individualImportedCards = convertToIndividualItems(importedCards);
-      
-      // Add all individual cards to collection (no bundling)
+      let processedCards = importedCards;
+      const errors = [];
+
+      // Phase 1: Card enrichment for large imports
+      if (isLargeImport) {
+        setImportProgress(prev => ({
+          ...prev,
+          phase: 'api',
+          message: 'Enriching card data from Scryfall...'
+        }));
+
+        try {
+          processedCards = await enrichCardsBatch(importedCards, (current, total) => {
+            setImportProgress(prev => ({
+              ...prev,
+              current: current,
+              total: total,
+              message: `Enriching cards... ${current}/${total}`
+            }));
+          }, {
+            isLargeImport: true,
+            batchSize: 15,
+            maxRetries: 3
+          });
+        } catch (enrichmentError) {
+          console.warn('⚠️ Card enrichment failed, proceeding with basic data:', enrichmentError.message);
+          errors.push(`Card enrichment partially failed: ${enrichmentError.message}`);
+          processedCards = importedCards; // Fall back to original data
+        }
+      }
+
+      // Phase 2: Processing
+      if (isLargeImport) {
+        setImportProgress(prev => ({
+          ...prev,
+          phase: 'processing',
+          current: 0,
+          total: processedCards.length,
+          message: 'Converting to individual items...'
+        }));
+      }
+
+      console.log('📥 Converting cards to individual items...');
+      const individualImportedCards = convertToIndividualItems(processedCards);
+
+      // Phase 3: Storage
+      if (isLargeImport) {
+        setImportProgress(prev => ({
+          ...prev,
+          phase: 'storing',
+          current: 0,
+          total: individualImportedCards.length,
+          message: 'Saving to collection...'
+        }));
+      }
+
+      // Add all individual cards to collection
       const updatedCollection = [...collection, ...individualImportedCards];
       
-      saveCollection(updatedCollection);
+      // Use enhanced storage for large collections
+      await saveCollectionWithProgress(updatedCollection, isLargeImport);
       
-      const totalCards = individualImportedCards.length;
+      // Complete
+      if (isLargeImport) {
+        const compressionStats = storageManager.getItem('cardCollections_metadata');
+        setImportProgress(prev => ({
+          ...prev,
+          phase: 'complete',
+          current: totalCards,
+          total: totalCards,
+          message: 'Import complete!',
+          compressionRatio: compressionStats?.compressionRatio,
+          errors
+        }));
+
+        // Show completion for 3 seconds
+        setTimeout(() => {
+          setImportProgress(prev => ({ ...prev, isVisible: false }));
+        }, 3000);
+      }
+      
       const uniqueCards = new Set(importedCards.map(card => `${card.name}|${card.set}|${card.foil}`)).size;
       
-      toast.success(`Import complete! Added ${totalCards} individual cards (${uniqueCards} unique card types).`);
+      const successMessage = errors.length > 0 
+        ? `Import completed with ${errors.length} warnings! Added ${totalCards} cards (${uniqueCards} unique).`
+        : `Import complete! Added ${totalCards} individual cards (${uniqueCards} unique card types).`;
       
-      console.log(`✅ Import successful: ${totalCards} individual items added`);
+      toast.success(successMessage);
+      
+      if (errors.length > 0) {
+        console.warn('⚠️ Import completed with errors:', errors);
+      } else {
+        console.log(`✅ Import successful: ${totalCards} individual items added`);
+      }
 
     } catch (error) {
-      console.error('Import error:', error);
+      console.error('❌ Import failed:', error);
+      
+      if (isLargeImport) {
+        setImportProgress(prev => ({
+          ...prev,
+          phase: 'complete',
+          message: `Import failed: ${error.message}`,
+          errors: [...prev.errors, error.message]
+        }));
+      }
+      
       toast.error(`Import failed: ${error.message}`);
+    }
+  };
+
+  // Enhanced collection saving with progress tracking
+  const saveCollectionWithProgress = async (collectionData, showProgress = false) => {
+    try {
+      if (showProgress) {
+        setImportProgress(prev => ({
+          ...prev,
+          message: 'Optimizing storage...'
+        }));
+      }
+
+      // Use enhanced storage manager for large collections
+      await storageManager.setItemChunked('cardCollections', { collections: collectionData });
+      
+      setCollection(collectionData);
+      
+      if (showProgress) {
+        const storageUsed = JSON.stringify(collectionData).length;
+        setImportProgress(prev => ({
+          ...prev,
+          storageUsed,
+          message: 'Collection saved successfully!'
+        }));
+      }
+      
+      console.log(`💾 Collection saved: ${collectionData.length} items`);
+      
+    } catch (error) {
+      console.error('❌ Failed to save collection:', error);
+      throw new Error(`Failed to save collection: ${error.message}`);
     }
   };
 
@@ -675,6 +842,16 @@ export default function CollectPage() {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImport}
+      />
+
+      <CollectionImportProgress
+        {...importProgress}
+        onPause={() => setImportProgress(prev => ({ ...prev, isPaused: true }))}
+        onResume={() => setImportProgress(prev => ({ ...prev, isPaused: false }))}
+        onCancel={() => {
+          setImportProgress(prev => ({ ...prev, isVisible: false }));
+          toast.info('Import cancelled');
+        }}
       />
     </div>
   );

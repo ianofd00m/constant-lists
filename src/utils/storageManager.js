@@ -161,7 +161,7 @@ export class StorageManager {
   }
 
   /**
-   * Smart retrieval with decompression
+   * Smart retrieval with decompression and collection optimization
    */
   getItem(key) {
     try {
@@ -175,7 +175,12 @@ export class StorageManager {
         return storeData;
       }
 
-      // Handle new format with compression
+      // Handle collection-optimized data (v2.0+)
+      if (storeData.collectionOptimized && storeData.version === '2.0') {
+        return this.decompressCollectionData(storeData);
+      }
+
+      // Handle regular compression
       return this.decompressData(storeData);
     } catch (error) {
       console.error(`❌ Failed to retrieve ${key}:`, error.message);
@@ -184,19 +189,135 @@ export class StorageManager {
   }
 
   /**
-   * Handle quota exceeded errors
+   * Special compression for collection data with field abbreviation
+   */
+  compressCollectionData(collections) {
+    const fieldMap = {
+      'name': 'n',
+      'quantity': 'q', 
+      'tags': 't',
+      'set': 's',
+      'collector_number': 'cn',
+      'rarity': 'r',
+      'prices': 'p',
+      'image_uris': 'i',
+      'color_identity': 'ci',
+      'mana_cost': 'mc',
+      'type_line': 'tl',
+      'oracle_text': 'ot',
+      'power': 'pw',
+      'toughness': 'to',
+      'cmc': 'c',
+      'legalities': 'l',
+      'card_faces': 'cf',
+      'layout': 'ly'
+    };
+
+    const compressed = JSON.parse(JSON.stringify(collections));
+    let cardCount = 0;
+    
+    // Compress collection fields and count cards
+    Object.keys(compressed).forEach(collectionId => {
+      const collection = compressed[collectionId];
+      if (collection.cards && Array.isArray(collection.cards)) {
+        cardCount += collection.cards.length;
+        collection.cards = collection.cards.map(card => {
+          const compressedCard = {};
+          Object.keys(card).forEach(key => {
+            const shortKey = fieldMap[key] || key;
+            // Only store essential data for very large collections
+            if (cardCount > 5000 && ['oracle_text', 'legalities', 'card_faces'].includes(key)) {
+              return; // Skip large optional fields for massive collections
+            }
+            compressedCard[shortKey] = card[key];
+          });
+          return compressedCard;
+        });
+      }
+    });
+
+    const originalSize = JSON.stringify(collections).length;
+    const compressedSize = JSON.stringify(compressed).length;
+
+    return {
+      data: compressed,
+      compressed: true,
+      collectionOptimized: true,
+      version: '2.0',
+      fieldMap,
+      cardCount,
+      originalSize,
+      compressedSize,
+      compressionRatio: Math.round((1 - compressedSize / originalSize) * 100)
+    };
+  }
+
+  /**
+   * Decompress collection-optimized data
+   */
+  decompressCollectionData(storeData) {
+    const { data, fieldMap } = storeData;
+    const reverseMap = {};
+    
+    // Create reverse field mapping
+    Object.keys(fieldMap).forEach(originalKey => {
+      reverseMap[fieldMap[originalKey]] = originalKey;
+    });
+
+    const decompressed = JSON.parse(JSON.stringify(data));
+    
+    // Decompress collection fields
+    Object.keys(decompressed).forEach(collectionId => {
+      const collection = decompressed[collectionId];
+      if (collection.cards && Array.isArray(collection.cards)) {
+        collection.cards = collection.cards.map(card => {
+          const decompressedCard = {};
+          Object.keys(card).forEach(shortKey => {
+            const originalKey = reverseMap[shortKey] || shortKey;
+            decompressedCard[originalKey] = card[shortKey];
+          });
+          return decompressedCard;
+        });
+      }
+    });
+
+    return decompressed;
+  }
+
+  /**
+   * Handle quota exceeded errors with progressive fallback strategies
    */
   handleQuotaExceeded(key, data, options = {}) {
     console.log('🚨 Storage quota exceeded, implementing emergency measures...');
     
     try {
-      // Strategy 1: Clear old cache data
-      this.clearOldData(['production-otag-data', 'cache-', 'temp-']);
+      // Strategy 1: Clear old cache and temporary data
+      const clearedBytes = this.clearOldData(['production-otag-data', 'cache-', 'temp-', 'old-']);
+      console.log(`🗑️ Cleared ${clearedBytes} old items, freed ${(clearedBytes / 1024).toFixed(1)}KB`);
       
-      // Strategy 2: Try storing with maximum compression
+      // Strategy 2: Try advanced compression for collections
+      if (key === 'cardCollection' && Array.isArray(data)) {
+        console.log('💡 Attempting advanced collection compression...');
+        const compressed = this.compressCollectionData(data);
+        
+        if (this.canStore(compressed.data, key)) {
+          const storeData = {
+            ...compressed,
+            timestamp: Date.now(),
+            key,
+            version: '2.0' // Mark as using advanced compression
+          };
+          
+          localStorage.setItem(key, JSON.stringify(storeData));
+          console.log(`✅ Stored collection with ${(compressed.savings / 1024).toFixed(1)}KB savings (${compressed.count} cards)`);
+          return true;
+        }
+      }
+      
+      // Strategy 3: Try regular maximum compression
       const maxCompressed = this.compressData(data);
       if (this.canStore(maxCompressed.data, key)) {
-        console.log('💡 Attempting storage after cleanup...');
+        console.log('💡 Attempting storage with maximum compression...');
         return this.setItem(key, data, { ...options, forceStore: true, clearOldData: false });
       }
 
@@ -208,9 +329,9 @@ export class StorageManager {
       }
 
       // Strategy 4: Use chunked storage for very large collections
-      if (key === 'cardCollection' && Array.isArray(data) && data.length > 1000) {
+      if (key === 'cardCollections' && typeof data === 'object' && data !== null) {
         console.log('💡 Using chunked storage for large collection...');
-        return this.storeInChunks(key, data);
+        return this.setItemChunked(key, data);
       }
 
       throw new Error('All storage strategies failed');
@@ -221,6 +342,95 @@ export class StorageManager {
       // Final fallback: show user error with guidance
       this.showStorageFullError(key, data);
       return false;
+    }
+  }
+
+  /**
+   * Advanced chunked storage for extremely large collections
+   */
+  async setItemChunked(key, data, chunkSize = 1000000) { // 1MB chunks
+    try {
+      const jsonString = JSON.stringify(data);
+      const totalSize = jsonString.length;
+      
+      if (totalSize <= chunkSize) {
+        // Small enough to store normally
+        return this.setItem(key, data);
+      }
+
+      console.log(`📦 Chunking large data: ${(totalSize / 1024 / 1024).toFixed(2)}MB`);
+      
+      // Store chunk metadata
+      const chunkCount = Math.ceil(totalSize / chunkSize);
+      const metadata = {
+        isChunked: true,
+        chunkCount,
+        totalSize,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem(`${key}_metadata`, JSON.stringify(metadata));
+      
+      // Store chunks
+      for (let i = 0; i < chunkCount; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, totalSize);
+        const chunk = jsonString.slice(start, end);
+        
+        try {
+          localStorage.setItem(`${key}_chunk_${i}`, chunk);
+        } catch (error) {
+          // Clean up partial chunks on failure
+          for (let j = 0; j < i; j++) {
+            localStorage.removeItem(`${key}_chunk_${j}`);
+          }
+          localStorage.removeItem(`${key}_metadata`);
+          throw new Error(`Failed to store chunk ${i}: ${error.message}`);
+        }
+      }
+      
+      console.log(`✅ Stored ${chunkCount} chunks successfully`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Chunked storage failed for ${key}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve chunked data
+   */
+  async getItemChunked(key) {
+    try {
+      const metadataStr = localStorage.getItem(`${key}_metadata`);
+      if (!metadataStr) {
+        // Try regular retrieval
+        return this.getItem(key);
+      }
+
+      const metadata = JSON.parse(metadataStr);
+      if (!metadata.isChunked) {
+        return this.getItem(key);
+      }
+
+      console.log(`📦 Retrieving ${metadata.chunkCount} chunks...`);
+      
+      let reconstructed = '';
+      for (let i = 0; i < metadata.chunkCount; i++) {
+        const chunk = localStorage.getItem(`${key}_chunk_${i}`);
+        if (chunk === null) {
+          throw new Error(`Missing chunk ${i} of ${metadata.chunkCount}`);
+        }
+        reconstructed += chunk;
+      }
+      
+      const data = JSON.parse(reconstructed);
+      console.log(`✅ Retrieved ${(reconstructed.length / 1024 / 1024).toFixed(2)}MB from chunks`);
+      
+      return data;
+    } catch (error) {
+      console.error(`❌ Failed to retrieve chunked data for ${key}:`, error.message);
+      return null;
     }
   }
 
