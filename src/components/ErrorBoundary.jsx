@@ -18,14 +18,14 @@ class ErrorBoundary extends React.Component {
     console.error(errorInfo);
     
     // Check if it's a forEach error
-    if (error.message && error.message.includes('forEach')) {
+    if (error && error.message && error.message.includes('forEach')) {
       console.error('[ERROR BOUNDARY] forEach error detected!');
       console.error('[ERROR BOUNDARY] Error stack:', error.stack);
     }
 
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo || null
     });
   }
 
@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component {
             <summary>Error details</summary>
             {this.state.error && this.state.error.toString()}
             <br />
-            {this.state.errorInfo.componentStack}
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
           </details>
           <button 
             onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
