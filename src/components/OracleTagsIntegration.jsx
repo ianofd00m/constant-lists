@@ -53,11 +53,38 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
       const cardName = getCardName(card);
       if (cardName && window.productionOtagSystem && window.productionOtagSystem.isReady) {
         console.log(`[OracleTagsIntegration] Getting tags for: ${cardName}`);
+        
+        // Debug: Check OTAG system stats
+        console.log(`[OracleTagsIntegration] OTAG System Stats:`, {
+          totalCards: window.productionOtagSystem.stats?.totalCards,
+          totalOtags: window.productionOtagSystem.stats?.totalOtags,
+          isReady: window.productionOtagSystem.isReady,
+          hasDatabase: !!window.productionOtagSystem.otagDatabase,
+          databaseSize: window.productionOtagSystem.otagDatabase?.size
+        });
+        
         const tags = window.productionOtagSystem.getTagsForCard(cardName);
         setOracleTags(tags || []);
         console.log(`[OracleTagsIntegration] Found ${(tags || []).length} tags for ${cardName}`);
+        
+        // Debug: If no tags found, check if card exists in database
+        if (!tags || tags.length === 0) {
+          const cardKey = cardName.toLowerCase().trim();
+          const hasCard = window.productionOtagSystem.otagDatabase?.has(cardKey);
+          console.log(`[OracleTagsIntegration] Card "${cardName}" (key: "${cardKey}") exists in database: ${hasCard}`);
+          
+          // Show a few sample cards from the database
+          if (window.productionOtagSystem.otagDatabase?.size > 0) {
+            const sampleCards = Array.from(window.productionOtagSystem.otagDatabase.keys()).slice(0, 5);
+            console.log(`[OracleTagsIntegration] Sample cards in database:`, sampleCards);
+          }
+        }
       } else {
-        console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`);
+        console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`, {
+          hasSystem: !!window.productionOtagSystem,
+          isReady: window.productionOtagSystem?.isReady,
+          loading: loading
+        });
         setOracleTags([]);
       }
     }
@@ -72,6 +99,79 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     if (cardObj.cardObj?.scryfall_json?.name) return cardObj.cardObj.scryfall_json.name;
     if (cardObj.cardObj?.card?.scryfall_json?.name) return cardObj.cardObj.card.scryfall_json.name;
     return null;
+  };
+
+  const getFallbackTags = (cardName, cardObj) => {
+    if (!cardName) return [];
+    
+    const tags = [];
+    const lowerName = cardName.toLowerCase();
+    
+    // Get card text/oracle text for analysis
+    const oracleText = cardObj?.scryfall_json?.oracle_text || 
+                      cardObj?.cardObj?.scryfall_json?.oracle_text || 
+                      cardObj?.cardObj?.card?.scryfall_json?.oracle_text || '';
+    const typeLine = cardObj?.scryfall_json?.type_line || 
+                    cardObj?.cardObj?.scryfall_json?.type_line || 
+                    cardObj?.cardObj?.card?.scryfall_json?.type_line || '';
+    
+    const lowerText = oracleText.toLowerCase();
+    const lowerType = typeLine.toLowerCase();
+    
+    // Basic card type tags
+    if (lowerType.includes('creature')) tags.push('creature');
+    if (lowerType.includes('instant')) tags.push('instant');
+    if (lowerType.includes('sorcery')) tags.push('sorcery');
+    if (lowerType.includes('artifact')) tags.push('artifact');
+    if (lowerType.includes('enchantment')) tags.push('enchantment');
+    if (lowerType.includes('planeswalker')) tags.push('planeswalker');
+    if (lowerType.includes('legendary')) tags.push('legendary');
+    
+    // Basic mechanics detection
+    if (lowerText.includes('flying')) tags.push('flying');
+    if (lowerText.includes('trample')) tags.push('trample');
+    if (lowerText.includes('lifelink')) tags.push('lifelink');
+    if (lowerText.includes('deathtouch')) tags.push('deathtouch');
+    if (lowerText.includes('vigilance')) tags.push('vigilance');
+    if (lowerText.includes('haste')) tags.push('haste');
+    if (lowerText.includes('first strike')) tags.push('first-strike');
+    if (lowerText.includes('double strike')) tags.push('double-strike');
+    if (lowerText.includes('hexproof')) tags.push('hexproof');
+    if (lowerText.includes('indestructible')) tags.push('indestructible');
+    if (lowerText.includes('menace')) tags.push('menace');
+    if (lowerText.includes('reach')) tags.push('reach');
+    
+    // Card advantage and utility
+    if (lowerText.includes('draw') && lowerText.includes('card')) tags.push('card-draw');
+    if (lowerText.includes('destroy')) tags.push('removal');
+    if (lowerText.includes('exile')) tags.push('exile');
+    if (lowerText.includes('counter') && lowerText.includes('spell')) tags.push('counterspell');
+    if (lowerText.includes('sacrifice')) tags.push('sacrifice');
+    if (lowerText.includes('token')) tags.push('token-generation');
+    if (lowerText.includes('graveyard')) tags.push('graveyard-interaction');
+    if (lowerText.includes('search') && lowerText.includes('library')) tags.push('tutor');
+    
+    // Mana and ramp
+    if (lowerText.includes('add') && lowerText.includes('mana')) tags.push('mana-acceleration');
+    if (lowerText.includes('untap') && lowerText.includes('land')) tags.push('ramp');
+    
+    // Common creature subtypes
+    if (lowerType.includes('zombie')) tags.push('zombie');
+    if (lowerType.includes('mutant')) tags.push('mutant');
+    if (lowerType.includes('human')) tags.push('human');
+    if (lowerType.includes('elf')) tags.push('elf');
+    if (lowerType.includes('dragon')) tags.push('dragon');
+    if (lowerType.includes('angel')) tags.push('angel');
+    if (lowerType.includes('demon')) tags.push('demon');
+    if (lowerType.includes('beast')) tags.push('beast');
+    
+    // Specific card name patterns
+    if (lowerName.includes('bright') || lowerName.includes('prophet')) {
+      tags.push('legendary-creature');
+      if (lowerName.includes('glowing')) tags.push('radiation');
+    }
+    
+    return [...new Set(tags)]; // Remove duplicates
   };
 
   // DISABLED: Using Production OTAG System instead
@@ -290,6 +390,68 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
   }
 
   if (!oracleTags || oracleTags.length === 0) {
+    // Temporary fallback: provide basic tags based on card name/type analysis
+    const cardName = getCardName(card);
+    const fallbackTags = getFallbackTags(cardName, card);
+    
+    if (fallbackTags.length > 0) {
+      console.log(`[OracleTagsIntegration] Using fallback tags for ${cardName}:`, fallbackTags);
+      // Use fallback tags temporarily
+      const tempGroupedTags = groupTags(fallbackTags);
+      
+      return (
+        <div className="oracle-tags-integration">
+          <div className="oracle-tags-header">
+            <span className="oracle-tags-icon">🏷️</span>
+            <span className="oracle-tags-title">Basic Oracle Tags ({fallbackTags.length}) - Limited Data</span>
+          </div>
+          
+          <div className="oracle-tags-content">
+            {Object.entries(tempGroupedTags).map(([category, tags]) => (
+              <div key={category} className="oracle-tags-category">
+                <div className="category-header">
+                  <span className="category-name">{category}</span>
+                  <span className="category-count">({tags.length})</span>
+                </div>
+                
+                <div className="oracle-tags-list">
+                  {tags.map((tag) => {
+                    const colors = getCategoryColor(category);
+                    return (
+                      <button
+                        key={tag}
+                        className="oracle-tag"
+                        style={{
+                          '--tag-bg': colors.bg,
+                          '--tag-border': colors.border,
+                          '--tag-text': colors.text
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onMouseDown={(e) => handleTagMouseDown(e, tag)}
+                        title={`Search for cards with "${tag}" functionality`}
+                      >
+                        {formatTagName(tag)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="oracle-tags-footer">
+            <span className="search-hint">💡 Click any tag to search for similar cards</span>
+            <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
+              Note: Using basic tags while full database loads
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="oracle-tags-integration no-tags">
         <div className="oracle-tags-header">
@@ -297,6 +459,9 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
           <span className="oracle-tags-title">Oracle Tags</span>
         </div>
         <div className="no-tags-message">No functional tags found for this card</div>
+        <div style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', marginTop: '4px' }}>
+          Database: {window.productionOtagSystem?.stats?.totalCards || 0} cards loaded
+        </div>
       </div>
     );
   }
