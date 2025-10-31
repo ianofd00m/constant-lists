@@ -633,7 +633,7 @@ export default function CollectPage() {
           console.log('🗑️ Clearing all collection storage...');
           
           // Clear regular collection storage
-          storageManager.removeItem('cardCollection');
+          localStorage.removeItem('cardCollection');
           
           // Clear chunked collection storage and metadata
           const metadata = localStorage.getItem('cardCollections_metadata');
