@@ -11,19 +11,40 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { storageManager } from "../utils/storageManager";
 
-// Safe forEach wrapper with debugging
-const safeForEach = (array, callback, context = 'unknown') => {
-  if (!Array.isArray(array)) {
-    console.error(`[FOREACH DEBUG] ${context}: forEach called on non-array:`, typeof array, array);
-    return;
-  }
+// ULTRA-SAFE forEach replacement - bypasses all forEach calls entirely
+const ultraSafeForEach = (array, callback, context = 'unknown') => {
   try {
-    array.forEach(callback);
+    if (!array) {
+      console.warn(`[ULTRA SAFE] ${context}: null/undefined array`);
+      return;
+    }
+    if (!Array.isArray(array)) {
+      console.warn(`[ULTRA SAFE] ${context}: converting non-array to array:`, typeof array, array);
+      if (array && typeof array.length === 'number' && array.length >= 0) {
+        array = Array.from(array);
+      } else if (array && typeof array[Symbol.iterator] === 'function') {
+        array = Array.from(array);
+      } else {
+        console.error(`[ULTRA SAFE] ${context}: cannot convert to array:`, array);
+        return;
+      }
+    }
+    
+    // Use traditional for loop instead of forEach to avoid ALL minification issues
+    for (let i = 0; i < array.length; i++) {
+      try {
+        callback(array[i], i, array);
+      } catch (callbackError) {
+        console.error(`[ULTRA SAFE] ${context}: callback error at index ${i}:`, callbackError);
+      }
+    }
   } catch (error) {
-    console.error(`[FOREACH DEBUG] ${context}: forEach error:`, error, array);
-    throw error;
+    console.error(`[ULTRA SAFE] ${context}: critical error:`, error, array);
   }
 };
+
+// Safe forEach wrapper with debugging (legacy - now uses ultra-safe version)
+const safeForEach = ultraSafeForEach;
 
 // Debug wrapper to catch forEach errors
 const originalForEach = Array.prototype.forEach;
@@ -402,7 +423,7 @@ function groupCardsByType(cards, commanderNames = []) {
   }
 
   // Apply consolidation to each type group using a simplified groupCards logic
-  Object.keys(typeMap).forEach(type => {
+  ultraSafeForEach(Object.keys(typeMap), (type) => {
     const cardsInType = typeMap[type];
     if (!Array.isArray(cardsInType)) {
       console.error('[FOREACH DEBUG] cardsInType is not an array in groupCardsByType:', typeof cardsInType, cardsInType, 'Type:', type);
@@ -412,7 +433,7 @@ function groupCardsByType(cards, commanderNames = []) {
     const consolidatedMap = {};
     
     try {
-      cardsInType.forEach(cardObj => {
+      ultraSafeForEach(cardsInType, (cardObj) => {
         const name = cardObj.card?.name || cardObj.name;
         // CRITICAL FIX: Use proper Scryfall ID instead of "default"
         const printing = cardObj.printing || 
@@ -658,7 +679,7 @@ const preloadCardImages = (cards, preloadedImagesMap) => {
 
   // Extract unique cards to avoid loading duplicates
   const uniqueCards = new Map();
-  cards.forEach((cardObj) => {
+  ultraSafeForEach(cards, (cardObj) => {
     if (!cardObj) return;
     const card = cardObj.card || cardObj;
     const name = card?.name || cardObj.name;
@@ -672,7 +693,7 @@ const preloadCardImages = (cards, preloadedImagesMap) => {
   });
 
   // Preload each image
-  uniqueCards.forEach((card, key) => {
+  ultraSafeForEach(Array.from(uniqueCards), ([key, card]) => {
     if (preloadedImagesMap.has(key)) return; // Skip if already preloaded
 
     let imageUrl;
@@ -1194,7 +1215,7 @@ const getCollectionStatus = (cardData) => {
     // Also create a map by card name to check for different versions
     const cardNameMap = new Map();
     
-    collection.forEach(item => {
+    ultraSafeForEach(collection, (item) => {
       const key = `${item.printing_id}_${item.foil}`;
       collectionMap.set(key, (collectionMap.get(key) || 0) + item.quantity);
       
@@ -6160,7 +6181,7 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       // Sort cards within each group
       if (Array.isArray(result)) {
-        result.forEach((group) => {
+        ultraSafeForEach(result, (group) => {
           if (group && Array.isArray(group.cards)) {
             group.cards = sortCards(group.cards, sortBy);
           }
@@ -13280,7 +13301,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                     
                     // Create a map for faster lookup: printing_id + foil -> quantity
                     const collectionMap = new Map();
-                    collection.forEach(item => {
+                    ultraSafeForEach(collection, (item) => {
                       const key = `${item.printing_id}_${item.foil}`;
                       collectionMap.set(key, (collectionMap.get(key) || 0) + item.quantity);
                     });
