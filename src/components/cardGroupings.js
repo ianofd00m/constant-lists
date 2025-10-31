@@ -25,6 +25,10 @@ const getColorIdentity = (cardObj) => {
 
 // Group cards by Mana Value
 export function groupCardsByManaValue(cards) {
+  if (!Array.isArray(cards)) {
+    console.error('[FOREACH DEBUG] groupCardsByManaValue: cards is not an array:', typeof cards, cards);
+    return [];
+  }
   const typeMap = {};
   for (const cardObj of cards) {
     if (!cardObj) continue;
@@ -41,6 +45,10 @@ export function groupCardsByManaValue(cards) {
 
 // Group cards by Color Identity
 export function groupCardsByColorIdentity(cards) {
+  if (!Array.isArray(cards)) {
+    console.error('[FOREACH DEBUG] groupCardsByColorIdentity: cards is not an array:', typeof cards, cards);
+    return [];
+  }
   const typeMap = {};
 
   const colorIdentityNames = {
@@ -114,6 +122,10 @@ export function groupCardsByColorIdentity(cards) {
 
 // Group cards by Collection Status
 export function groupCardsByCollectionStatus(cards) {
+  if (!Array.isArray(cards)) {
+    console.error('[FOREACH DEBUG] groupCardsByCollectionStatus: cards is not an array:', typeof cards, cards);
+    return [];
+  }
   console.log('[CollectionGrouping] Regrouping cards by collection status, total cards:', cards.length);
   try {
     // Get collection from localStorage
@@ -147,10 +159,10 @@ export function groupCardsByCollectionStatus(cards) {
     const differentVersion = [];
     const notOwned = [];
     
-    cards.forEach(card => {
+    for (const card of cards) {
       if (!card) {
         notOwned.push(card);
-        return;
+        continue;
       }
       
       // Get card name from various possible locations
@@ -188,7 +200,7 @@ export function groupCardsByCollectionStatus(cards) {
           cardStructure: Object.keys(card) 
         });
         notOwned.push(card);
-        return;
+        continue;
       }
       
       console.log('[CollectionGrouping] Processing card:', { 
@@ -217,7 +229,7 @@ export function groupCardsByCollectionStatus(cards) {
           notOwned.push(card);
         }
       }
-    });
+    }
     
     const groups = [];
     if (exactMatch.length > 0) {
