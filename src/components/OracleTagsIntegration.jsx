@@ -114,9 +114,18 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     const typeLine = cardObj?.scryfall_json?.type_line || 
                     cardObj?.cardObj?.scryfall_json?.type_line || 
                     cardObj?.cardObj?.card?.scryfall_json?.type_line || '';
+    const manaCost = cardObj?.scryfall_json?.mana_cost || 
+                    cardObj?.cardObj?.scryfall_json?.mana_cost || 
+                    cardObj?.cardObj?.card?.scryfall_json?.mana_cost || '';
     
     const lowerText = oracleText.toLowerCase();
     const lowerType = typeLine.toLowerCase();
+    
+    console.log(`[Fallback Tags] Analyzing ${cardName}:`, {
+      oracleText: oracleText,
+      typeLine: typeLine,
+      manaCost: manaCost
+    });
     
     // Basic card type tags
     if (lowerType.includes('creature')) tags.push('creature');
@@ -127,8 +136,9 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     if (lowerType.includes('planeswalker')) tags.push('planeswalker');
     if (lowerType.includes('legendary')) tags.push('legendary');
     
-    // Basic mechanics detection
+    // Advanced mechanics detection
     if (lowerText.includes('flying')) tags.push('flying');
+    if (lowerText.includes('gains flying')) tags.push('flying-granter');
     if (lowerText.includes('trample')) tags.push('trample');
     if (lowerText.includes('lifelink')) tags.push('lifelink');
     if (lowerText.includes('deathtouch')) tags.push('deathtouch');
@@ -141,6 +151,28 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     if (lowerText.includes('menace')) tags.push('menace');
     if (lowerText.includes('reach')) tags.push('reach');
     
+    // Counter mechanics
+    if (lowerText.includes('+1/+1 counter')) tags.push('plus-one-counter');
+    if (lowerText.includes('put a +1/+1 counter')) tags.push('counter-generation');
+    if (lowerText.includes('-1/-1 counter')) tags.push('minus-one-counter');
+    if (lowerText.includes('counter') && !lowerText.includes('spell')) tags.push('counters-matter');
+    
+    // Power/Toughness manipulation
+    if (lowerText.includes('power') && lowerText.includes('different')) tags.push('power-matters');
+    if (lowerText.includes('base power')) tags.push('base-power-matters');
+    if (lowerText.includes('toughness')) tags.push('toughness-matters');
+    if (lowerText.includes('gets +') || lowerText.includes('get +')) tags.push('stat-boost');
+    
+    // Triggered abilities
+    if (lowerText.includes('whenever')) tags.push('triggered-ability');
+    if (lowerText.includes('when') && lowerText.includes('dies')) tags.push('death-trigger');
+    if (lowerText.includes('when') && lowerText.includes('enters')) tags.push('etb-trigger');
+    if (lowerText.includes('at the beginning')) tags.push('upkeep-trigger');
+    
+    // Conditional effects
+    if (lowerText.includes('if') && lowerText.includes('power')) tags.push('conditional-effect');
+    if (lowerText.includes('until end of turn')) tags.push('temporary-effect');
+    
     // Card advantage and utility
     if (lowerText.includes('draw') && lowerText.includes('card')) tags.push('card-draw');
     if (lowerText.includes('destroy')) tags.push('removal');
@@ -151,9 +183,27 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     if (lowerText.includes('graveyard')) tags.push('graveyard-interaction');
     if (lowerText.includes('search') && lowerText.includes('library')) tags.push('tutor');
     
+    // Target effects
+    if (lowerText.includes('target creature')) tags.push('targets-creatures');
+    if (lowerText.includes('target') && !lowerText.includes('creature')) tags.push('targeted-effect');
+    
     // Mana and ramp
     if (lowerText.includes('add') && lowerText.includes('mana')) tags.push('mana-acceleration');
     if (lowerText.includes('untap') && lowerText.includes('land')) tags.push('ramp');
+    
+    // Color identity from mana cost
+    if (manaCost.includes('W')) tags.push('white');
+    if (manaCost.includes('U')) tags.push('blue');
+    if (manaCost.includes('B')) tags.push('black');
+    if (manaCost.includes('R')) tags.push('red');
+    if (manaCost.includes('G')) tags.push('green');
+    
+    // Color combinations
+    const colorCount = [manaCost.includes('W'), manaCost.includes('U'), manaCost.includes('B'), manaCost.includes('R'), manaCost.includes('G')].filter(Boolean).length;
+    if (colorCount === 0) tags.push('colorless');
+    if (colorCount === 1) tags.push('mono-color');
+    if (colorCount === 2) tags.push('two-color');
+    if (colorCount >= 3) tags.push('multicolor');
     
     // Common creature subtypes
     if (lowerType.includes('zombie')) tags.push('zombie');
@@ -164,12 +214,50 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     if (lowerType.includes('angel')) tags.push('angel');
     if (lowerType.includes('demon')) tags.push('demon');
     if (lowerType.includes('beast')) tags.push('beast');
+    if (lowerType.includes('warrior')) tags.push('warrior');
+    if (lowerType.includes('wizard')) tags.push('wizard');
+    if (lowerType.includes('soldier')) tags.push('soldier');
+    if (lowerType.includes('knight')) tags.push('knight');
+    if (lowerType.includes('cleric')) tags.push('cleric');
+    if (lowerType.includes('rogue')) tags.push('rogue');
+    if (lowerType.includes('shaman')) tags.push('shaman');
     
-    // Specific card name patterns
-    if (lowerName.includes('bright') || lowerName.includes('prophet')) {
-      tags.push('legendary-creature');
-      if (lowerName.includes('glowing')) tags.push('radiation');
+    // Format relevance
+    if (lowerType.includes('legendary') && lowerType.includes('creature')) {
+      tags.push('commander-legal');
+      tags.push('edh-relevant');
     }
+    
+    // Specific card analysis for Jason Bright
+    if (lowerName.includes('jason bright') || lowerName.includes('glowing prophet')) {
+      tags.push('legendary-creature');
+      tags.push('fallout-themed');
+      tags.push('radiation-themed');
+      tags.push('utility-creature');
+      tags.push('commander-option');
+      if (lowerText.includes('zombie') && lowerText.includes('mutant')) {
+        tags.push('tribal-synergy');
+        tags.push('zombie-matters');
+        tags.push('mutant-matters');
+      }
+    }
+    
+    // Theme detection
+    if (lowerText.includes('dies') || lowerText.includes('graveyard')) tags.push('death-matters');
+    if (lowerText.includes('artifact') && lowerType.includes('creature')) tags.push('artifact-matters');
+    if (lowerText.includes('enchantment')) tags.push('enchantment-matters');
+    
+    // Combat relevance
+    if (lowerText.includes('combat') || lowerText.includes('attack') || lowerText.includes('block')) {
+      tags.push('combat-relevant');
+    }
+    
+    // Synergy indicators
+    if (lowerType.includes('zombie') || lowerType.includes('mutant')) {
+      tags.push('tribal-creature');
+    }
+    
+    console.log(`[Fallback Tags] Generated ${tags.length} tags for ${cardName}:`, tags);
     
     return [...new Set(tags)]; // Remove duplicates
   };
@@ -278,7 +366,11 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
           lowerTag.includes('bounce') || lowerTag.includes('flicker') ||
           lowerTag.includes('sacrifice') || lowerTag.includes('token') ||
           lowerTag.includes('buff') || lowerTag.includes('debuff') ||
-          lowerTag.includes('tap') || lowerTag.includes('untap')) {
+          lowerTag.includes('tap') || lowerTag.includes('untap') ||
+          lowerTag.includes('trigger') || lowerTag.includes('conditional') ||
+          lowerTag.includes('temporary') || lowerTag.includes('boost') ||
+          lowerTag.includes('generation') || lowerTag.includes('granter') ||
+          lowerTag.includes('targeted') || lowerTag.includes('utility')) {
         groups['Mechanics & Effects'].push(tag);
       }
       // Card Types & Attributes
@@ -295,7 +387,9 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                lowerTag.includes('vigilance') || lowerTag.includes('haste') ||
                lowerTag.includes('reach') || lowerTag.includes('first-strike') ||
                lowerTag.includes('double-strike') || lowerTag.includes('menace') ||
-               lowerTag.includes('hexproof') || lowerTag.includes('indestructible')) {
+               lowerTag.includes('hexproof') || lowerTag.includes('indestructible') ||
+               lowerTag.includes('matters') || lowerTag.includes('effect') ||
+               lowerTag.includes('ability') || lowerTag.includes('combat')) {
         groups['Card Types & Attributes'].push(tag);
       }
       // Colors & Identity
@@ -318,7 +412,8 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                lowerTag.includes('competitive') || lowerTag.includes('casual') ||
                lowerTag.includes('tournament') || lowerTag.includes('meta') ||
                lowerTag.includes('staple') || lowerTag.includes('sideboard') ||
-               lowerTag.includes('mainboard')) {
+               lowerTag.includes('mainboard') || lowerTag.includes('relevant') ||
+               lowerTag.includes('option')) {
         groups['Competitive & Formats'].push(tag);
       }
       // Tribal & Themes
@@ -329,7 +424,16 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
                lowerTag.includes('engine') || lowerTag.includes('package') ||
                lowerTag.includes('theme') || lowerTag.includes('build-around') ||
                lowerTag.includes('win-condition') || lowerTag.includes('finisher') ||
-               lowerTag.includes('enabler') || lowerTag.includes('payoff')) {
+               lowerTag.includes('enabler') || lowerTag.includes('payoff') ||
+               lowerTag.includes('zombie') || lowerTag.includes('mutant') ||
+               lowerTag.includes('human') || lowerTag.includes('elf') ||
+               lowerTag.includes('dragon') || lowerTag.includes('angel') ||
+               lowerTag.includes('demon') || lowerTag.includes('beast') ||
+               lowerTag.includes('warrior') || lowerTag.includes('wizard') ||
+               lowerTag.includes('soldier') || lowerTag.includes('knight') ||
+               lowerTag.includes('cleric') || lowerTag.includes('rogue') ||
+               lowerTag.includes('shaman') || lowerTag.includes('fallout') ||
+               lowerTag.includes('radiation') || lowerTag.includes('death')) {
         groups['Tribal & Themes'].push(tag);
       }
       // Everything else
