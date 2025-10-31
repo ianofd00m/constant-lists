@@ -6338,9 +6338,17 @@ export default function DeckViewEdit({ isPublic = false }) {
             group.cards = [];
           }
           try {
-            group.cards = sortCards([...group.cards], sortBy);
+            // CRITICAL: Extra validation before spreading to prevent forEach errors
+            if (!Array.isArray(group.cards)) {
+              console.error('[FOREACH DEBUG] group.cards is not an array before spread:', typeof group.cards, group.cards);
+              group.cards = [];
+            }
+            const cardsToSort = [...group.cards];
+            console.log('[FOREACH DEBUG] About to sort cards:', cardsToSort.length, 'cards');
+            group.cards = sortCards(cardsToSort, sortBy);
           } catch (error) {
             console.error('[FOREACH DEBUG] Error in sortCards:', error, 'group.cards:', group.cards);
+            console.error('[FOREACH DEBUG] sortBy:', sortBy);
             throw error;
           }
         });
@@ -11525,14 +11533,20 @@ export default function DeckViewEdit({ isPublic = false }) {
                         }
                         
                         // Sideboard cards
-                        (deck?.sideboard || []).forEach(card => {
-                          allCardIds.add(generateCardSelectionId(card));
-                        });
+                        const sideboardCards = deck?.sideboard || [];
+                        if (Array.isArray(sideboardCards)) {
+                          sideboardCards.forEach(card => {
+                            allCardIds.add(generateCardSelectionId(card));
+                          });
+                        }
                         
                         // Tech ideas cards
-                        (deck?.techIdeas || []).forEach(card => {
-                          allCardIds.add(generateCardSelectionId(card));
-                        });
+                        const techIdeasCards = deck?.techIdeas || [];
+                        if (Array.isArray(techIdeasCards)) {
+                          techIdeasCards.forEach(card => {
+                            allCardIds.add(generateCardSelectionId(card));
+                          });
+                        }
                         
                         setSelectedCards(allCardIds);
                       } else {
