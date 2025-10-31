@@ -1672,10 +1672,23 @@ export default function DeckViewEdit({ isPublic = false }) {
   // Read-only mode state
   const [isReadOnly, setIsReadOnly] = useState(isPublic);
   
-  // Track excessive re-renders
+  // Track excessive re-renders with circuit breaker
   renderCounter.current++;
   if (renderCounter.current % 50 === 0) {
     console.warn(`[PERFORMANCE] DeckViewEdit has re-rendered ${renderCounter.current} times! Possible render loop.`);
+  }
+  
+  // EMERGENCY: Circuit breaker to prevent infinite render loops from crashing the app
+  if (renderCounter.current > 200) {
+    console.error(`[EMERGENCY] DeckViewEdit has re-rendered ${renderCounter.current} times! Activating circuit breaker.`);
+    return (
+      <div style={{ padding: '20px', border: '2px solid red', margin: '20px' }}>
+        <h3>🚨 Render Loop Detected</h3>
+        <p>The deck editor encountered a render loop and was stopped to prevent crashes.</p>
+        <p>Please refresh the page to try again.</p>
+        <button onClick={() => window.location.reload()}>Refresh Page</button>
+      </div>
+    );
   }
 
   // Global modal state for the entire page
