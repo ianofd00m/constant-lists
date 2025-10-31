@@ -1324,7 +1324,154 @@ export default function EnhancedCollectionTable({
           }
           break;
         case 'set':
-          groupKey = item.set_name || item.scryfall_json?.set_name || 'Unknown Set';
+          // Use the same logic as the setName renderer
+          let setName = '';
+          
+          // Try enriched data first (proper field names)
+          if (item.set_name && item.set_name !== '' && item.set_name !== item.set) {
+            setName = item.set_name;
+          }
+          // Try scryfall_json as fallback
+          else if (item.scryfall_json?.set_name && item.scryfall_json.set_name !== '') {
+            setName = item.scryfall_json.set_name;
+          }
+          // Try edition field (legacy)
+          else if (item.edition && item.edition !== item.set) {
+            setName = item.edition;
+          }
+          
+          // Map common set codes to full names as fallback
+          const setNameMap = {
+            'DSC': 'Dominaria Supplement Cards',
+            'RNA': 'Ravnica Allegiance', 
+            '2X2': 'Double Masters 2022',
+            '7ED': 'Seventh Edition',
+            '9ED': 'Ninth Edition',
+            'THS': 'Theros',
+            'C13': 'Commander 2013',
+            'LEA': 'Limited Edition Alpha',
+            'LEB': 'Limited Edition Beta',
+            'UNL': 'Unlimited Edition',
+            'ARN': 'Arabian Nights',
+            'ATQ': 'Antiquities',
+            'LEG': 'Legends',
+            'DRK': 'The Dark',
+            'FEM': 'Fallen Empires',
+            'ICE': 'Ice Age',
+            'CHR': 'Chronicles',
+            'HML': 'Homelands',
+            'ALL': 'Alliances',
+            'MIR': 'Mirage',
+            'VIS': 'Visions',
+            'WTH': 'Weatherlight',
+            'TMP': 'Tempest',
+            'STH': 'Stronghold',
+            'EXO': 'Exodus',
+            'UGL': 'Unglued',
+            'USG': 'Urza\'s Saga',
+            'ULG': 'Urza\'s Legacy',
+            'UDS': 'Urza\'s Destiny',
+            'MMQ': 'Mercadian Masques',
+            'NEM': 'Nemesis',
+            'PCY': 'Prophecy',
+            'INV': 'Invasion',
+            'PLS': 'Planeshift',
+            'APC': 'Apocalypse',
+            'ODY': 'Odyssey',
+            'TOR': 'Torment',
+            'JUD': 'Judgment',
+            'ONS': 'Onslaught',
+            'LGN': 'Legions',
+            'SCG': 'Scourge',
+            'MRD': 'Mirrodin',
+            'DST': 'Darksteel',
+            '5DN': 'Fifth Dawn',
+            'CHK': 'Champions of Kamigawa',
+            'BOK': 'Betrayers of Kamigawa',
+            'SOK': 'Saviors of Kamigawa',
+            'RAV': 'Ravnica: City of Guilds',
+            'GPT': 'Guildpact',
+            'DIS': 'Dissension',
+            'CSP': 'Coldsnap',
+            'TSP': 'Time Spiral',
+            'TSB': 'Time Spiral Timeshifted',
+            'PLC': 'Planar Chaos',
+            'FUT': 'Future Sight',
+            'LRW': 'Lorwyn',
+            'MOR': 'Morningtide',
+            'SHM': 'Shadowmoor',
+            'EVE': 'Eventide',
+            'ALA': 'Shards of Alara',
+            'CON': 'Conflux',
+            'ARB': 'Alara Reborn',
+            'ZEN': 'Zendikar',
+            'WWK': 'Worldwake',
+            'ROE': 'Rise of the Eldrazi',
+            'SOM': 'Scars of Mirrodin',
+            'MBS': 'Mirrodin Besieged',
+            'NPH': 'New Phyrexia',
+            'ISD': 'Innistrad',
+            'DKA': 'Dark Ascension',
+            'AVR': 'Avacyn Restored',
+            'RTR': 'Return to Ravnica',
+            'GTC': 'Gatecrash',
+            'DGM': 'Dragon\'s Maze',
+            'M10': 'Magic 2010',
+            'M11': 'Magic 2011',
+            'M12': 'Magic 2012',
+            'M13': 'Magic 2013',
+            'M14': 'Magic 2014',
+            'M15': 'Magic 2015',
+            'ORI': 'Magic Origins',
+            'BFZ': 'Battle for Zendikar',
+            'OGW': 'Oath of the Gatewatch',
+            'SOI': 'Shadows over Innistrad',
+            'EMN': 'Eldritch Moon',
+            'KLD': 'Kaladesh',
+            'AER': 'Aether Revolt',
+            'AKH': 'Amonkhet',
+            'HOU': 'Hour of Devastation',
+            'XLN': 'Ixalan',
+            'RIX': 'Rivals of Ixalan',
+            'DOM': 'Dominaria',
+            'M19': 'Core Set 2019',
+            'GRN': 'Guilds of Ravnica',
+            'WAR': 'War of the Spark',
+            'M20': 'Core Set 2020',
+            'ELD': 'Throne of Eldraine',
+            'THB': 'Theros Beyond Death',
+            'IKO': 'Ikoria: Lair of Behemoths',
+            'M21': 'Core Set 2021',
+            'ZNR': 'Zendikar Rising',
+            'KHM': 'Kaldheim',
+            'STX': 'Strixhaven: School of Mages',
+            'AFR': 'Adventures in the Forgotten Realms',
+            'MID': 'Innistrad: Midnight Hunt',
+            'VOW': 'Innistrad: Crimson Vow',
+            'NEO': 'Kamigawa: Neon Dynasty',
+            'SNC': 'Streets of New Capenna',
+            'CLB': 'Commander Legends: Battle for Baldur\'s Gate',
+            'DMU': 'Dominaria United',
+            'BRO': 'The Brothers\' War',
+            'ONE': 'Phyrexia: All Will Be One',
+            'MOM': 'March of the Machine',
+            'MAT': 'March of the Machine: The Aftermath',
+            'LTR': 'The Lord of the Rings: Tales of Middle-earth',
+            'WOE': 'Wilds of Eldraine',
+            'LCI': 'The Lost Caverns of Ixalan',
+            'MKM': 'Murders at Karlov Manor',
+            'OTJ': 'Outlaws of Thunder Junction',
+            'BIG': 'The Big Score',
+            'MH3': 'Modern Horizons 3',
+            'BLB': 'Bloomburrow',
+            'DSK': 'Duskmourn: House of Horror'
+          };
+          
+          if (!setName && item.set && setNameMap[item.set]) {
+            setName = setNameMap[item.set];
+          }
+          
+          groupKey = setName || item.set || 'Unknown Set';
           break;
         case 'cmc':
           const cmc = item.cmc || item.scryfall_json?.cmc || 0;
