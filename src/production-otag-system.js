@@ -152,9 +152,11 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize local CSV for complete data
+            // Try multiple data sources - prioritize compressed file for complete data
             const dataSources = [
-                // Static files first - most reliable for complete data
+                // Compressed file first - much smaller and more reliable to load
+                './oracle-tags.csv.gz',
+                // Static files - complete but large (may be truncated)
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
                 './FULL OTAGS.csv',
                 './otag-medium-dataset.csv',
@@ -177,18 +179,79 @@ class ProductionOtagSystem {
                         console.log(`🌐 Loading full dataset from external source (this may take 10-30 seconds)...`);
                     }
                     
-                    const response = await fetch(source);
-                    console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                    // For large local files, try different approaches
+                    let response, csvText;
+                    
+                    if (source.startsWith('./')) {
+                        // Try multiple methods for local files
+                        console.log(`🔍 Attempting to load large local file: ${source}`);
+                        
+                        try {
+                            // Method 1: Standard fetch
+                            response = await fetch(source, {
+                                method: 'GET',
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                },
+                            });
+                            console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                            
+                            if (response.ok) {
+                                const contentLength = response.headers.get('content-length');
+                                console.log(`📏 Content-Length header: ${contentLength}`);
+                                
+                                // Try to read as stream for large files
+                                if (contentLength && parseInt(contentLength) > 1000000) {
+                                    console.log(`📊 Large file detected (${(parseInt(contentLength) / (1024 * 1024)).toFixed(1)}MB), attempting stream read...`);
+                                }
+                                
+                                // Handle compressed files
+                                if (source.endsWith('.gz')) {
+                                    console.log(`📦 Decompressing gzipped file...`);
+                                    const arrayBuffer = await response.arrayBuffer();
+                                    csvText = await this.decompressGzip(arrayBuffer);
+                                } else {
+                                    csvText = await response.text();
+                                }
+                            }
+                        } catch (fetchError) {
+                            console.warn(`⚠️ Standard fetch failed for ${source}:`, fetchError.message);
+                            throw fetchError;
+                        }
+                    } else {
+                        // External sources
+                        response = await fetch(source);
+                        console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                        
+                        if (response.ok) {
+                            const contentLength = response.headers.get('content-length');
+                            if (contentLength && source.startsWith('http')) {
+                                const sizeMB = (parseInt(contentLength) / (1024 * 1024)).toFixed(1);
+                                console.log(`📊 Downloading ${sizeMB}MB of Oracle Tag data...`);
+                            }
+                            
+                            // Handle compressed files for external sources too
+                            if (source.endsWith('.gz')) {
+                                console.log(`📦 Decompressing external gzipped file...`);
+                                const arrayBuffer = await response.arrayBuffer();
+                                csvText = await this.decompressGzip(arrayBuffer);
+                            } else {
+                                csvText = await response.text();
+                            }
+                        }
+                    }
                     
                     if (response.ok) {
-                        const contentLength = response.headers.get('content-length');
-                        if (contentLength && isExternal) {
-                            const sizeMB = (parseInt(contentLength) / (1024 * 1024)).toFixed(1);
-                            console.log(`📊 Downloading ${sizeMB}MB of Oracle Tag data...`);
-                        }
-                        
-                        const csvText = await response.text();
                         console.log(`✅ Loaded OTAG data from: ${source} (${csvText.length} characters)`);
+                        
+                        // Debug: Show first and last 200 characters to see what we got
+                        console.log(`🔍 First 200 chars:`, csvText.substring(0, 200));
+                        console.log(`🔍 Last 200 chars:`, csvText.substring(csvText.length - 200));
+                        
+                        // Check if file was truncated (expected size is ~7MB = ~7,000,000 chars)
+                        if (csvText.length < 100000) {
+                            console.warn(`⚠️ File seems truncated! Got ${csvText.length} chars, expected ~7,000,000`);
+                        }
                         
                         // Validate we got actual CSV data, not an error page
                         if (csvText.length < 1000 && !csvText.includes('card_name')) {
@@ -224,6 +287,48 @@ class ProductionOtagSystem {
         } catch (error) {
             console.error('❌ Error loading OTAG data:', error);
             this.createFallbackData();
+        }
+    }
+
+    async decompressGzip(arrayBuffer) {
+        try {
+            // Use the browser's built-in DecompressionStream if available
+            if ('DecompressionStream' in window) {
+                console.log(`🔧 Using browser DecompressionStream...`);
+                const ds = new DecompressionStream('gzip');
+                const stream = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(new Uint8Array(arrayBuffer));
+                        controller.close();
+                    }
+                }).pipeThrough(ds);
+                
+                const reader = stream.getReader();
+                const chunks = [];
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                
+                // Combine chunks and decode as text
+                const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                const combined = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    combined.set(chunk, offset);
+                    offset += chunk.length;
+                }
+                
+                return new TextDecoder('utf-8').decode(combined);
+            } else {
+                console.warn(`⚠️ DecompressionStream not available, cannot decompress gzip file`);
+                throw new Error('Gzip decompression not supported in this browser');
+            }
+        } catch (error) {
+            console.error('❌ Error decompressing gzip file:', error);
+            throw error;
         }
     }
 
