@@ -108,6 +108,7 @@ function CurrentPriceCell({ item }) {
       const cardData = {
         name: item.name,
         foil: item.foil,
+        price: item.price, // Include the direct price field!
         scryfall_json: item.scryfall_json || {},
         // Fallback data if scryfall_json is missing
         set: item.set,
@@ -161,19 +162,26 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
     // 1234 -> 12.34, 375 -> 3.75, 1 -> 0.01, 0 -> 0.00, 0000 -> 0.00
     let numericValue = 0;
     
+    console.log(`[ATM DEBUG] Raw input: "${editValue}"`);
+    
     // Handle empty or whitespace input as 0
     if (!editValue || editValue.trim() === '') {
       numericValue = 0;
+      console.log(`[ATM DEBUG] Empty input, setting to: ${numericValue}`);
     } else {
       const digits = editValue.replace(/\D/g, '');
+      console.log(`[ATM DEBUG] Digits after cleaning: "${digits}"`);
       
       if (digits.length === 0 || parseInt(digits) === 0) {
         // All zeros (0, 00, 000, 0000, etc.) should be 0.00
         numericValue = 0;
+        console.log(`[ATM DEBUG] All zeros detected, setting to: ${numericValue}`);
       } else if (digits.length === 1) {
         numericValue = parseInt(digits) / 100; // 1 -> 0.01
+        console.log(`[ATM DEBUG] Single digit, converting: ${digits} -> ${numericValue}`);
       } else {
         numericValue = parseInt(digits) / 100; // 1234 -> 12.34
+        console.log(`[ATM DEBUG] Multiple digits, converting: ${digits} -> ${numericValue}`);
       }
     }
     
@@ -181,6 +189,8 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
       toast.error('Please enter a valid price (0 or greater)');
       return;
     }
+    
+    console.log(`[ATM DEBUG] Final value being saved: ${numericValue}`);
     
     // Use purchase_price field to match the database structure
     onUpdate(item.id, 'purchase_price', numericValue);
@@ -219,11 +229,12 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
             width: '60px',
             padding: '2px 4px',
             fontSize: '12px',
-            border: '1px solid #007bff',
+            border: '1px solid #ddd',
             borderRadius: 2,
             textAlign: 'right',
             backgroundColor: 'white',
             color: 'black',
+            outline: 'none', // Remove blue outline on focus
             // Remove number input arrows
             MozAppearance: 'textfield'
           }}
@@ -740,6 +751,7 @@ function NetGainCell({ item }) {
       const cardData = {
         name: item.name,
         foil: item.foil,
+        price: item.price, // Include the direct price field!
         scryfall_json: item.scryfall_json || {},
         set: item.set,
         collector_number: item.collector_number,
