@@ -11678,15 +11678,15 @@ export default function DeckViewEdit({ isPublic = false }) {
                 <div key={group.type} className="card-type-section">
                   <CardTypeHeader
                     type={group.type}
-                    count={group.cards.reduce((total, cardObj) => {
+                    count={Array.isArray(group.cards) ? group.cards.reduce((total, cardObj) => {
                       const quantity = cardObj.count || cardObj.quantity || 1;
                       return total + quantity;
-                    }, 0)}
+                    }, 0) : 0}
                     onClick={() => handleSectionHeaderClick(group.type, group.cards, 'main deck')}
                     isClickable={bulkEditMode}
                   />
                   <div className="card-type-list">
-                    {group.cards.map((cardObj, index) => {
+                    {Array.isArray(group.cards) ? group.cards.map((cardObj, index) => {
                     // If groupCards() was used, group.cards is an array of { name, count, printing, cardObj }
                     // If not, fallback to cardObj structure
                     // console.log(`[DeckViewEdit] Rendering card: ${cardObj.card?.name || cardObj.name}, count:`, cardObj.count, "quantity:", cardObj.quantity, "foil:", cardObj.foil);
@@ -11963,7 +11963,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                         setFixedPreview={setFixedPreview}
                       />
                     );
-                  })}
+                  }) : null}
                   </div>
                 </div>
               )) : null}
@@ -12217,15 +12217,15 @@ export default function DeckViewEdit({ isPublic = false }) {
                     <div key={`sideboard-${group.type}`} className="card-type-section">
                       <CardTypeHeader
                         type={group.type}
-                        count={group.cards.reduce((total, cardObj) => {
+                        count={Array.isArray(group.cards) ? group.cards.reduce((total, cardObj) => {
                           const quantity = cardObj.count || cardObj.quantity || 1;
                           return total + quantity;
-                        }, 0)}
+                        }, 0) : 0}
                         onClick={() => handleSectionHeaderClick(group.type, group.cards, 'sideboard')}
                         isClickable={bulkEditMode}
                       />
                       <div className="card-type-list">
-                        {group.cards.map((cardObj, index) => {
+                        {Array.isArray(group.cards) ? group.cards.map((cardObj, index) => {
                           const cardData = cardObj.cardObj
                             ? cardObj
                             : {
@@ -12370,7 +12370,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                               setFixedPreview={setFixedPreview}
                             />
                           );
-                        })}
+                        }) : null}
                       </div>
                     </div>
                   ))}
@@ -12398,15 +12398,15 @@ export default function DeckViewEdit({ isPublic = false }) {
                 <div key={`tech-ideas-${group.type}`} className="card-type-section">
                   <CardTypeHeader
                     type={group.type}
-                    count={group.cards.reduce((total, cardObj) => {
+                    count={Array.isArray(group.cards) ? group.cards.reduce((total, cardObj) => {
                       const quantity = cardObj.count || cardObj.quantity || 1;
                       return total + quantity;
-                    }, 0)}
+                    }, 0) : 0}
                     onClick={() => handleSectionHeaderClick(group.type, group.cards, 'tech ideas')}
                     isClickable={bulkEditMode}
                   />
                   <div className="card-type-list">
-                    {group.cards.map((cardObj, index) => {
+                    {Array.isArray(group.cards) ? group.cards.map((cardObj, index) => {
                       // CRITICAL: Ensure modalPrice is available for display
                       if (!cardObj.modalPrice && cardObj.modalPrice !== 0) {
                         // Try to find modalPrice in nested structures
@@ -12586,7 +12586,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                           setFixedPreview={setFixedPreview}
                         />
                       );
-                    })}
+                    }) : null}
                   </div>
                 </div>
               ))}
