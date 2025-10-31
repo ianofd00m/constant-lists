@@ -6327,31 +6327,37 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       // Sort cards within each group only - ensure cardGroups is an array
       if (Array.isArray(cardGroups)) {
-        cardGroups.forEach((group, index) => {
-          console.log('[FOREACH DEBUG] Processing group', index, ':', {
-            group: group,
-            cards: group?.cards,
-            isCardsArray: Array.isArray(group?.cards)
-          });
-          if (!Array.isArray(group.cards)) {
-            console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
-            group.cards = [];
-          }
+        // NUCLEAR SAFETY: Replace forEach with for loop to avoid minification issues
+        for (let index = 0; index < cardGroups.length; index++) {
+          const group = cardGroups[index];
           try {
-            // CRITICAL: Extra validation before spreading to prevent forEach errors
+            console.log('[FOREACH DEBUG] Processing group', index, ':', {
+              group: group,
+              cards: group?.cards,
+              isCardsArray: Array.isArray(group?.cards)
+            });
             if (!Array.isArray(group.cards)) {
-              console.error('[FOREACH DEBUG] group.cards is not an array before spread:', typeof group.cards, group.cards);
+              console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
               group.cards = [];
             }
-            const cardsToSort = [...group.cards];
-            console.log('[FOREACH DEBUG] About to sort cards:', cardsToSort.length, 'cards');
-            group.cards = sortCards(cardsToSort, sortBy);
-          } catch (error) {
-            console.error('[FOREACH DEBUG] Error in sortCards:', error, 'group.cards:', group.cards);
-            console.error('[FOREACH DEBUG] sortBy:', sortBy);
-            throw error;
+            try {
+              // CRITICAL: Extra validation before spreading to prevent forEach errors
+              if (!Array.isArray(group.cards)) {
+                console.error('[FOREACH DEBUG] group.cards is not an array before spread:', typeof group.cards, group.cards);
+                group.cards = [];
+              }
+              const cardsToSort = [...group.cards];
+              console.log('[FOREACH DEBUG] About to sort cards:', cardsToSort.length, 'cards');
+              group.cards = sortCards(cardsToSort, sortBy);
+            } catch (error) {
+              console.error('[FOREACH DEBUG] Error in sortCards:', error, 'group.cards:', group.cards);
+              console.error('[FOREACH DEBUG] sortBy:', sortBy);
+              throw error;
+            }
+          } catch (groupError) {
+            console.error('[FOREACH DEBUG] Error processing group:', groupError);
           }
-        });
+        }
       } else {
         // Fallback if cardGroups is not an array
         console.error('[FOREACH DEBUG] cardGroups is not an array in groupedAndSortedCards:', typeof cardGroups, cardGroups);
@@ -6446,14 +6452,44 @@ export default function DeckViewEdit({ isPublic = false }) {
     
     // Flatten all cards from all groups to create a navigation order
     const allFlattenedCards = [];
-    if (Array.isArray(groupedAndSortedCards)) {
-      groupedAndSortedCards.forEach(group => {
-        if (group && Array.isArray(group.cards)) {
-          group.cards.forEach(cardObj => {
-            allFlattenedCards.push(cardObj);
-          });
+    try {
+      if (Array.isArray(groupedAndSortedCards)) {
+        console.log('[NUCLEAR SAFETY] About to forEach on groupedAndSortedCards:', {
+          isArray: Array.isArray(groupedAndSortedCards),
+          type: typeof groupedAndSortedCards,
+          length: groupedAndSortedCards?.length,
+          value: groupedAndSortedCards
+        });
+        
+        // Ultra-safe forEach with multiple fallbacks
+        const safeGroups = Array.isArray(groupedAndSortedCards) ? groupedAndSortedCards : [];
+        for (let i = 0; i < safeGroups.length; i++) {
+          const group = safeGroups[i];
+          try {
+            if (group && Array.isArray(group.cards)) {
+              const safeCards = Array.isArray(group.cards) ? group.cards : [];
+              for (let j = 0; j < safeCards.length; j++) {
+                const cardObj = safeCards[j];
+                if (cardObj) {
+                  allFlattenedCards.push(cardObj);
+                }
+              }
+            }
+          } catch (groupError) {
+            console.error('[NUCLEAR SAFETY] Error processing group:', group, groupError);
+          }
         }
-      });
+      } else {
+        console.error('[NUCLEAR SAFETY] groupedAndSortedCards is not an array:', {
+          type: typeof groupedAndSortedCards,
+          value: groupedAndSortedCards,
+          isNull: groupedAndSortedCards === null,
+          isUndefined: groupedAndSortedCards === undefined
+        });
+      }
+    } catch (flattenError) {
+      console.error('[NUCLEAR SAFETY] Critical error in card flattening:', flattenError);
+      console.trace();
     }
     
     // Find current card index in flattened list
