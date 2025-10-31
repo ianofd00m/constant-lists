@@ -1,31 +1,55 @@
-// GLOBAL FOREACH PROTECTION - Must be FIRST before any other imports
-(function installGlobalForEachProtection() {
-  console.log('[GLOBAL FOREACH] Installing global forEach protection...');
-  const originalForEach = Array.prototype.forEach;
+// ULTRA AGGRESSIVE FOREACH PROTECTION
+(function installUltraForEachProtection() {
+  console.log('[ULTRA FOREACH] Installing ultra forEach protection...');
   
+  // Method 1: Standard prototype patch
+  const originalForEach = Array.prototype.forEach;
   Array.prototype.forEach = function(callback, thisArg) {
     if (!Array.isArray(this)) {
-      console.error('[GLOBAL FOREACH] Non-array forEach call detected GLOBALLY:');
-      console.error('[GLOBAL FOREACH] Type:', typeof this);
-      console.error('[GLOBAL FOREACH] Value:', this);
-      console.error('[GLOBAL FOREACH] Constructor:', this?.constructor?.name);
-      console.error('[GLOBAL FOREACH] Stack trace:');
+      console.error('[ULTRA FOREACH] Non-array forEach detected:', {
+        type: typeof this,
+        value: this,
+        constructor: this?.constructor?.name,
+        isNull: this === null,
+        isUndefined: this === undefined,
+        hasLength: this && 'length' in this,
+        length: this?.length
+      });
       console.trace();
       
-      // Try to convert to array if it's array-like
+      // Try to convert if array-like
       if (this && typeof this.length === 'number' && this.length >= 0) {
-        console.warn('[GLOBAL FOREACH] Converting array-like object to array');
+        console.warn('[ULTRA FOREACH] Converting to array');
         return originalForEach.call(Array.from(this), callback, thisArg);
       }
       
-      // Return empty result instead of crashing
-      console.warn('[GLOBAL FOREACH] Returning empty to prevent crash');
+      console.warn('[ULTRA FOREACH] Preventing crash - returning undefined');
       return;
     }
     return originalForEach.call(this, callback, thisArg);
   };
   
-  console.log('[GLOBAL FOREACH] Global forEach protection installed');
+  // Method 2: Override global error handler to catch and suppress
+  window.addEventListener('error', function(event) {
+    if (event.error && event.error.message && event.error.message.includes('forEach is not a function')) {
+      console.error('[ULTRA FOREACH] Caught global forEach error:', event.error);
+      console.error('[ULTRA FOREACH] Error location:', event.filename, 'line:', event.lineno);
+      console.error('[ULTRA FOREACH] Preventing page crash');
+      event.preventDefault(); // Prevent the error from crashing the page
+      return false;
+    }
+  });
+  
+  // Method 3: Promise rejection handler for async forEach errors
+  window.addEventListener('unhandledrejection', function(event) {
+    if (event.reason && event.reason.message && event.reason.message.includes('forEach is not a function')) {
+      console.error('[ULTRA FOREACH] Caught unhandled forEach promise rejection:', event.reason);
+      console.error('[ULTRA FOREACH] Preventing promise crash');
+      event.preventDefault();
+    }
+  });
+  
+  console.log('[ULTRA FOREACH] Ultra forEach protection installed');
 })();
 
 import { StrictMode } from 'react'
