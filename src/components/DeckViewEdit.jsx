@@ -5214,11 +5214,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       console.log('[COLOR ID DEBUG] Final Result:', colorIdentity ? colorIdentity.join("").toLowerCase() : "EMPTY");
       
       // Test each commander name explicitly
-      commanderNames.forEach((name, index) => {
-        const normalized = (name || '').toLowerCase().trim();
-        console.log(`[COLOR ID DEBUG] Commander ${index}: "${name}" -> normalized: "${normalized}"`);
-        console.log(`[COLOR ID DEBUG] Contains Jason Bright: ${normalized.includes('jason bright')}`);
-      });
+      if (Array.isArray(commanderNames)) {
+        commanderNames.forEach((name, index) => {
+          const normalized = (name || '').toLowerCase().trim();
+          console.log(`[COLOR ID DEBUG] Commander ${index}: "${name}" -> normalized: "${normalized}"`);
+          console.log(`[COLOR ID DEBUG] Contains Jason Bright: ${normalized.includes('jason bright')}`);
+        });
+      }
     }
     return colorIdentity ? colorIdentity.join("").toLowerCase() : "";
   }, [deck, commanderColorCache]);
@@ -6093,9 +6095,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       }
 
       // Sort cards within each group
-      result.forEach((group) => {
-        group.cards = sortCards(group.cards, sortBy);
-      });
+      if (Array.isArray(result)) {
+        result.forEach((group) => {
+          if (group && Array.isArray(group.cards)) {
+            group.cards = sortCards(group.cards, sortBy);
+          }
+        });
+      }
 
       return result;
     } catch (error) {
@@ -11370,9 +11376,11 @@ export default function DeckViewEdit({ isPublic = false }) {
                         
                         // Main deck cards
                         const allCards = cards && cards.length > 0 ? cards : deck?.cards || [];
-                        allCards.forEach(card => {
-                          allCardIds.add(generateCardSelectionId(card));
-                        });
+                        if (Array.isArray(allCards)) {
+                          allCards.forEach(card => {
+                            allCardIds.add(generateCardSelectionId(card));
+                          });
+                        }
                         
                         // Sideboard cards
                         (deck?.sideboard || []).forEach(card => {
