@@ -152,9 +152,11 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize compressed file for complete data
+            // Try multiple data sources - prioritize uncompressed complete file for browser compatibility
             const dataSources = [
-                // Compressed file first - much smaller and more reliable to load
+                // Uncompressed file first - browser compatible, complete data
+                './oracle-tags.csv',
+                // Compressed file fallback - for browsers that support gzip decompression
                 './oracle-tags.csv.gz',
                 // Static files - complete but large (may be truncated)
                 './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
