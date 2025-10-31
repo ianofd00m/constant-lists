@@ -19,13 +19,30 @@ const ultraSafeForEach = (array, callback, context = 'unknown') => {
       return;
     }
     if (!Array.isArray(array)) {
-      console.warn(`[ULTRA SAFE] ${context}: converting non-array to array:`, typeof array, array);
+      // Better object detection and logging
+      const objectInfo = {
+        type: typeof array,
+        constructor: array?.constructor?.name,
+        hasLength: 'length' in array,
+        length: array?.length,
+        keys: array && typeof array === 'object' ? Object.keys(array).slice(0, 3) : [],
+        isIterable: array && typeof array[Symbol.iterator] === 'function'
+      };
+      
+      // Only log if it's a significant issue or has useful context (reduce noise)
+      if (context !== 'unknown' && (objectInfo.hasLength || objectInfo.isIterable)) {
+        console.warn(`[ULTRA SAFE] ${context}: converting non-array:`, objectInfo);
+      }
+      
       if (array && typeof array.length === 'number' && array.length >= 0) {
         array = Array.from(array);
       } else if (array && typeof array[Symbol.iterator] === 'function') {
         array = Array.from(array);
       } else {
-        console.error(`[ULTRA SAFE] ${context}: cannot convert to array:`, array);
+        // Only error log for unexpected cases
+        if (context !== 'unknown') {
+          console.error(`[ULTRA SAFE] ${context}: cannot convert to array:`, objectInfo);
+        }
         return;
       }
     }
@@ -39,7 +56,7 @@ const ultraSafeForEach = (array, callback, context = 'unknown') => {
       }
     }
   } catch (error) {
-    console.error(`[ULTRA SAFE] ${context}: critical error:`, error, array);
+    console.error(`[ULTRA SAFE] ${context}: critical error:`, error);
   }
 };
 
@@ -1008,8 +1025,12 @@ const DeckCardRow = memo(
     // Use deck-level flip state instead of local state
     const showBackFace = deckFlipStates.get(cardKey) || false;
     
-    // Get collection status for this card
-    const collectionStatus = getCollectionStatus(cardData);
+    // Get collection status for this card (lazy loading for performance)
+    const collectionStatus = useMemo(() => {
+      // Only compute collection status if prices are shown (to avoid loading collection unnecessarily)
+      if (hidePrices) return 'not-owned';
+      return getCollectionStatus(cardData);
+    }, [cardData, hidePrices]);
     
     // Check if this is a double-faced card
     const cardFaces = cardData.cardObj?.card?.scryfall_json?.card_faces || 
@@ -1203,18 +1224,58 @@ const DeckCardRow = memo(
 
 DeckCardRow.displayName = "DeckCardRow";
 
-// Helper function to get collection status for a card
-const getCollectionStatus = (cardData) => {
+// Cache collection data to avoid reloading it every time
+let collectionCache = null;
+let collectionCacheTimestamp = 0;
+const COLLECTION_CACHE_TTL = 30000; // 30 seconds
+
+// Function to invalidate collection cache when collection changes
+const invalidateCollectionCache = () => {
+  collectionCache = null;
+  collectionCacheTimestamp = 0;
+  console.log('[COLLECTION] Cache invalidated');
+};
+
+// Helper function to get cached collection data
+const getCachedCollection = () => {
+  const now = Date.now();
+  
+  // Return cached data if it's still valid
+  if (collectionCache && (now - collectionCacheTimestamp) < COLLECTION_CACHE_TTL) {
+    return collectionCache;
+  }
+  
+  // Reload and cache collection data
   try {
-    // Get collection from smart storage
-    const collection = storageManager.getChunkedItem('cardCollection') || [];
+    const rawCollection = storageManager.getChunkedItem('cardCollection');
+    let collection = [];
     
-    // Create a map for faster lookup: printing_id + foil -> quantity
+    // Handle the storage wrapper object format
+    if (rawCollection && typeof rawCollection === 'object') {
+      if (Array.isArray(rawCollection)) {
+        collection = rawCollection;
+      } else if (rawCollection.data) {
+        // Parse the JSON data from the storage wrapper
+        try {
+          collection = JSON.parse(rawCollection.data);
+        } catch (parseError) {
+          console.warn('[COLLECTION] Failed to parse collection data:', parseError);
+          collection = [];
+        }
+      }
+    }
+    
+    // Ensure collection is an array
+    if (!Array.isArray(collection)) {
+      console.warn('[COLLECTION] Collection data is not an array:', typeof collection);
+      collection = [];
+    }
+    
+    // Create optimized lookup maps
     const collectionMap = new Map();
-    
-    // Also create a map by card name to check for different versions
     const cardNameMap = new Map();
     
+    // Build lookup maps once
     ultraSafeForEach(collection, (item) => {
       const key = `${item.printing_id}_${item.foil}`;
       collectionMap.set(key, (collectionMap.get(key) || 0) + item.quantity);
@@ -1227,8 +1288,23 @@ const getCollectionStatus = (cardData) => {
         }
         cardNameMap.get(cardName).add(`${item.printing_id}_${item.foil}`);
       }
-    });
+    }, 'collection-cache-build');
     
+    // Cache the processed data
+    collectionCache = { collectionMap, cardNameMap };
+    collectionCacheTimestamp = now;
+    
+    return collectionCache;
+  } catch (error) {
+    console.error('[COLLECTION] Error loading collection:', error);
+    return { collectionMap: new Map(), cardNameMap: new Map() };
+  }
+};
+
+// Helper function to get collection status for a card
+const getCollectionStatus = (cardData) => {
+  try {
+    const { collectionMap, cardNameMap } = getCachedCollection();
     // Get card name from various possible locations
     const cardName = cardData.name || 
                     cardData.cardObj?.name ||
@@ -1679,6 +1755,7 @@ export default function DeckViewEdit({ isPublic = false }) {
   const [cards, setCards] = useState([]);
   
   const [loading, setLoading] = useState(true);
+  const [fastLoading, setFastLoading] = useState(true); // For immediate deck content
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   // Initialize with card back but will persist last viewed card
   const [fixedPreview, setFixedPreview] = useState({ card: null });
@@ -1733,6 +1810,46 @@ export default function DeckViewEdit({ isPublic = false }) {
     priceCache.current.clear();
     console.log('[PRICE CACHE] Cleared cache due to deck change');
   }, [deck?._id]); // Only clear when deck ID changes, not on every card count change
+
+  // Async price loading after deck renders
+  const [pricesLoaded, setPricesLoaded] = useState(false);
+  useEffect(() => {
+    if (!deck || !cards || cards.length === 0) return;
+    
+    // Delay price loading to not block initial render
+    const priceLoadTimer = setTimeout(async () => {
+      console.log('[PRICE CACHE] Starting async price loading...');
+      // Pre-load prices for visible cards
+      const visibleCards = cards.slice(0, 20); // Load first 20 cards immediately
+      
+      for (const cardData of visibleCards) {
+        try {
+          await getCardPrice(cardData); // This will cache the price
+        } catch (error) {
+          // Ignore individual price failures to not block loading
+        }
+      }
+      
+      setPricesLoaded(true);
+      console.log('[PRICE CACHE] Initial price loading complete');
+      
+      // Load remaining prices in background
+      const remainingCards = cards.slice(20);
+      setTimeout(async () => {
+        for (const cardData of remainingCards) {
+          try {
+            await getCardPrice(cardData);
+          } catch (error) {
+            // Ignore failures
+          }
+        }
+        console.log('[PRICE CACHE] Background price loading complete');
+      }, 1000); // Wait 1 second before loading remaining prices
+      
+    }, 500); // Wait 500ms before starting price loading
+    
+    return () => clearTimeout(priceLoadTimer);
+  }, [deck?._id, cards?.length]);
   
   // DEBUG: Monitor deck state changes (reduced logging for performance)
   useEffect(() => {
@@ -4595,6 +4712,7 @@ export default function DeckViewEdit({ isPublic = false }) {
           });
           setName(data.name);
           setCards(deduplicatedMainCards); // Use the deduplicated cards to prevent zone card duplication
+          setFastLoading(false); // Deck content is ready immediately
           setLoading(false);
 
           preloadCardImages(finalCardsWithCommander, preloadedImages.current);
@@ -6391,7 +6509,7 @@ export default function DeckViewEdit({ isPublic = false }) {
       console.error('[FOREACH DEBUG] Error stack:', error.stack);
       throw error; // Re-throw to see the full error
     }
-  }, [cards, groupBy, sortBy, commanderNames, collectionUpdateCounter]);
+  }, [cards, groupBy, sortBy, commanderNames]); // Removed collectionUpdateCounter for better performance
   
   // Navigation functions for CardActionsModal
   const handleNavigateToCard = useCallback((direction) => {
