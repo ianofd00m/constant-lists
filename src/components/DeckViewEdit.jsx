@@ -7723,6 +7723,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       let failureCount = 0;
       const selectedCardIds = Array.from(selectedCards);
       
+      // CRITICAL: Validate selectedCardIds is an array to prevent forEach errors
+      if (!Array.isArray(selectedCardIds)) {
+        console.error('[FOREACH DEBUG] handleBulkAddToCollection: selectedCardIds is not an array:', typeof selectedCardIds, selectedCardIds);
+        toast.error("Failed to process selected cards: Invalid selection data");
+        return;
+      }
+      
       // Get existing collection from smart storage
       const existingCollection = storageManager.getChunkedItem('cardCollection') || [];
       
@@ -7817,6 +7824,13 @@ export default function DeckViewEdit({ isPublic = false }) {
       const cardsToAdd = Array.from(selectedCards).map(cardName => {
         return cards.find(card => (card.card?.name || card.name) === cardName);
       }).filter(Boolean);
+      
+      // CRITICAL: Validate cardsToAdd is an array to prevent forEach errors
+      if (!Array.isArray(cardsToAdd)) {
+        console.error('[FOREACH DEBUG] handleBulkAddToWishlist: cardsToAdd is not an array:', typeof cardsToAdd, cardsToAdd);
+        toast.error("Failed to process selected cards: Invalid selection data");
+        return;
+      }
       
       if (cardsToAdd.length === 0) {
         toast.error("No valid cards selected for wishlist");
@@ -8768,6 +8782,13 @@ export default function DeckViewEdit({ isPublic = false }) {
         return nameA.localeCompare(nameB);
       });
 
+      // CRITICAL: Validate sortedCards is an array to prevent forEach errors
+      if (!Array.isArray(sortedCards)) {
+        console.error('[FOREACH DEBUG] handleExportToText: sortedCards is not an array:', typeof sortedCards, sortedCards);
+        toast.error("Failed to export: Invalid deck data");
+        return;
+      }
+
       sortedCards.forEach(card => {
         textContent += formatCardForTCGPlayer(card) + '\n';
       });
@@ -8784,6 +8805,13 @@ export default function DeckViewEdit({ isPublic = false }) {
           const nameB = (b.name || b.card?.name || 'Unknown Card').toLowerCase();
           return nameA.localeCompare(nameB);
         });
+
+        // CRITICAL: Validate sortedSideboard is an array to prevent forEach errors
+        if (!Array.isArray(sortedSideboard)) {
+          console.error('[FOREACH DEBUG] handleExportToText: sortedSideboard is not an array:', typeof sortedSideboard, sortedSideboard);
+          toast.error("Failed to export sideboard: Invalid data");
+          return;
+        }
 
         sortedSideboard.forEach(card => {
           textContent += formatCardForTCGPlayer(card) + '\n';
@@ -8802,6 +8830,13 @@ export default function DeckViewEdit({ isPublic = false }) {
           const nameB = (b.name || b.card?.name || 'Unknown Card').toLowerCase();
           return nameA.localeCompare(nameB);
         });
+
+        // CRITICAL: Validate sortedTechIdeas is an array to prevent forEach errors
+        if (!Array.isArray(sortedTechIdeas)) {
+          console.error('[FOREACH DEBUG] handleExportToText: sortedTechIdeas is not an array:', typeof sortedTechIdeas, sortedTechIdeas);
+          toast.error("Failed to export tech ideas: Invalid data");
+          return;
+        }
 
         sortedTechIdeas.forEach(card => {
           textContent += formatCardForTCGPlayer(card) + '\n';
