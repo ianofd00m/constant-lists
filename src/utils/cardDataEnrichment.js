@@ -182,12 +182,14 @@ async function processQueue() {
  */
 export async function enrichCardsBatch(cards, onProgress, options = {}) {
   const {
-    batchSize = isLargeImport ? 40 : 25,  // Larger batches for big imports
     maxConcurrent = 5,                     // Increased concurrency 
     enableRetries = true,                  // Enable retry logic
-    progressInterval = isLargeImport ? 200 : 50, // Less frequent progress updates for large imports
     isLargeImport = false                  // Optimize for very large imports (>5000 cards)
   } = options;
+
+  // Set batch size and progress interval based on import size
+  const batchSize = isLargeImport ? 40 : 25;  // Larger batches for big imports
+  const progressInterval = isLargeImport ? 200 : 50; // Less frequent progress updates for large imports
 
   const enrichedCards = [];
   const errors = [];
