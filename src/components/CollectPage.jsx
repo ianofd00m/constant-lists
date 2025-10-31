@@ -629,6 +629,37 @@ export default function CollectPage() {
       // Double confirmation for safety
       if (window.confirm('Final confirmation: Delete everything? This is your last chance to cancel.')) {
         try {
+          // Clear ALL storage related to collections, including chunked data
+          console.log('🗑️ Clearing all collection storage...');
+          
+          // Clear regular collection storage
+          storageManager.removeItem('cardCollection');
+          
+          // Clear chunked collection storage and metadata
+          const metadata = localStorage.getItem('cardCollections_metadata');
+          if (metadata) {
+            try {
+              const meta = JSON.parse(metadata);
+              if (meta.isChunked && meta.chunkCount) {
+                console.log(`🧹 Removing ${meta.chunkCount} storage chunks...`);
+                for (let i = 0; i < meta.chunkCount; i++) {
+                  localStorage.removeItem(`cardCollections_chunk_${i}`);
+                }
+              }
+            } catch (parseError) {
+              console.log('⚠️ Could not parse chunk metadata, clearing anyway');
+            }
+            localStorage.removeItem('cardCollections_metadata');
+          }
+          
+          // Also clear any remaining chunk data (cleanup)
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('cardCollections_chunk_') || key.startsWith('cardCollection_chunk_')) {
+              localStorage.removeItem(key);
+            }
+          });
+          
+          // Now save empty collection
           await saveCollection([]);
           toast.success(`Collection cleared! Removed ${totalCards} cards.`);
         } catch (error) {
