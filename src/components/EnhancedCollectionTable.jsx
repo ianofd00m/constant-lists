@@ -403,7 +403,9 @@ function EditablePurchaseDateCell({ item, onUpdate }) {
             padding: '2px 4px',
             border: '1px solid #007bff',
             borderRadius: 2,
-            fontSize: '11px'
+            fontSize: '11px',
+            backgroundColor: 'white',
+            color: '#333'
           }}
           autoFocus
           onFocus={(e) => e.target.select()}
@@ -1212,7 +1214,7 @@ export default function EnhancedCollectionTable({
               padding: '8px 12px',
               border: '1px solid #ddd',
               borderRadius: 4,
-              fontSize: 14,
+              fontSize: 11,
               backgroundColor: 'white',
               color: 'black',
               minWidth: '150px'
@@ -1302,8 +1304,12 @@ export default function EnhancedCollectionTable({
                   >
                     <div style={{ 
                       position: 'relative',
-                      marginRight: 16, // Space between checkbox and label
-                      display: 'inline-block'
+                      marginRight: 12, // Slightly less space for tighter layout
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 18,
+                      height: 18
                     }}>
                       <input
                         type="checkbox"
@@ -1316,20 +1322,21 @@ export default function EnhancedCollectionTable({
                           cursor: col.fixed ? 'not-allowed' : 'pointer',
                           appearance: 'none',
                           WebkitAppearance: 'none',
-                          border: '2px solid #ddd',
+                          border: col.visible ? '2px solid #007bff' : '2px solid #ccc',
                           borderRadius: '3px',
                           backgroundColor: col.visible ? '#007bff' : 'white',
                           outline: 'none',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.15s ease',
+                          boxShadow: col.visible ? '0 0 0 1px rgba(0, 123, 255, 0.1)' : 'none'
                         }}
                       />
                       {col.visible && (
                         <span style={{
                           position: 'absolute',
-                          left: '4px',
-                          top: '1px',
-                          width: '4px',
-                          height: '8px',
+                          left: '5px',
+                          top: '2px',
+                          width: '3px',
+                          height: '7px',
                           border: 'solid white',
                           borderWidth: '0 2px 2px 0',
                           transform: 'rotate(45deg)',
