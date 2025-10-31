@@ -795,7 +795,7 @@ function NetGainCell({ item }) {
 const DEFAULT_COLUMNS = {
   quantity: { id: 'quantity', title: 'Qty', visible: true, width: '70px', sortable: false },
   name: { id: 'name', title: 'Card Name', visible: true, width: 'auto', sortable: true, fixed: true }, // Card name can't be toggled off
-  setIcon: { id: 'setIcon', title: 'Set', visible: true, width: '60px', sortable: false },
+  setIcon: { id: 'setIcon', title: 'Set Icon', visible: true, width: '60px', sortable: false },
   setCode: { id: 'setCode', title: 'Set', visible: false, width: '80px', sortable: true },
   setName: { id: 'setName', title: 'Set Name', visible: false, width: '120px', sortable: true },
   cardNumber: { id: 'cardNumber', title: '#', visible: false, width: '60px', sortable: true },
@@ -805,7 +805,7 @@ const DEFAULT_COLUMNS = {
   foil: { id: 'foil', title: 'Foil', visible: true, width: '70px', sortable: true },
   currentPrice: { id: 'currentPrice', title: 'Price', visible: false, width: '80px', sortable: true },
   purchasePrice: { id: 'purchasePrice', title: 'Paid', visible: true, width: '80px', sortable: true },
-  purchaseDate: { id: 'purchaseDate', title: 'Purchase Date', visible: true, width: '110px', sortable: true },
+  purchaseDate: { id: 'purchaseDate', title: 'Acquired Date', visible: true, width: '110px', sortable: true },
   netGain: { id: 'netGain', title: 'Gain %', visible: false, width: '80px', sortable: true },
   dateAdded: { id: 'dateAdded', title: 'Added', visible: false, width: '100px', sortable: true },
   actions: { id: 'actions', title: 'Actions', visible: true, width: '120px', sortable: false, fixed: true }
@@ -1045,6 +1045,16 @@ export default function EnhancedCollectionTable({
       if (sortBy === 'currentPrice' || sortBy === 'purchasePrice') {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
+      } else if (sortBy === 'netGain') {
+        // Calculate net gain percentage for sorting
+        const aPurchasePrice = parseFloat(a.purchase_price) || 0;
+        const bPurchasePrice = parseFloat(b.purchase_price) || 0;
+        const aCurrentPrice = parseFloat(a.price) || 0;
+        const bCurrentPrice = parseFloat(b.price) || 0;
+        
+        // Calculate gain percentages (same logic as NetGainCell)
+        aVal = (aPurchasePrice > 0 && aCurrentPrice > 0) ? ((aCurrentPrice - aPurchasePrice) / aPurchasePrice) * 100 : -999999;
+        bVal = (bPurchasePrice > 0 && bCurrentPrice > 0) ? ((bCurrentPrice - bPurchasePrice) / bPurchasePrice) * 100 : -999999;
       } else if (sortBy === 'cardNumber') {
         // Numeric sorting for card numbers
         aVal = parseInt(aVal) || 0;
@@ -1288,7 +1298,13 @@ export default function EnhancedCollectionTable({
                       checked={col.visible}
                       onChange={() => toggleColumn(col.id)}
                       disabled={col.fixed}
-                      style={{ marginRight: 8 }}
+                      style={{ 
+                        marginRight: 12, // More spacing between checkbox and label
+                        width: 16,
+                        height: 16,
+                        accentColor: '#007bff', // Modern checkbox color
+                        cursor: col.fixed ? 'not-allowed' : 'pointer'
+                      }}
                     />
                     {col.title}
                     {col.fixed && (
