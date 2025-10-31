@@ -152,18 +152,18 @@ class ProductionOtagSystem {
             
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources - prioritize MongoDB-based API for reliability
+            // Try multiple data sources - prioritize local CSV for complete data
             const dataSources = [
-                // MongoDB-based API endpoint (most reliable - bypasses all file serving issues)
+                // Static files first - most reliable for complete data
+                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './FULL OTAGS.csv',
+                './otag-medium-dataset.csv',
+                // MongoDB-based API endpoint (may have incomplete data)
                 `${window.location.origin}/api/oracle-tags`,
                 'https://constant-lists-api.onrender.com/api/oracle-tags',
                 // Filesystem-based API endpoints (fallback)
                 `${window.location.origin}/api/otag-data`,
                 'https://constant-lists-api.onrender.com/api/otag-data',
-                // Static files (last resort - limited by file serving)
-                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
-                './otag-medium-dataset.csv',
-                './FULL OTAGS.csv',
                 './test-otag-data.csv'
             ];
             

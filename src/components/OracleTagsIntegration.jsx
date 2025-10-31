@@ -494,77 +494,23 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
   }
 
   if (!oracleTags || oracleTags.length === 0) {
-    // Temporary fallback: provide basic tags based on card name/type analysis
-    const cardName = getCardName(card);
-    const fallbackTags = getFallbackTags(cardName, card);
-    
-    if (fallbackTags.length > 0) {
-      console.log(`[OracleTagsIntegration] Using fallback tags for ${cardName}:`, fallbackTags);
-      // Use fallback tags temporarily
-      const tempGroupedTags = groupTags(fallbackTags);
-      
-      return (
-        <div className="oracle-tags-integration">
-          <div className="oracle-tags-header">
-            <span className="oracle-tags-icon">🏷️</span>
-            <span className="oracle-tags-title">Basic Oracle Tags ({fallbackTags.length}) - Limited Data</span>
-          </div>
-          
-          <div className="oracle-tags-content">
-            {Object.entries(tempGroupedTags).map(([category, tags]) => (
-              <div key={category} className="oracle-tags-category">
-                <div className="category-header">
-                  <span className="category-name">{category}</span>
-                  <span className="category-count">({tags.length})</span>
-                </div>
-                
-                <div className="oracle-tags-list">
-                  {tags.map((tag) => {
-                    const colors = getCategoryColor(category);
-                    return (
-                      <button
-                        key={tag}
-                        className="oracle-tag"
-                        style={{
-                          '--tag-bg': colors.bg,
-                          '--tag-border': colors.border,
-                          '--tag-text': colors.text
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onMouseDown={(e) => handleTagMouseDown(e, tag)}
-                        title={`Search for cards with "${tag}" functionality`}
-                      >
-                        {formatTagName(tag)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="oracle-tags-footer">
-            <span className="search-hint">💡 Click any tag to search for similar cards</span>
-            <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
-              Note: Using basic tags while full database loads
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
     return (
       <div className="oracle-tags-integration no-tags">
         <div className="oracle-tags-header">
           <span className="oracle-tags-icon">🏷️</span>
           <span className="oracle-tags-title">Oracle Tags</span>
         </div>
-        <div className="no-tags-message">No functional tags found for this card</div>
+        <div className="no-tags-message">
+          {window.productionOtagSystem?.stats?.totalCards > 100 
+            ? "No functional tags found for this card"
+            : "Loading Oracle Tags database..."
+          }
+        </div>
         <div style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', marginTop: '4px' }}>
           Database: {window.productionOtagSystem?.stats?.totalCards || 0} cards loaded
+          {window.productionOtagSystem?.stats?.totalCards <= 100 && (
+            <div>⚠️ Database incomplete - expected 34,000+ cards</div>
+          )}
         </div>
       </div>
     );
