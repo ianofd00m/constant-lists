@@ -1324,7 +1324,7 @@ export default function EnhancedCollectionTable({
           }
           break;
         case 'set':
-          groupKey = item.set_name || item.set || 'Unknown Set';
+          groupKey = item.set_name || item.scryfall_json?.set_name || 'Unknown Set';
           break;
         case 'cmc':
           const cmc = item.cmc || item.scryfall_json?.cmc || 0;
@@ -1499,28 +1499,6 @@ export default function EnhancedCollectionTable({
             }}
           />
           
-          {/* Group By Dropdown */}
-          <select 
-            value={groupBy} 
-            onChange={(e) => setGroupBy(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: 4,
-              fontSize: 11,
-              backgroundColor: 'white',
-              color: 'black',
-              minWidth: '120px'
-            }}
-          >
-            <option value="none">No Grouping</option>
-            <option value="colorIdentity">Group by Color ID</option>
-            <option value="set">Group by Set</option>
-            <option value="cmc">Group by Mana Cost</option>
-            <option value="rarity">Group by Rarity</option>
-            <option value="cardType">Group by Card Type</option>
-          </select>
-          
           {/* Column Visibility Menu */}
           <div style={{ position: 'relative' }} ref={columnMenuRef}>
             <button
@@ -1651,6 +1629,28 @@ export default function EnhancedCollectionTable({
               </div>
             )}
           </div>
+          
+          {/* Group By Dropdown */}
+          <select 
+            value={groupBy} 
+            onChange={(e) => setGroupBy(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: 4,
+              fontSize: 11,
+              backgroundColor: 'white',
+              color: 'black',
+              minWidth: '120px'
+            }}
+          >
+            <option value="none">No Grouping</option>
+            <option value="colorIdentity">Group by Color ID</option>
+            <option value="set">Group by Set</option>
+            <option value="cmc">Group by Mana Cost</option>
+            <option value="rarity">Group by Rarity</option>
+            <option value="cardType">Group by Card Type</option>
+          </select>
           
           {/* Sort Dropdown */}
           <select 
