@@ -158,11 +158,17 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
   
   const handleSave = () => {
     // Convert ATM-style input to decimal
-    // 1234 -> 12.34, 375 -> 3.75, 1 -> 0.01, 0 -> 0.00
+    // 1234 -> 12.34, 375 -> 3.75, 1 -> 0.01, 0 -> 0.00, 0000 -> 0.00
     let numericValue = 0;
-    if (editValue && editValue !== '0') {
+    
+    // Handle empty or whitespace input as 0
+    if (!editValue || editValue.trim() === '') {
+      numericValue = 0;
+    } else {
       const digits = editValue.replace(/\D/g, '');
-      if (digits.length === 0) {
+      
+      if (digits.length === 0 || parseInt(digits) === 0) {
+        // All zeros (0, 00, 000, 0000, etc.) should be 0.00
         numericValue = 0;
       } else if (digits.length === 1) {
         numericValue = parseInt(digits) / 100; // 1 -> 0.01
@@ -632,7 +638,8 @@ function EditableLanguageCell({ item, onUpdate }) {
     { value: 'Korean', label: 'Korean', code: 'KO' },
     { value: 'Russian', label: 'Russian', code: 'RU' },
     { value: 'Simplified Chinese', label: 'Simplified Chinese', code: 'ZH' },
-    { value: 'Traditional Chinese', label: 'Traditional Chinese', code: 'TW' }
+    { value: 'Traditional Chinese', label: 'Traditional Chinese', code: 'TW' },
+    { value: 'Phyrexian', label: 'Phyrexian', code: 'PH' }
   ];
 
   useEffect(() => {
@@ -1223,7 +1230,7 @@ export default function EnhancedCollectionTable({
                 fontSize: 14
               }}
             >
-              Columns ⚙️
+              Columns
             </button>
             
             {showColumnMenu && (

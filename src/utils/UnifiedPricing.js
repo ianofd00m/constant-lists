@@ -267,25 +267,27 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
     }
   }
   
-  // Step 5: Basic land fallback (already handled above for empty price data case)
-  if (!price && isBasicLand) {
-    price = '0.10';
-    source = 'basic_land_fallback';
-    debugLog(`[UNIFIED PRICING] Applied basic land fallback: $${price}`);
-  }
-  
-  // Step 6: Legacy fallback search
+  // Step 5: Legacy fallback search (check direct price field first)
   if (!price) {
-    const legacyPrice = findNestedValue(cardData, 'price') || 
+    // Check for direct price field (common in imported card data)
+    const directPrice = cardData.price || cardData.usd;
+    const legacyPrice = directPrice || findNestedValue(cardData, 'price') || 
                        findNestedValue(cardData, 'usd');
     if (legacyPrice && isValidModalPrice(legacyPrice)) {
-      price = legacyPrice;
+      price = legacyPrice.toString();
       source = 'legacy_fallback';
       debugLog(`[UNIFIED PRICING] Applied legacy fallback: $${price}`);
     }
   }
 
-  // Step 6.5: Reasonable fallback for common cards without pricing
+  // Step 6: Basic land fallback 
+  if (!price && isBasicLand) {
+    price = '0.10';
+    source = 'basic_land_fallback';
+    debugLog(`[UNIFIED PRICING] Applied basic land fallback: $${price}`);
+  }
+
+  // Step 7: Reasonable fallback for common cards without pricing
   if (!price && !isBasicLand) {
     // For cards without any pricing data, use a small fallback
     // This prevents "N/A" from showing everywhere while still indicating missing data
@@ -303,20 +305,20 @@ export const getUnifiedCardPrice = (cardData, options = {}) => {
       debugLog(`[UNIFIED PRICING] Applied basic land secondary fallback: $${price}`);
     } else {
       // For other cards, use a minimal fallback to indicate "needs pricing data"
-      price = '0.25';
+      price = '0.05';
       source = 'generic_fallback';
       debugLog(`[UNIFIED PRICING] Applied generic fallback (missing data): $${price}`);
     }
   }
   
-  // Step 7: Final fallback
+  // Step 8: Final fallback
   if (!price && fallbackPrice) {
     price = fallbackPrice;
     source = 'provided_fallback';
     debugLog(`[UNIFIED PRICING] Applied provided fallback: $${price}`);
   }
   
-  // Step 8: Last resort fallback - prevent N/A when no other options
+  // Step 9: Last resort fallback - prevent N/A when no other options
   if (!price && !fallbackPrice) {
     // If we still don't have a price, we need to return null to show N/A
     // This preserves the behavior where cards without data show N/A
