@@ -6275,7 +6275,15 @@ export default function DeckViewEdit({ isPublic = false }) {
       return [];
     }
 
-    const commanderNamesForGrouping = commanderNames;
+    const commanderNamesForGrouping = Array.isArray(commanderNames) ? commanderNames : [];
+    
+    console.log('[FOREACH DEBUG] groupedAndSortedCards useMemo:', {
+      cards: cards?.length,
+      cardsToGroup: cardsToGroup?.length,
+      commanderNames: commanderNames,
+      commanderNamesForGrouping: commanderNamesForGrouping,
+      groupBy: groupBy
+    });
 
     if (groupBy === "type") {
       cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
