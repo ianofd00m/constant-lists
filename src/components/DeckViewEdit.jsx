@@ -6332,11 +6332,15 @@ export default function DeckViewEdit({ isPublic = false }) {
     
     // Flatten all cards from all groups to create a navigation order
     const allFlattenedCards = [];
-    groupedAndSortedCards.forEach(group => {
-      group.cards.forEach(cardObj => {
-        allFlattenedCards.push(cardObj);
+    if (Array.isArray(groupedAndSortedCards)) {
+      groupedAndSortedCards.forEach(group => {
+        if (group && Array.isArray(group.cards)) {
+          group.cards.forEach(cardObj => {
+            allFlattenedCards.push(cardObj);
+          });
+        }
       });
-    });
+    }
     
     // Find current card index in flattened list
     const currentIndex = allFlattenedCards.findIndex(cardObj => {
@@ -11552,17 +11556,17 @@ export default function DeckViewEdit({ isPublic = false }) {
               borderBottom: "2px solid #1976d2",
               paddingBottom: "0.5rem"
             }}>
-              Main Deck ({groupedAndSortedCards.reduce((total, group) => {
-                return total + group.cards.reduce((groupTotal, cardObj) => {
+              Main Deck ({Array.isArray(groupedAndSortedCards) ? groupedAndSortedCards.reduce((total, group) => {
+                return total + (Array.isArray(group.cards) ? group.cards.reduce((groupTotal, cardObj) => {
                   const quantity = cardObj.count || cardObj.quantity || 1;
                   return groupTotal + quantity;
-                }, 0);
-              }, 0)} cards)
+                }, 0) : 0);
+              }, 0) : 0} cards)
             </h3>
             
             {/* Card sections without containers */}
             <div className="card-sections-container">
-              {groupedAndSortedCards.map((group) => (
+              {Array.isArray(groupedAndSortedCards) ? groupedAndSortedCards.map((group) => (
                 <div key={group.type} className="card-type-section">
                   <CardTypeHeader
                     type={group.type}
@@ -11854,7 +11858,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                   })}
                   </div>
                 </div>
-              ))}
+              )) : null}
                 
                   {/* Render context menu at top level so it is not clipped or duplicated */}
                   {contextMenu.open && (
