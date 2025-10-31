@@ -19,6 +19,8 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  # Only redirect if the file doesn't exist
+  force = false
 
 # Security headers
 [[headers]]
@@ -56,3 +58,18 @@
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Serve CSV files with proper content type and caching
+[[headers]]
+  for = "/*.csv"
+  [headers.values]
+    Content-Type = "text/csv; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+
+# Serve gzipped files with proper content type
+[[headers]]
+  for = "/*.csv.gz"
+  [headers.values]
+    Content-Type = "text/csv; charset=utf-8"
+    Content-Encoding = "gzip"
+    Cache-Control = "public, max-age=3600"
