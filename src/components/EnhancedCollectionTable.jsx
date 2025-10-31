@@ -798,6 +798,7 @@ const DEFAULT_COLUMNS = {
   quantity: { id: 'quantity', title: 'Qty', visible: true, width: '70px', sortable: false },
   name: { id: 'name', title: 'Card Name', visible: true, width: 'auto', sortable: true, fixed: true }, // Card name can't be toggled off
   colorIdentity: { id: 'colorIdentity', title: 'Color ID', visible: false, width: '90px', sortable: true },
+  cmc: { id: 'cmc', title: 'CMC', visible: false, width: '60px', sortable: true },
   cardType: { id: 'cardType', title: 'Type', visible: false, width: '100px', sortable: true },
   setIcon: { id: 'setIcon', title: 'Set Icon', visible: true, width: '60px', sortable: false },
   setCode: { id: 'setCode', title: 'Set Code', visible: false, width: '80px', sortable: true },
@@ -901,6 +902,37 @@ const COLUMN_RENDERERS = {
             style={{ width: '14px', height: '14px' }}
           />
         ))}
+      </div>
+    );
+  },
+  
+  cmc: (item) => {
+    // Use enriched data first, then fallback to legacy fields
+    let cmc = 0;
+    
+    // Try enriched data first (proper field names)
+    if (item.cmc !== undefined && item.cmc !== null) {
+      cmc = item.cmc;
+    }
+    // Try scryfall_json as fallback
+    else if (item.scryfall_json?.cmc !== undefined && item.scryfall_json.cmc !== null) {
+      cmc = item.scryfall_json.cmc;
+    }
+    // Try mana_cost parsing if available
+    else if (item.mana_cost || item.scryfall_json?.mana_cost) {
+      const manaCost = item.mana_cost || item.scryfall_json.mana_cost;
+      if (manaCost && typeof manaCost === 'string') {
+        // Simple CMC calculation from mana cost string
+        // Remove all non-numeric characters except X, then count
+        const numbers = manaCost.match(/\d+/g) || [];
+        const symbols = (manaCost.match(/\{[^}]+\}/g) || []).filter(s => !s.match(/\d/));
+        cmc = numbers.reduce((sum, num) => sum + parseInt(num), 0) + symbols.length;
+      }
+    }
+    
+    return (
+      <div style={{ textAlign: 'center', fontWeight: '500', fontSize: '14px' }}>
+        {cmc}
       </div>
     );
   },
@@ -1133,6 +1165,7 @@ export default function EnhancedCollectionTable({
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [filterText, setFilterText] = useState('');
+  const [groupBy, setGroupBy] = useState('none');
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef(null);
   
@@ -1175,8 +1208,8 @@ export default function EnhancedCollectionTable({
       .sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [columns]);
   
-  // Filter and sort collection
-  const filteredAndSorted = useMemo(() => {
+  // Filter, group, and sort collection
+  const processedData = useMemo(() => {
     let filtered = collection;
     
     // Apply filter
@@ -1190,8 +1223,8 @@ export default function EnhancedCollectionTable({
       );
     }
     
-    // Apply sort
-    return filtered.sort((a, b) => {
+    // Apply sort first
+    const sorted = filtered.sort((a, b) => {
       // Map column IDs to actual data field names
       let fieldName = sortBy;
       if (sortBy === 'setCode') fieldName = 'set';
@@ -1221,6 +1254,43 @@ export default function EnhancedCollectionTable({
         // Numeric sorting for card numbers
         aVal = parseInt(aVal) || 0;
         bVal = parseInt(bVal) || 0;
+      } else if (sortBy === 'colorIdentity') {
+        // Sort by color identity length, then alphabetically
+        const aColors = a.color_identity || [];
+        const bColors = b.color_identity || [];
+        const aLength = Array.isArray(aColors) ? aColors.length : 0;
+        const bLength = Array.isArray(bColors) ? bColors.length : 0;
+        
+        if (aLength !== bLength) {
+          aVal = aLength;
+          bVal = bLength;
+        } else {
+          // Same number of colors, sort alphabetically by joined colors
+          aVal = Array.isArray(aColors) ? aColors.sort().join('') : '';
+          bVal = Array.isArray(bColors) ? bColors.sort().join('') : '';
+        }
+      } else if (sortBy === 'cmc') {
+        // Sort by converted mana cost
+        aVal = a.cmc || a.scryfall_json?.cmc || 0;
+        bVal = b.cmc || b.scryfall_json?.cmc || 0;
+        
+        // Parse from mana cost if CMC not available
+        if (aVal === 0 && (a.mana_cost || a.scryfall_json?.mana_cost)) {
+          const manaCost = a.mana_cost || a.scryfall_json.mana_cost;
+          const numbers = manaCost.match(/\d+/g) || [];
+          const symbols = (manaCost.match(/\{[^}]+\}/g) || []).filter(s => !s.match(/\d/));
+          aVal = numbers.reduce((sum, num) => sum + parseInt(num), 0) + symbols.length;
+        }
+        if (bVal === 0 && (b.mana_cost || b.scryfall_json?.mana_cost)) {
+          const manaCost = b.mana_cost || b.scryfall_json.mana_cost;
+          const numbers = manaCost.match(/\d+/g) || [];
+          const symbols = (manaCost.match(/\{[^}]+\}/g) || []).filter(s => !s.match(/\d/));
+          bVal = numbers.reduce((sum, num) => sum + parseInt(num), 0) + symbols.length;
+        }
+      } else if (sortBy === 'cardType') {
+        // Sort by card type, using type_line field
+        aVal = (a.type_line || a.type || '').toLowerCase();
+        bVal = (b.type_line || b.type || '').toLowerCase();
       } else if (sortBy === 'dateAdded' || sortBy === 'purchaseDate') {
         aVal = new Date(aVal).getTime() || 0;
         bVal = new Date(bVal).getTime() || 0;
@@ -1233,7 +1303,70 @@ export default function EnhancedCollectionTable({
       if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [collection, filterText, sortBy, sortDirection]);
+    
+    // Apply grouping if requested
+    if (groupBy === 'none') {
+      return { items: sorted, isGrouped: false };
+    }
+    
+    // Group the sorted data
+    const groups = {};
+    sorted.forEach(item => {
+      let groupKey = 'Other';
+      
+      switch (groupBy) {
+        case 'colorIdentity':
+          const colors = item.color_identity || item.scryfall_json?.color_identity || [];
+          if (Array.isArray(colors) && colors.length > 0) {
+            groupKey = colors.sort().join('');
+          } else {
+            groupKey = 'Colorless';
+          }
+          break;
+        case 'set':
+          groupKey = item.set_name || item.set || 'Unknown Set';
+          break;
+        case 'cmc':
+          const cmc = item.cmc || item.scryfall_json?.cmc || 0;
+          groupKey = `${cmc} Mana`;
+          break;
+        case 'rarity':
+          groupKey = (item.rarity || 'Unknown').charAt(0).toUpperCase() + (item.rarity || 'Unknown').slice(1);
+          break;
+        case 'cardType':
+          const typeLine = item.type_line || item.scryfall_json?.type_line || item.type || '';
+          if (typeLine.includes('Creature')) groupKey = 'Creatures';
+          else if (typeLine.includes('Instant')) groupKey = 'Instants';
+          else if (typeLine.includes('Sorcery')) groupKey = 'Sorceries';
+          else if (typeLine.includes('Artifact')) groupKey = 'Artifacts';
+          else if (typeLine.includes('Enchantment')) groupKey = 'Enchantments';
+          else if (typeLine.includes('Planeswalker')) groupKey = 'Planeswalkers';
+          else if (typeLine.includes('Land')) groupKey = 'Lands';
+          else groupKey = 'Other Types';
+          break;
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(item);
+    });
+    
+    // Convert groups to array format with headers
+    const groupedItems = [];
+    Object.keys(groups).sort().forEach(groupName => {
+      // Add group header
+      groupedItems.push({
+        isGroupHeader: true,
+        groupName,
+        itemCount: groups[groupName].length
+      });
+      // Add group items
+      groupedItems.push(...groups[groupName]);
+    });
+    
+    return { items: groupedItems, isGrouped: true };
+  }, [collection, filterText, sortBy, sortDirection, groupBy]);
   
   // Handle column reordering
   const handleDragEnd = (event) => {
@@ -1349,7 +1482,7 @@ export default function EnhancedCollectionTable({
         <h3 style={{ margin: 0 }}>Your Cards ({collection.length})</h3>
         
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {/* Filter Input - Dark background with white text */}
+          {/* Filter Input */}
           <input
             type="text"
             placeholder="Filter cards..."
@@ -1366,10 +1499,10 @@ export default function EnhancedCollectionTable({
             }}
           />
           
-          {/* Sort Dropdown - Dark background with white text */}
+          {/* Group By Dropdown */}
           <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
+            value={groupBy} 
+            onChange={(e) => setGroupBy(e.target.value)}
             style={{
               padding: '8px 12px',
               border: '1px solid #ddd',
@@ -1377,34 +1510,16 @@ export default function EnhancedCollectionTable({
               fontSize: 11,
               backgroundColor: 'white',
               color: 'black',
-              minWidth: '150px'
+              minWidth: '120px'
             }}
           >
-            {Object.values(columns)
-              .filter(col => col.sortable)
-              .map(col => (
-                <option key={col.id} value={col.id}>
-                  Sort by {col.title}
-                </option>
-              ))
-            }
+            <option value="none">No Grouping</option>
+            <option value="colorIdentity">Group by Color ID</option>
+            <option value="set">Group by Set</option>
+            <option value="cmc">Group by Mana Cost</option>
+            <option value="rarity">Group by Rarity</option>
+            <option value="cardType">Group by Card Type</option>
           </select>
-          
-          {/* Sort Direction Button */}
-          <button
-            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: 4,
-              backgroundColor: '#f8f9fa',
-              color: 'black',
-              cursor: 'pointer',
-              fontSize: 14
-            }}
-          >
-            {sortDirection === 'asc' ? '↑' : '↓'}
-          </button>
           
           {/* Column Visibility Menu */}
           <div style={{ position: 'relative' }} ref={columnMenuRef}>
@@ -1536,11 +1651,51 @@ export default function EnhancedCollectionTable({
               </div>
             )}
           </div>
+          
+          {/* Sort Dropdown */}
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: 4,
+              fontSize: 11,
+              backgroundColor: 'white',
+              color: 'black',
+              minWidth: '150px'
+            }}
+          >
+            {Object.values(columns)
+              .filter(col => col.sortable)
+              .map(col => (
+                <option key={col.id} value={col.id}>
+                  Sort by {col.title}
+                </option>
+              ))
+            }
+          </select>
+          
+          {/* Sort Direction Button */}
+          <button
+            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: 4,
+              backgroundColor: '#f8f9fa',
+              color: 'black',
+              cursor: 'pointer',
+              fontSize: 14
+            }}
+          >
+            {sortDirection === 'asc' ? '↑' : '↓'}
+          </button>
         </div>
       </div>
 
       {/* Table */}
-      {filteredAndSorted.length === 0 ? (
+      {processedData.items.length === 0 ? (
         <div style={{ 
           textAlign: 'center', 
           padding: 48, 
@@ -1588,28 +1743,56 @@ export default function EnhancedCollectionTable({
             </thead>
             
             <tbody>
-              {filteredAndSorted.map(item => (
-                <tr key={item.id} style={{
-                  borderBottom: '1px solid #eee',
-                  backgroundColor: '#fff'
-                }}>
-                  {visibleColumns.map(col => (
-                    <td 
-                      key={col.id}
-                      style={{
-                        padding: '8px 12px',
-                        verticalAlign: 'middle',
-                        width: col.width
-                      }}
-                    >
-                      {col.id === 'actions' 
-                        ? renderActions(item)
-                        : COLUMN_RENDERERS[col.id]?.(item, handleItemUpdate) || <div>-</div>
-                      }
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {processedData.items.map((item, index) => {
+                // Render group header
+                if (item.isGroupHeader) {
+                  return (
+                    <tr key={`group-${item.groupName}`} style={{
+                      backgroundColor: '#f8f9fa',
+                      borderTop: '2px solid #dee2e6',
+                      borderBottom: '1px solid #dee2e6'
+                    }}>
+                      <td 
+                        colSpan={visibleColumns.length} 
+                        style={{
+                          padding: '12px 16px',
+                          fontWeight: 'bold',
+                          fontSize: '14px',
+                          color: '#495057',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        {item.groupName} ({item.itemCount} cards)
+                      </td>
+                    </tr>
+                  );
+                }
+                
+                // Render regular card row
+                return (
+                  <tr key={item.id} style={{
+                    borderBottom: '1px solid #eee',
+                    backgroundColor: '#fff'
+                  }}>
+                    {visibleColumns.map(col => (
+                      <td 
+                        key={col.id}
+                        style={{
+                          padding: '8px 12px',
+                          verticalAlign: 'middle',
+                          width: col.width
+                        }}
+                      >
+                        {col.id === 'actions' 
+                          ? renderActions(item)
+                          : COLUMN_RENDERERS[col.id]?.(item, handleItemUpdate) || <div>-</div>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </DndContext>
