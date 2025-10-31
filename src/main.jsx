@@ -1,3 +1,33 @@
+// GLOBAL FOREACH PROTECTION - Must be FIRST before any other imports
+(function installGlobalForEachProtection() {
+  console.log('[GLOBAL FOREACH] Installing global forEach protection...');
+  const originalForEach = Array.prototype.forEach;
+  
+  Array.prototype.forEach = function(callback, thisArg) {
+    if (!Array.isArray(this)) {
+      console.error('[GLOBAL FOREACH] Non-array forEach call detected GLOBALLY:');
+      console.error('[GLOBAL FOREACH] Type:', typeof this);
+      console.error('[GLOBAL FOREACH] Value:', this);
+      console.error('[GLOBAL FOREACH] Constructor:', this?.constructor?.name);
+      console.error('[GLOBAL FOREACH] Stack trace:');
+      console.trace();
+      
+      // Try to convert to array if it's array-like
+      if (this && typeof this.length === 'number' && this.length >= 0) {
+        console.warn('[GLOBAL FOREACH] Converting array-like object to array');
+        return originalForEach.call(Array.from(this), callback, thisArg);
+      }
+      
+      // Return empty result instead of crashing
+      console.warn('[GLOBAL FOREACH] Returning empty to prevent crash');
+      return;
+    }
+    return originalForEach.call(this, callback, thisArg);
+  };
+  
+  console.log('[GLOBAL FOREACH] Global forEach protection installed');
+})();
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
