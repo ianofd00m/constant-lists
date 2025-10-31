@@ -10,6 +10,50 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { storageManager } from "../utils/storageManager";
+
+// Safe forEach wrapper with debugging
+const safeForEach = (array, callback, context = 'unknown') => {
+  if (!Array.isArray(array)) {
+    console.error(`[FOREACH DEBUG] ${context}: forEach called on non-array:`, typeof array, array);
+    return;
+  }
+  try {
+    array.forEach(callback);
+  } catch (error) {
+    console.error(`[FOREACH DEBUG] ${context}: forEach error:`, error, array);
+    throw error;
+  }
+};
+
+// Debug wrapper to catch forEach errors
+const originalForEach = Array.prototype.forEach;
+let debugMode = false;
+
+const enableForEachDebugging = () => {
+  if (debugMode) return;
+  debugMode = true;
+  
+  Array.prototype.forEach = function(callback, thisArg) {
+    if (!Array.isArray(this)) {
+      console.error('[FOREACH DEBUG] forEach called on non-array:', typeof this, this);
+      console.trace('Stack trace:');
+      throw new TypeError('forEach called on non-array');
+    }
+    return originalForEach.call(this, callback, thisArg);
+  };
+};
+
+const disableForEachDebugging = () => {
+  if (!debugMode) return;
+  debugMode = false;
+  Array.prototype.forEach = originalForEach;
+};
+
+// Make debugging functions available globally
+if (typeof window !== 'undefined') {
+  window.enableForEachDebugging = enableForEachDebugging;
+  window.disableForEachDebugging = disableForEachDebugging;
+}
 import "react-toastify/dist/ReactToastify.css";
 import CardActionsModal from "./CardActionsModal";
 import "./CardActionsModal.css";
@@ -1482,6 +1526,16 @@ GridCard.displayName = "GridCard";
 
 export default function DeckViewEdit({ isPublic = false }) {
   const { id } = useParams();
+
+  // Enable forEach debugging for this component
+  useEffect(() => {
+    console.log('[DEBUG] Enabling forEach debugging...');
+    enableForEachDebugging();
+    return () => {
+      console.log('[DEBUG] Disabling forEach debugging...');
+      disableForEachDebugging();
+    };
+  }, []);
 
   // Debug: Log the deck ID being accessed
   // console.log('[DeckViewEdit] Attempting to load deck ID:', id);
