@@ -23,6 +23,7 @@ import Profile from './components/Profile';
 import AdminDashboard from './components/AdminDashboard';
 // Lazy load DeckViewEdit to handle large component size
 const DeckViewEdit = React.lazy(() => import('./components/DeckViewEdit'));
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import ResearchPage from './components/ResearchPage';
 import { BuildPageWithAuth } from './components/BuildPage';
@@ -146,24 +147,28 @@ function App() {
           </RequireAuth>
         } />
         <Route path="/decks/:id" element={
-          <React.Suspense fallback={
-            <div style={{padding: '2rem', textAlign: 'center'}}>
-              <h2>Loading Deck Editor...</h2>
-              <p>Loading the deck editor (this may take a moment due to its size)</p>
-            </div>
-          }>
-            <DeckViewEdit />
-          </React.Suspense>
+          <ErrorBoundary>
+            <React.Suspense fallback={
+              <div style={{padding: '2rem', textAlign: 'center'}}>
+                <h2>Loading Deck Editor...</h2>
+                <p>Loading the deck editor (this may take a moment due to its size)</p>
+              </div>
+            }>
+              <DeckViewEdit />
+            </React.Suspense>
+          </ErrorBoundary>
         } />
         <Route path="/public/decks/:id" element={
-          <React.Suspense fallback={
-            <div style={{padding: '2rem', textAlign: 'center'}}>
-              <h2>Loading Public Deck...</h2>
-              <p>Loading the public deck view (read-only)</p>
-            </div>
-          }>
-            <DeckViewEdit isPublic={true} />
-          </React.Suspense>
+          <ErrorBoundary>
+            <React.Suspense fallback={
+              <div style={{padding: '2rem', textAlign: 'center'}}>
+                <h2>Loading Public Deck...</h2>
+                <p>Loading the public deck view (read-only)</p>
+              </div>
+            }>
+              <DeckViewEdit isPublic={true} />
+            </React.Suspense>
+          </ErrorBoundary>
         } />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />

@@ -1537,6 +1537,27 @@ GridCard.displayName = "GridCard";
 export default function DeckViewEdit({ isPublic = false }) {
   const { id } = useParams();
 
+  // Global error boundary to catch forEach errors
+  useEffect(() => {
+    const originalForEach = Array.prototype.forEach;
+    Array.prototype.forEach = function(callback, thisArg) {
+      if (!Array.isArray(this)) {
+        console.error('[GLOBAL FOREACH DEBUG] Non-array forEach call detected:');
+        console.error('[GLOBAL FOREACH DEBUG] Type:', typeof this);
+        console.error('[GLOBAL FOREACH DEBUG] Value:', this);
+        console.error('[GLOBAL FOREACH DEBUG] Stack trace:');
+        console.trace();
+        // Return early instead of throwing to prevent crash
+        return;
+      }
+      return originalForEach.call(this, callback, thisArg);
+    };
+
+    return () => {
+      Array.prototype.forEach = originalForEach;
+    };
+  }, []);
+
   // Enable forEach debugging for this component (DISABLED - was causing interference)
   // useEffect(() => {
   //   console.log('[DEBUG] Enabling forEach debugging...');

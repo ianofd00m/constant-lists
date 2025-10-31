@@ -9,7 +9,7 @@
 const MAX_CARDS_TO_LOG = 3;
 
 // Debug flag - set to true to enable verbose logging
-const DEBUG_ENABLED = false;
+const DEBUG_ENABLED = true;
 
 /**
  * Log card structure details
@@ -97,10 +97,96 @@ export function logCardGroup(cards, groupName) {
 }
 
 /**
+ * Enhanced logging for import process
+ */
+const importLogs = [];
+const MAX_IMPORT_LOGS = 500;
+
+export function logImportStep(step, data = null) {
+  if (!DEBUG_ENABLED) return;
+  
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    step,
+    data: data ? JSON.stringify(data, null, 2) : null
+  };
+  
+  importLogs.push(logEntry);
+  if (importLogs.length > MAX_IMPORT_LOGS) {
+    importLogs.shift(); // Remove oldest log
+  }
+  
+  console.log(`[IMPORT ${timestamp}] ${step}`, data || '');
+}
+
+export function logImportError(step, error) {
+  if (!DEBUG_ENABLED) return;
+  
+  const timestamp = new Date().toISOString();
+  const errorData = {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  };
+  
+  importLogs.push({
+    timestamp,
+    step: `ERROR: ${step}`,
+    data: JSON.stringify(errorData, null, 2)
+  });
+  
+  console.error(`[IMPORT ERROR ${timestamp}] ${step}`, errorData);
+}
+
+export function getImportLogs(limit = 50) {
+  const recent = importLogs.slice(-limit);
+  return recent.map(log => {
+    let output = `[${log.timestamp}] ${log.step}`;
+    if (log.data) {
+      output += `\n${log.data}`;
+    }
+    return output;
+  }).join('\n---\n');
+}
+
+export function printImportLogs(limit = 20) {
+  console.group('🔍 Import Debug Logs');
+  const logs = getImportLogs(limit);
+  console.log(logs);
+  console.groupEnd();
+  
+  // Also make it easy to copy
+  console.log('\n📋 Copy this to share:');
+  console.log('```');
+  console.log(logs);
+  console.log('```');
+}
+
+export function clearImportLogs() {
+  importLogs.length = 0;
+  console.log('[DEBUG] Import logs cleared');
+}
+
+// Add to window for browser console access
+if (typeof window !== 'undefined') {
+  window.debugImport = {
+    logs: () => printImportLogs(),
+    clear: clearImportLogs,
+    get: getImportLogs
+  };
+}
+
+/**
  * Add this debug logger to a component
  * Just import and call at key points during rendering
  */
 export default {
   logCardStructure,
-  logCardGroup
+  logCardGroup,
+  logImportStep,
+  logImportError,
+  getImportLogs,
+  printImportLogs,
+  clearImportLogs
 };

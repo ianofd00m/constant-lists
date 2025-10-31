@@ -9,6 +9,7 @@ import { parseScryfallJSON, parseScryfallCollection } from '../utils/scryfallPar
 import { parseDek, convertDekToCollection } from '../utils/dekParser';
 import { parseSimpleText, convertSimpleTextToCollection } from '../utils/simpleTextParser';
 import { documentParser, getSupportedFormats, isFormatSupported } from '../utils/documentParser';
+import { logImportStep, logImportError } from '../utils/debugLogger';
 
 function getRarityColor(rarity) {
   const colors = {
@@ -64,19 +65,29 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
     const fileName = file.name.toLowerCase();
     const fileExtension = fileName.split('.').pop();
 
+    logImportStep('File selected', { 
+      fileName, 
+      fileExtension, 
+      fileSize: file.size,
+      fileType: file.type 
+    });
+
     // Validate file type and size using comprehensive format checker
     if (!isFormatSupported(fileName)) {
       const supportedFormats = getSupportedFormats();
       const allExtensions = Object.values(supportedFormats).flat();
+      logImportError('Unsupported file type', new Error(`File: ${fileName}, Supported: ${allExtensions.join(', ')}`));
       toast.error(`Unsupported file type. Supported formats: ${allExtensions.join(', ')}`);
       return;
     }
 
     if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      logImportError('File too large', new Error(`File size: ${file.size} bytes`));
       toast.error('File too large. Please select a file smaller than 50MB');
       return;
     }
 
+    logImportStep('Starting file processing', { fileExtension, enrichCards });
     // Use comprehensive document parser for all file types
     processDocumentFile(file, fileExtension);
   };
@@ -195,9 +206,18 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
 
   const processDocumentFile = async (file, fileExtension) => {
     setIsProcessing(true);
+    logImportStep('Document processing started', { fileName: file.name, fileExtension });
+    
     try {
       // Use comprehensive document parser
+      logImportStep('Calling document parser', { enrichCards });
       const parsed = await documentParser.parseDocument(file, { enrichData: enrichCards });
+      
+      logImportStep('Document parser completed', { 
+        cardCount: parsed.length,
+        sampleCard: parsed[0] || null
+      });
+      
       setPreviewData(parsed);
       setShowPreview(true);
       
@@ -214,6 +234,7 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
       }
       
     } catch (error) {
+      logImportError('Document processing failed', error);
       console.error(`${fileExtension.toUpperCase()} parsing error:`, error);
       toast.error(`${fileExtension.toUpperCase()} parsing failed: ${error.message}`);
       
@@ -222,11 +243,12 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
         toast.info('💡 Tip: For best results with spreadsheets, export as CSV first');
       } else if (['docx', 'doc', 'odt', 'pages'].includes(fileExtension)) {
         toast.info('💡 Tip: For better accuracy, copy text content and use Text Import');
-      } else if (['docx', 'doc', 'odt', 'pages'].includes(fileExtension)) {
+      } else if (['pdf'].includes(fileExtension)) {
         toast.info('💡 Tip: Copy text from PDF and use Text Import for best results');
       }
     } finally {
       setIsProcessing(false);
+      logImportStep('Document processing finished');
     }
   };
 
@@ -674,6 +696,91 @@ export default function ImportModal({ isOpen, onClose, onImport }) {
             )}
           </div>
         )}
+
+        {/* Processing Progress Bar */}
+        {isProcessing && (
+          <div style={{ marginTop: 20, marginBottom: 20 }}>
+            <div style={{ marginBottom: 8, color: '#666', fontWeight: '500' }}>
+              Processing import...
+            </div>
+            <div style={{ 
+              width: '100%', 
+              height: '8px', 
+              backgroundColor: '#e0e0e0', 
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#007bff',
+                animation: 'progressIndeterminate 2s infinite linear'
+              }} />
+            </div>
+            <style>{`
+              @keyframes progressIndeterminate {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* Debug Panel */}
+        <div style={{ 
+          marginTop: 16, 
+          padding: 8, 
+          backgroundColor: '#f8f9fa', 
+          border: '1px solid #dee2e6',
+          borderRadius: 4,
+          fontSize: 12
+        }}>
+          <div style={{ marginBottom: 4, fontWeight: 'bold', color: '#495057' }}>
+            🐛 Debug Tools
+          </div>
+          <button 
+            onClick={() => {
+              if (window.debugImport) {
+                window.debugImport.logs();
+              } else {
+                console.log('Debug tools not available');
+              }
+            }}
+            style={{
+              padding: '4px 8px',
+              fontSize: 11,
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: 3,
+              cursor: 'pointer',
+              marginRight: 4
+            }}
+          >
+            Show Console Logs
+          </button>
+          <button 
+            onClick={() => {
+              if (window.debugImport) {
+                window.debugImport.clear();
+              }
+            }}
+            style={{
+              padding: '4px 8px',
+              fontSize: 11,
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: 3,
+              cursor: 'pointer'
+            }}
+          >
+            Clear Logs
+          </button>
+          <div style={{ fontSize: 10, color: '#6c757d', marginTop: 4 }}>
+            Open browser console after clicking "Show Console Logs" to see formatted debug output
+          </div>
+        </div>
 
         {/* Preview Section */}
         {showPreview && previewData.length > 0 && (
