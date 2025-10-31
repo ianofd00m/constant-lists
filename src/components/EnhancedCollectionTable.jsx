@@ -830,7 +830,22 @@ const COLUMN_RENDERERS = {
   ),
   
   colorIdentity: (item) => {
-    const colors = item.color_identity || item.colorIdentity || [];
+    // Try multiple possible data sources for color identity
+    let colors = [];
+    
+    // Check various possible data locations
+    if (item.color_identity && Array.isArray(item.color_identity)) {
+      colors = item.color_identity;
+    } else if (item.colorIdentity && Array.isArray(item.colorIdentity)) {
+      colors = item.colorIdentity;
+    } else if (item.scryfall_json?.color_identity && Array.isArray(item.scryfall_json.color_identity)) {
+      colors = item.scryfall_json.color_identity;
+    } else if (item.card?.color_identity && Array.isArray(item.card.color_identity)) {
+      colors = item.card.color_identity;
+    } else if (item.card?.scryfall_json?.color_identity && Array.isArray(item.card.scryfall_json.color_identity)) {
+      colors = item.card.scryfall_json.color_identity;
+    }
+    
     const colorMap = {
       'W': { name: 'White', symbol: 'w' },
       'U': { name: 'Blue', symbol: 'u' },
@@ -839,7 +854,7 @@ const COLUMN_RENDERERS = {
       'G': { name: 'Green', symbol: 'g' }
     };
     
-    if (!colors.length) {
+    if (!colors || !colors.length) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img 
@@ -868,20 +883,36 @@ const COLUMN_RENDERERS = {
   },
   
   cardType: (item) => {
+    // Try multiple possible data sources for type line
+    let typeLine = '';
+    
+    if (item.type_line) {
+      typeLine = item.type_line;
+    } else if (item.type) {
+      typeLine = item.type;
+    } else if (item.scryfall_json?.type_line) {
+      typeLine = item.scryfall_json.type_line;
+    } else if (item.card?.type_line) {
+      typeLine = item.card.type_line;
+    } else if (item.card?.scryfall_json?.type_line) {
+      typeLine = item.card.scryfall_json.type_line;
+    }
+    
     // Extract main type from type line
     let mainType = '';
-    const typeLine = item.type_line || item.type || '';
     
-    // Split by spaces and dashes to get individual words
-    const words = typeLine.split(/[\s—-]+/);
-    
-    // Look for main card types (excluding supertypes and subtypes)
-    const mainTypes = ['artifact', 'creature', 'enchantment', 'instant', 'land', 'planeswalker', 'sorcery', 'tribal', 'battle'];
-    
-    for (const word of words) {
-      if (mainTypes.includes(word.toLowerCase())) {
-        mainType = word;
-        break;
+    if (typeLine) {
+      // Split by spaces and dashes to get individual words
+      const words = typeLine.split(/[\s—-]+/);
+      
+      // Look for main card types (excluding supertypes and subtypes)
+      const mainTypes = ['artifact', 'creature', 'enchantment', 'instant', 'land', 'planeswalker', 'sorcery', 'tribal', 'battle'];
+      
+      for (const word of words) {
+        if (mainTypes.includes(word.toLowerCase())) {
+          mainType = word;
+          break;
+        }
       }
     }
     
@@ -937,11 +968,28 @@ const COLUMN_RENDERERS = {
     </div>
   ),
   
-  setName: (item) => (
-    <div style={{ fontSize: '13px', color: '#555' }}>
-      {item.set_name || item.scryfall_json?.set_name || item.edition || '-'}
-    </div>
-  ),
+  setName: (item) => {
+    // Try multiple possible data sources for set name
+    let setName = '';
+    
+    if (item.set_name && item.set_name !== item.set) {
+      setName = item.set_name;
+    } else if (item.scryfall_json?.set_name && item.scryfall_json.set_name !== item.set) {
+      setName = item.scryfall_json.set_name;
+    } else if (item.card?.set_name && item.card.set_name !== item.set) {
+      setName = item.card.set_name;
+    } else if (item.card?.scryfall_json?.set_name && item.card.scryfall_json.set_name !== item.set) {
+      setName = item.card.scryfall_json.set_name;
+    } else if (item.edition && item.edition !== item.set) {
+      setName = item.edition;
+    }
+    
+    return (
+      <div style={{ fontSize: '13px', color: '#555' }}>
+        {setName || '-'}
+      </div>
+    );
+  },
   
   cardNumber: (item) => (
     <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
