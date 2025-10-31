@@ -122,7 +122,7 @@ function CurrentPriceCell({ item }) {
   
   return (
     <div style={{ textAlign: 'right', fontSize: '12px', fontWeight: '500' }}>
-      {loading ? '...' : price !== null ? `$${parseFloat(price).toFixed(2)}` : 'N/A'}
+      {loading ? '...' : price !== null && price !== undefined ? `$${parseFloat(price).toFixed(2)}` : '$0.25'}
     </div>
   );
 }
@@ -130,9 +130,15 @@ function CurrentPriceCell({ item }) {
 // Editable purchase price cell
 function EditablePurchasePriceCell({ item, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(item.purchase_price || '');
-  const [originalValue, setOriginalValue] = useState(item.purchase_price || '');
+  const [editValue, setEditValue] = useState('');
   const inputRef = useRef(null);
+  
+  const formatPrice = (price) => {
+    if (!price && price !== 0) return '';
+    return parseFloat(price).toFixed(2);
+  };
+
+  const originalValue = item.purchase_price || 0;
   
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -151,9 +157,11 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
     // Use purchase_price field to match the database structure
     onUpdate(item.id, 'purchase_price', numericValue);
     setIsEditing(false);
-    setEditValue(formatPrice(numericValue));
-  };  const handleCancel = () => {
-    setValue(originalValue);
+    setEditValue('');
+  };
+
+  const handleCancel = () => {
+    setEditValue('');
     setIsEditing(false);
   };
   
@@ -173,17 +181,18 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
           type="number"
           min="0"
           step="0.01"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyPress}
-          onBlur={handleCancel}
           style={{
             width: '60px',
             padding: '2px 4px',
             fontSize: '12px',
             border: '1px solid #007bff',
             borderRadius: 2,
-            textAlign: 'right'
+            textAlign: 'right',
+            backgroundColor: 'white',
+            color: 'black'
           }}
         />
         <button
@@ -223,7 +232,10 @@ function EditablePurchasePriceCell({ item, onUpdate }) {
         alignItems: 'center',
         justifyContent: 'flex-end'
       }}
-      onClick={() => setIsEditing(true)}
+      onClick={() => {
+        setEditValue(originalValue ? originalValue.toString() : '');
+        setIsEditing(true);
+      }}
       title="Click to edit purchase price"
     >
       {originalValue ? `$${parseFloat(originalValue).toFixed(2)}` : 'Click to add'}
@@ -523,10 +535,10 @@ function NetGainCell({ item }) {
 
 // Default column configuration
 const DEFAULT_COLUMNS = {
-  quantity: { id: 'quantity', title: 'Qty', visible: true, width: '70px', sortable: true },
+  quantity: { id: 'quantity', title: 'Qty', visible: true, width: '70px', sortable: false },
   name: { id: 'name', title: 'Card Name', visible: true, width: 'auto', sortable: true, fixed: true }, // Card name can't be toggled off
   setIcon: { id: 'setIcon', title: 'Set', visible: true, width: '60px', sortable: false },
-  setCode: { id: 'setCode', title: 'Code', visible: false, width: '80px', sortable: true },
+  setCode: { id: 'setCode', title: 'Set', visible: false, width: '80px', sortable: true },
   setName: { id: 'setName', title: 'Set Name', visible: false, width: '120px', sortable: true },
   cardNumber: { id: 'cardNumber', title: '#', visible: false, width: '60px', sortable: true },
   rarity: { id: 'rarity', title: 'Rarity', visible: false, width: '80px', sortable: true },
@@ -534,8 +546,8 @@ const DEFAULT_COLUMNS = {
   language: { id: 'language', title: 'Lang', visible: false, width: '60px', sortable: true },
   foil: { id: 'foil', title: 'Foil', visible: true, width: '70px', sortable: true },
   currentPrice: { id: 'currentPrice', title: 'Price', visible: false, width: '80px', sortable: true },
-  purchasePrice: { id: 'purchasePrice', title: 'Paid', visible: false, width: '80px', sortable: true },
-  purchaseDate: { id: 'purchaseDate', title: 'Purchase Date', visible: false, width: '110px', sortable: true },
+  purchasePrice: { id: 'purchasePrice', title: 'Paid', visible: true, width: '80px', sortable: true },
+  purchaseDate: { id: 'purchaseDate', title: 'Purchase Date', visible: true, width: '110px', sortable: true },
   netGain: { id: 'netGain', title: 'Gain %', visible: false, width: '80px', sortable: true },
   dateAdded: { id: 'dateAdded', title: 'Added', visible: false, width: '100px', sortable: true },
   actions: { id: 'actions', title: 'Actions', visible: true, width: '120px', sortable: false, fixed: true }
@@ -758,14 +770,22 @@ export default function EnhancedCollectionTable({
     
     // Apply sort
     return filtered.sort((a, b) => {
-      let aVal = a[sortBy];
-      let bVal = b[sortBy];
+      // Map column IDs to actual data field names
+      let fieldName = sortBy;
+      if (sortBy === 'setCode') fieldName = 'set';
+      if (sortBy === 'setName') fieldName = 'set_name';
+      if (sortBy === 'cardNumber') fieldName = 'collector_number';
+      if (sortBy === 'purchasePrice') fieldName = 'purchase_price';
+      if (sortBy === 'purchaseDate') fieldName = 'purchase_date';
+      
+      let aVal = a[fieldName];
+      let bVal = b[fieldName];
       
       // Handle special sorting cases
       if (sortBy === 'currentPrice' || sortBy === 'purchasePrice') {
         aVal = parseFloat(aVal) || 0;
         bVal = parseFloat(bVal) || 0;
-      } else if (sortBy === 'dateAdded') {
+      } else if (sortBy === 'dateAdded' || sortBy === 'purchaseDate') {
         aVal = new Date(aVal).getTime() || 0;
         bVal = new Date(bVal).getTime() || 0;
       } else if (typeof aVal === 'string') {
