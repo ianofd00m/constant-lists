@@ -797,9 +797,11 @@ function NetGainCell({ item }) {
 const DEFAULT_COLUMNS = {
   quantity: { id: 'quantity', title: 'Qty', visible: true, width: '70px', sortable: false },
   name: { id: 'name', title: 'Card Name', visible: true, width: 'auto', sortable: true, fixed: true }, // Card name can't be toggled off
+  colorIdentity: { id: 'colorIdentity', title: 'Color ID', visible: false, width: '90px', sortable: true },
+  cardType: { id: 'cardType', title: 'Type', visible: false, width: '100px', sortable: true },
   setIcon: { id: 'setIcon', title: 'Set Icon', visible: true, width: '60px', sortable: false },
-  setCode: { id: 'setCode', title: 'Set', visible: false, width: '80px', sortable: true },
-  setName: { id: 'setName', title: 'Set Name', visible: false, width: '120px', sortable: true },
+  setCode: { id: 'setCode', title: 'Set Code', visible: false, width: '80px', sortable: true },
+  setName: { id: 'setName', title: 'Set Name', visible: false, width: '140px', sortable: true },
   cardNumber: { id: 'cardNumber', title: '#', visible: false, width: '60px', sortable: true },
   rarity: { id: 'rarity', title: 'Rarity', visible: false, width: '80px', sortable: true },
   condition: { id: 'condition', title: 'Condition', visible: false, width: '80px', sortable: true },
@@ -809,7 +811,7 @@ const DEFAULT_COLUMNS = {
   purchasePrice: { id: 'purchasePrice', title: 'Paid', visible: true, width: '80px', sortable: true },
   purchaseDate: { id: 'purchaseDate', title: 'Acquired Date', visible: true, width: '110px', sortable: true },
   netGain: { id: 'netGain', title: 'Gain %', visible: false, width: '80px', sortable: true },
-  dateAdded: { id: 'dateAdded', title: 'Added', visible: false, width: '100px', sortable: true },
+  dateAdded: { id: 'dateAdded', title: 'Added Date', visible: false, width: '100px', sortable: true },
   actions: { id: 'actions', title: 'Actions', visible: true, width: '120px', sortable: false, fixed: true }
 };
 
@@ -826,6 +828,69 @@ const COLUMN_RENDERERS = {
       {item.name}
     </div>
   ),
+  
+  colorIdentity: (item) => {
+    const colors = item.color_identity || item.colorIdentity || [];
+    const colorMap = {
+      'W': { name: 'White', symbol: 'w' },
+      'U': { name: 'Blue', symbol: 'u' },
+      'B': { name: 'Black', symbol: 'b' },
+      'R': { name: 'Red', symbol: 'r' },
+      'G': { name: 'Green', symbol: 'g' }
+    };
+    
+    if (!colors.length) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img 
+            src="/svgs/c.svg"
+            alt="Colorless"
+            title="Colorless"
+            style={{ width: '14px', height: '14px' }}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+        {colors.map((color, index) => (
+          <img 
+            key={index}
+            src={`/svgs/${colorMap[color]?.symbol || color.toLowerCase()}.svg`}
+            alt={colorMap[color]?.name || color}
+            title={colorMap[color]?.name || color}
+            style={{ width: '14px', height: '14px' }}
+          />
+        ))}
+      </div>
+    );
+  },
+  
+  cardType: (item) => {
+    // Extract main type from type line
+    let mainType = '';
+    const typeLine = item.type_line || item.type || '';
+    
+    // Split by spaces and dashes to get individual words
+    const words = typeLine.split(/[\s—-]+/);
+    
+    // Look for main card types (excluding supertypes and subtypes)
+    const mainTypes = ['artifact', 'creature', 'enchantment', 'instant', 'land', 'planeswalker', 'sorcery', 'tribal', 'battle'];
+    
+    for (const word of words) {
+      if (mainTypes.includes(word.toLowerCase())) {
+        mainType = word;
+        break;
+      }
+    }
+    
+    return (
+      <div style={{ fontSize: '12px', color: '#555', textTransform: 'capitalize' }}>
+        {mainType || '-'}
+      </div>
+    );
+  },
   
   setIcon: (item) => {
     const getSetIconUrl = (setCode) => {
@@ -874,7 +939,7 @@ const COLUMN_RENDERERS = {
   
   setName: (item) => (
     <div style={{ fontSize: '13px', color: '#555' }}>
-      {item.set_name || item.scryfall_json?.set_name || item.edition || (item.set ? item.set.toUpperCase() : '-')}
+      {item.set_name || item.scryfall_json?.set_name || item.edition || '-'}
     </div>
   ),
   
