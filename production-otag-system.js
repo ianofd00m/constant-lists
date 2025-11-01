@@ -564,6 +564,15 @@ class ProductionOtagSystem {
         
         this.isLoaded = true;
         console.log(`✅ OTAG database ready: ${this.stats.totalCards} cards, ${this.stats.totalOtags} categories`);
+        
+        // CRITICAL: Notify UI that database is now loaded with real stats
+        window.dispatchEvent(new CustomEvent('otagDatabaseLoaded', {
+            detail: { 
+                stats: this.stats,
+                isReady: true,
+                isLoaded: true
+            }
+        }));
     }
 
     createFallbackData() {

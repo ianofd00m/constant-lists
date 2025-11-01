@@ -12,7 +12,7 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
   const [error, setError] = useState(null);
   const [oracleTagsData, setOracleTagsData] = useState(new Map());
 
-  // Wait for Production OTAG System to be ready
+  // Wait for Production OTAG System to be ready AND database to be loaded
   useEffect(() => {
     const checkOtagReady = () => {
       if (window.productionOtagSystem && window.productionOtagSystem.isReady) {
@@ -23,8 +23,29 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
       return false;
     };
 
+    // CRITICAL: Listen for database loaded event (real data available)
+    const handleDatabaseLoaded = (event) => {
+      console.log('[OracleTagsIntegration] OTAG database loaded with stats:', event.detail?.stats);
+      setLoading(false);
+      // Force a re-render by updating oracle tags for current card
+      if (card) {
+        updateOracleTagsForCard(card);
+      }
+    };
+
+    // Listen for the database loaded event
+    window.addEventListener('otagDatabaseLoaded', handleDatabaseLoaded);
+
     if (checkOtagReady()) {
-      return; // Already ready
+      // Check if database is already loaded
+      const stats = window.productionOtagSystem?.getStats?.();
+      if (stats && stats.totalCards > 1000) {
+        console.log('[OracleTagsIntegration] Database already loaded with', stats.totalCards, 'cards');
+        setLoading(false);
+      }
+      return () => {
+        window.removeEventListener('otagDatabaseLoaded', handleDatabaseLoaded);
+      };
     }
 
     // Check periodically for OTAG system readiness
@@ -44,62 +65,72 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
+      window.removeEventListener('otagDatabaseLoaded', handleDatabaseLoaded);
     };
+  }, [card]);
+
+  // Helper function to extract card name from various possible structures
+  const getCardName = useCallback((cardObj) => {
+    if (cardObj?.name) return cardObj.name;
+    if (cardObj?.cardObj?.name) return cardObj.cardObj.name;
+    if (cardObj?.cardObj?.card?.name) return cardObj.cardObj.card.name;
+    if (cardObj?.scryfall_json?.name) return cardObj.scryfall_json.name;
+    if (cardObj?.card?.name) return cardObj.card.name;
+    if (typeof cardObj === 'string') return cardObj;
+    return null;
   }, []);
+
+  // Helper function to update oracle tags for a card
+  const updateOracleTagsForCard = useCallback((cardToUpdate) => {
+    const cardName = getCardName(cardToUpdate);
+    if (cardName && window.productionOtagSystem && window.productionOtagSystem.isReady) {
+      console.log(`[OracleTagsIntegration] Getting tags for: ${cardName}`);
+      
+      // Debug: Check OTAG system stats
+      console.log(`[OracleTagsIntegration] OTAG System Stats:`, {
+        totalCards: window.productionOtagSystem.stats?.totalCards,
+        totalOtags: window.productionOtagSystem.stats?.totalOtags,
+        isReady: window.productionOtagSystem.isReady,
+        hasDatabase: !!window.productionOtagSystem.otagDatabase,
+        databaseSize: window.productionOtagSystem.otagDatabase?.size
+      });
+      
+      const tags = window.productionOtagSystem.getTagsForCard(cardName);
+      setOracleTags(tags || []);
+      console.log(`[OracleTagsIntegration] Found ${(tags || []).length} tags for ${cardName}`);
+      
+      // Debug: If no tags found, check if card exists in database
+      if (!tags || tags.length === 0) {
+        const cardKey = cardName.toLowerCase().trim();
+        const hasCard = window.productionOtagSystem.otagDatabase?.has(cardKey);
+        console.log(`[OracleTagsIntegration] Card "${cardName}" (key: "${cardKey}") exists in database: ${hasCard}`);
+        
+        // Show a few sample cards from the database
+        if (window.productionOtagSystem.otagDatabase?.size > 0) {
+          const sampleCards = Array.from(window.productionOtagSystem.otagDatabase.keys()).slice(0, 5);
+          console.log(`[OracleTagsIntegration] Sample cards in database:`, sampleCards);
+        }
+      }
+    } else {
+      console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`);
+      setOracleTags([]);
+    }
+  }, [getCardName]);
 
   // Update tags when card changes OR when loading state changes - use Production OTAG System
   useEffect(() => {
     if (card && !loading) {
+      updateOracleTagsForCard(card);
+    } else if (card) {
       const cardName = getCardName(card);
-      if (cardName && window.productionOtagSystem && window.productionOtagSystem.isReady) {
-        console.log(`[OracleTagsIntegration] Getting tags for: ${cardName}`);
-        
-        // Debug: Check OTAG system stats
-        console.log(`[OracleTagsIntegration] OTAG System Stats:`, {
-          totalCards: window.productionOtagSystem.stats?.totalCards,
-          totalOtags: window.productionOtagSystem.stats?.totalOtags,
-          isReady: window.productionOtagSystem.isReady,
-          hasDatabase: !!window.productionOtagSystem.otagDatabase,
-          databaseSize: window.productionOtagSystem.otagDatabase?.size
-        });
-        
-        const tags = window.productionOtagSystem.getTagsForCard(cardName);
-        setOracleTags(tags || []);
-        console.log(`[OracleTagsIntegration] Found ${(tags || []).length} tags for ${cardName}`);
-        
-        // Debug: If no tags found, check if card exists in database
-        if (!tags || tags.length === 0) {
-          const cardKey = cardName.toLowerCase().trim();
-          const hasCard = window.productionOtagSystem.otagDatabase?.has(cardKey);
-          console.log(`[OracleTagsIntegration] Card "${cardName}" (key: "${cardKey}") exists in database: ${hasCard}`);
-          
-          // Show a few sample cards from the database
-          if (window.productionOtagSystem.otagDatabase?.size > 0) {
-            const sampleCards = Array.from(window.productionOtagSystem.otagDatabase.keys()).slice(0, 5);
-            console.log(`[OracleTagsIntegration] Sample cards in database:`, sampleCards);
-          }
-        }
-      } else {
-        console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`, {
-          hasSystem: !!window.productionOtagSystem,
-          isReady: window.productionOtagSystem?.isReady,
-          loading: loading
-        });
-        setOracleTags([]);
-      }
+      console.log(`[OracleTagsIntegration] OTAG system not ready for: ${cardName}`, {
+        hasSystem: !!window.productionOtagSystem,
+        isReady: window.productionOtagSystem?.isReady,
+        loading: loading
+      });
+      setOracleTags([]);
     }
-  }, [card, loading]);
-
-  const getCardName = (cardObj) => {
-    // Extract card name from various possible structures
-    if (cardObj.name) return cardObj.name;
-    if (cardObj.cardObj?.name) return cardObj.cardObj.name;
-    if (cardObj.cardObj?.card?.name) return cardObj.cardObj.card.name;
-    if (cardObj.scryfall_json?.name) return cardObj.scryfall_json.name;
-    if (cardObj.cardObj?.scryfall_json?.name) return cardObj.cardObj.scryfall_json.name;
-    if (cardObj.cardObj?.card?.scryfall_json?.name) return cardObj.cardObj.card.scryfall_json.name;
-    return null;
-  };
+  }, [card, loading, updateOracleTagsForCard, getCardName]);
 
   const getFallbackTags = (cardName, cardObj) => {
     if (!cardName) return [];
