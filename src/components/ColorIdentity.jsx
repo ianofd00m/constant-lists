@@ -5,7 +5,7 @@ const ColorIdentity = React.memo(({ colorIdentity, size = 16 }) => {
     // Return colorless mana symbol if no color identity
     return (
       <img
-        src="https://svgs.scryfall.io/card-symbols/C.svg"
+        src="/svgs/c.svg"
         alt="Colorless"
         style={{ 
           width: size, 
@@ -13,6 +13,11 @@ const ColorIdentity = React.memo(({ colorIdentity, size = 16 }) => {
           marginRight: 2, 
           verticalAlign: 'middle' 
         }}
+        onError={(e) => {
+          e.target.outerHTML = 'C';
+        }}
+        data-no-qr-scan="true"
+        loading="lazy"
       />
     );
   }
@@ -20,11 +25,10 @@ const ColorIdentity = React.memo(({ colorIdentity, size = 16 }) => {
   return (
     <span className="color-identity">
       {colorIdentity.map((color, index) => {
-        const imageUrl = `https://svgs.scryfall.io/card-symbols/${color}.svg`;
         return (
           <img
             key={index}
-            src={imageUrl}
+            src={`/svgs/${color.toLowerCase()}.svg`}
             alt={color}
             style={{ 
               width: size, 
@@ -32,6 +36,11 @@ const ColorIdentity = React.memo(({ colorIdentity, size = 16 }) => {
               marginRight: 2, 
               verticalAlign: 'middle' 
             }}
+            onError={(e) => {
+              e.target.outerHTML = color;
+            }}
+            data-no-qr-scan="true"
+            loading="lazy"
           />
         );
       })}

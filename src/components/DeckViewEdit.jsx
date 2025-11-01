@@ -13555,9 +13555,11 @@ export default function DeckViewEdit({ isPublic = false }) {
                           }}
                           title={`${mana.symbol} mana`}
                           onError={(e) => {
-                            // Fallback to Scryfall if local SVG doesn't work
-                            e.target.src = `https://svgs.scryfall.io/card-symbols/${mana.symbol}.svg`;
+                            // Fallback to text if local SVG doesn't work
+                            e.target.outerHTML = `{${mana.symbol}}`;
                           }}
+                          data-no-qr-scan="true"
+                          loading="lazy"
                         />
                         <span style={{ 
                           fontSize: "10px", 

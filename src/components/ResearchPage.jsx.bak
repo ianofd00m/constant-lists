@@ -488,7 +488,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                             return (
                               <img
                                 key={`front-${i}`}
-                                src={`/svgs/${code.toLowerCase()}.svg`}
+                                src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                                 alt={code}
                                 style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
                               />
@@ -506,7 +506,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                             return (
                               <img
                                 key={`back-${i}`}
-                                src={`/svgs/${code.toLowerCase()}.svg`}
+                                src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                                 alt={code}
                                 style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
                               />
@@ -522,7 +522,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                           return (
                             <img
                               key={i}
-                              src={`/svgs/${code.toLowerCase()}.svg`}
+                              src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                               alt={code}
                               style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
                             />
@@ -873,7 +873,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                                 return (
                                   <img
                                     key={`front-${i}`}
-                                    src={`/svgs/${code.toLowerCase()}.svg`}
+                                    src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                                     alt={code}
                                     style={{ width: 16, height: 16 }}
                                   />
@@ -887,7 +887,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                                 return (
                                   <img
                                     key={`back-${i}`}
-                                    src={`/svgs/${code.toLowerCase()}.svg`}
+                                    src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                                     alt={code}
                                     style={{ width: 16, height: 16 }}
                                   />
@@ -900,7 +900,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                               return (
                                 <img
                                   key={i}
-                                  src={`/svgs/${code.toLowerCase()}.svg`}
+                                  src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
                                   alt={code}
                                   style={{ width: 16, height: 16 }}
                                 />
