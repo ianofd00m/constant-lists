@@ -25,7 +25,7 @@ function parseSimpleDeckList(listText) {
     if (match) {
       const [, count, name, set, collectorNumber] = match;
       result.push({
-        count: parseInt(count, 10),
+        quantity: parseInt(count, 10),
         name: name.trim(),
         set: set?.trim(),
         collectorNumber: collectorNumber?.trim(),

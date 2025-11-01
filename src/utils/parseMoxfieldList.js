@@ -1,5 +1,5 @@
 // Utility to parse Moxfield/MTG text decklists
-// Returns [{ name, set, collectorNumber, foil, count }]
+// Returns [{ name, set, collectorNumber, foil, quantity }]
 export function parseMoxfieldList(listText) {
   const lines = listText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const result = [];
@@ -12,7 +12,7 @@ export function parseMoxfieldList(listText) {
     if (match) {
       const [, count, name, set, collectorNumber] = match;
       result.push({
-        count: parseInt(count, 10),
+        quantity: parseInt(count, 10),
         name: name.trim(),
         set: set.trim(),
         collectorNumber: collectorNumber.trim(),
