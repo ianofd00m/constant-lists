@@ -5,6 +5,8 @@ import './App.css'
 // import './strong-animation-fix.css'
 // REMOVED: Direct JS animation fix for testing
 // import './direct-animation-fix.js'
+// Browser compatibility fixes for Windows 11/Brave
+import '../browser-compatibility-fix.js'
 import {
   BrowserRouter as Router,
   Routes,
@@ -37,6 +39,7 @@ import TradePage from './components/TradePage';
 import TradeManagementPage from './components/TradeManagementPage';
 import ShoppingCart from './components/ShoppingCart';
 import WishlistPage from './components/WishlistPage';
+import NetworkDiagnostics from './components/NetworkDiagnostics';
 
 function HomePage() {
   return (
@@ -179,6 +182,7 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/verify-email" element={<EmailVerification />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/network-diagnostics" element={<NetworkDiagnostics />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
         <Route path="*" element={<h2 style={{textAlign:'center',marginTop:40}}>404 – Page Not Found</h2>} />
       </Routes>

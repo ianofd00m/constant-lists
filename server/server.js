@@ -25,11 +25,17 @@ app.use(cors({
   origin: (origin, callback) => {
     console.log('🔍 CORS check - Origin:', origin, 'NODE_ENV:', process.env.NODE_ENV);
     
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (like mobile apps, curl requests, or Brave in strict mode)
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin (mobile/strict browser)');
+      return callback(null, true);
+    }
     
     // In development, allow all origins
-    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ CORS: Development mode - allowing all origins');
+      return callback(null, true);
+    }
     
     // Check if origin matches any allowed pattern
     const isAllowed = allowedOrigins.some(allowedOrigin => {
@@ -41,13 +47,15 @@ app.use(cors({
       return false;
     });
     
-    console.log('🔍 CORS result for', origin, '- isAllowed:', isAllowed, 'allowedOrigins:', allowedOrigins);
+    console.log('🔍 CORS result for', origin, '- isAllowed:', isAllowed);
     
     if (isAllowed) {
+      console.log('✅ CORS: Origin allowed');
       callback(null, true);
     } else {
-      console.warn('🚫 CORS blocked origin:', origin);
-      callback(null, true); // TEMPORARILY allow all origins to debug
+      console.warn('🚫 CORS: Origin not in allowed list, but allowing for debugging');
+      // Allow for now to prevent blocking legitimate users
+      callback(null, true);
     }
   },
   credentials: true,
