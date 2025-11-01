@@ -393,6 +393,11 @@ function groupCardsByType(cards, commanderNames = []) {
                             cardObj.scryfall_json?.type_line ||
                             cardObj.card?.scryfallCard?.type_line ||
                             cardObj.card?.scryfall_json?.type_line;
+                            
+            // Debug: Check if we're missing type data
+            if (!typeLine && Math.random() < 0.1) {
+              console.log('[TYPE DEBUG] Missing type_line for', name, 'keys:', Object.keys(cardObj));
+            }
 
             type =
               (name && CARD_TYPE_HINTS[name]) ||
@@ -1782,7 +1787,7 @@ export default function DeckViewEdit({ isPublic = false }) {
   const [otagSuggestions, setOtagSuggestions] = useState([]);
   const [otagLoading, setOtagLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [groupBy, setGroupBy] = useState("type"); // 'type', 'manaValue', 'colorIdentity', 'collectionStatus'
+  const [groupBy, setGroupBy] = useState("type"); // 'type', 'manaValue', 'colorIdentity' (collectionStatus only for collection page)
   const [sortBy, setSortBy] = useState("name-asc"); // 'name-asc', 'name-desc', 'price-asc', 'price-desc'
   const [hidePrices, setHidePrices] = useState(false); // Hide card prices by default
   const [showMana, setShowMana] = useState(true); // Show mana symbols toggle
@@ -6446,13 +6451,7 @@ export default function DeckViewEdit({ isPublic = false }) {
 
       const commanderNamesForGrouping = Array.isArray(commanderNames) ? commanderNames : [];
       
-      console.log('[FOREACH DEBUG] groupedAndSortedCards useMemo:', {
-        cards: cards?.length,
-        cardsToGroup: cardsToGroup?.length,
-        commanderNames: commanderNames,
-        commanderNamesForGrouping: commanderNamesForGrouping,
-        groupBy: groupBy
-      });
+      // Debug logging reduced to prevent console spam
 
       if (groupBy === "type") {
         cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
@@ -6467,21 +6466,15 @@ export default function DeckViewEdit({ isPublic = false }) {
           commanderNamesForGrouping,
         );
       } else if (groupBy === "collectionStatus") {
-        cardGroups = groupCardsByCollectionStatus(
-          cardsToGroup,
-          commanderNamesForGrouping,
-        );
+        // Collection status grouping not supported in deck view - fallback to type
+        console.warn('Collection status grouping not supported in deck view, falling back to type grouping');
+        cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
       } else {
         // Fallback: default to grouping by type if groupBy is unrecognized
         cardGroups = groupCardsByType(cardsToGroup, commanderNamesForGrouping);
       }
 
-      console.log('[FOREACH DEBUG] cardGroups after grouping:', {
-        cardGroups: cardGroups,
-        isArray: Array.isArray(cardGroups),
-        length: cardGroups?.length,
-        firstGroup: cardGroups?.[0]
-      });
+      // Debug logging reduced to prevent console spam
 
       // Sort cards within each group only - ensure cardGroups is an array
       if (Array.isArray(cardGroups)) {
@@ -6489,23 +6482,16 @@ export default function DeckViewEdit({ isPublic = false }) {
         for (let index = 0; index < cardGroups.length; index++) {
           const group = cardGroups[index];
           try {
-            console.log('[FOREACH DEBUG] Processing group', index, ':', {
-              group: group,
-              cards: group?.cards,
-              isCardsArray: Array.isArray(group?.cards)
-            });
+            // Processing group safely
             if (!Array.isArray(group.cards)) {
-              console.error('[FOREACH DEBUG] group.cards is not an array in groupedAndSortedCards:', typeof group.cards, group.cards, 'Group:', group);
               group.cards = [];
             }
             try {
-              // CRITICAL: Extra validation before spreading to prevent forEach errors
+              // Extra validation before spreading to prevent forEach errors
               if (!Array.isArray(group.cards)) {
-                console.error('[FOREACH DEBUG] group.cards is not an array before spread:', typeof group.cards, group.cards);
                 group.cards = [];
               }
               const cardsToSort = [...group.cards];
-              console.log('[FOREACH DEBUG] About to sort cards:', cardsToSort.length, 'cards');
               group.cards = sortCards(cardsToSort, sortBy);
             } catch (error) {
               console.error('[FOREACH DEBUG] Error in sortCards:', error, 'group.cards:', group.cards);
@@ -13740,7 +13726,7 @@ export default function DeckViewEdit({ isPublic = false }) {
                           typeCounts['Other'] = (typeCounts['Other'] || 0) + quantity;
                         }
                       } else {
-                        console.log(`[DEBUG] Card with no type info counted as Other: "${cardName}" ${isCommander ? '(Commander - should have type info!)' : ''}`);
+                        // Card with no type info counted as Other
                         typeCounts['Other'] = (typeCounts['Other'] || 0) + quantity;
                       }
                     } else {

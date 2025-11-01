@@ -40,7 +40,6 @@ function CardGroupSortOptions({ groupBy, setGroupBy, sortBy, setSortBy, viewMode
           <option value="type">Card Type</option>
           <option value="manaValue">Mana Value</option>
           <option value="colorIdentity">Color Identity</option>
-          <option value="collectionStatus">Collection Status</option>
         </select>
       </div>
       
