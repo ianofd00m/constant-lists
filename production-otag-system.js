@@ -10,6 +10,7 @@ class ProductionOtagSystem {
         this.otagDatabase = new Map();
         this.cardNameMap = new Map();
         this.searchCache = new Map();
+        this.memoryCache = null; // Emergency memory cache
         this.stats = {
             totalCards: 0,
             totalOtags: 0,
@@ -22,8 +23,12 @@ class ProductionOtagSystem {
 
     async initialize() {
         try {
-            // Auto-load OTAG data from your server
-            await this.loadOtagDataFromServer();
+            // Clear any old cache keys from previous versions
+            this.clearOldCaches();
+            
+            // PERFORMANCE: Only load OTAG data when actually needed (lazy loading)
+            this.isReady = true; // Mark as ready without loading data
+            console.log('✅ Production OTAG System ready (lazy loading enabled)');
             
             // Start monitoring for modals
             this.startModalMonitoring();
@@ -44,49 +49,123 @@ class ProductionOtagSystem {
         }
     }
 
+    clearOldCaches() {
+        // List of all old cache keys that should be cleared
+        const oldCacheKeys = [
+            'production-otag-data-v1',
+            'production-otag-timestamp-v1',
+            'production-otag-data-v2',
+            'production-otag-timestamp-v2',
+            'production-otag-data-v3-full',
+            'production-otag-timestamp-v3-full'
+        ];
+        
+        let clearedCount = 0;
+        for (const key of oldCacheKeys) {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+                clearedCount++;
+            }
+        }
+        
+        if (clearedCount > 0) {
+            console.log(`🧹 Cleared ${clearedCount} old cache entries`);
+        }
+        
+        // Also clear current cache if it contains insufficient data
+        const currentCacheKey = 'production-otag-data-v4-api';
+        const currentData = localStorage.getItem(currentCacheKey);
+        if (currentData) {
+            try {
+                const parsedData = JSON.parse(currentData);
+                if (parsedData && parsedData.length < 1000) {
+                    localStorage.removeItem(currentCacheKey);
+                    localStorage.removeItem('production-otag-timestamp-v4-api');
+                    console.log(`🚫 Cleared current cache (only ${parsedData.length} entries - insufficient data)`);
+                }
+            } catch (e) {
+                // If we can't parse the cache, clear it
+                localStorage.removeItem(currentCacheKey);
+                localStorage.removeItem('production-otag-timestamp-v4-api');
+                console.log('🚫 Cleared corrupted cache data');
+            }
+        }
+    }
+
     async loadOtagDataFromServer() {
-        const cacheKey = 'production-otag-data-v2';
-        const cacheTimestamp = 'production-otag-timestamp-v2';
+        const cacheKey = 'production-otag-data-v4-api'; // Updated to force reload with API endpoint
+        const cacheTimestamp = 'production-otag-timestamp-v4-api';
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         try {
-            // Check cache first
-            const cachedData = localStorage.getItem(cacheKey);
-            const cachedTime = localStorage.getItem(cacheTimestamp);
-            
-            console.log('🔍 Cache check:', { 
-                hasCachedData: !!cachedData, 
-                hasCachedTime: !!cachedTime,
-                cachedDataLength: cachedData ? cachedData.length : 0,
-                cachedDataType: typeof cachedData,
-                cachedData: cachedData
-            });
+            // EMERGENCY: Check memory cache first
+            if (this.memoryCache && this.memoryCache.data && (Date.now() - this.memoryCache.timestamp) < CACHE_DURATION) {
+                console.log('🧠 Using memory cache from previous load...');
+                this.processOtagData(this.memoryCache.data);
+                return;
+            }
+
+            // Check all possible cache formats
+            const cacheChecks = [
+                // Standard format
+                { key: cacheKey, time: cacheTimestamp, format: 'standard' },
+                // Compact format
+                { key: cacheKey + '-compact', time: cacheTimestamp, format: 'compact' },
+                // Session storage
+                { key: cacheKey + '-session', time: cacheTimestamp + '-session', format: 'session' }
+            ];
+
+            console.log('🔍 Checking multiple cache formats...');
             
             // More robust cache check - must have both data and time, and data must not be empty
             let shouldUseCache = false;
             let parsedData = null;
+            let usedCacheFormat = null;
             
-            if (cachedData && cachedTime && cachedData.trim() !== '') {
-                try {
-                    parsedData = JSON.parse(cachedData);
-                    const age = Date.now() - parseInt(cachedTime);
-                    console.log(`🕐 Cache age: ${Math.round(age / 1000 / 60)} minutes`);
-                    
-                    if (age < CACHE_DURATION && parsedData && parsedData.length > 0) {
-                        shouldUseCache = true;
-                        console.log('📋 Loading OTAG data from cache...');
-                        console.log(`📊 Cached data contains: ${parsedData.length} entries`);
-                    } else {
-                        console.log('🔄 Cache expired or empty, will fetch fresh data');
+            for (const cacheCheck of cacheChecks) {
+                const storage = cacheCheck.format === 'session' ? sessionStorage : localStorage;
+                const cachedData = storage.getItem(cacheCheck.key);
+                const cachedTime = storage.getItem(cacheCheck.time);
+                
+                if (cachedData && cachedTime && cachedData.trim() !== '') {
+                    try {
+                        let rawData = JSON.parse(cachedData);
+                        const age = Date.now() - parseInt(cachedTime);
+                        console.log(`🕐 ${cacheCheck.format} cache age: ${Math.round(age / 1000 / 60)} minutes`);
+                        
+                        // Convert compact format back to full format
+                        if (cacheCheck.format === 'compact' || cacheCheck.format === 'session') {
+                            rawData = rawData.map(card => ({
+                                cardName: card.n,
+                                otags: card.t || []
+                            }));
+                        }
+                        
+                        // Invalidate cache if it's test data (less than 1000 cards - full dataset has 34k+)
+                        if (rawData.length < 1000) {
+                            console.log(`🚫 ${cacheCheck.format} cache contains only ${rawData.length} entries (insufficient data)`);
+                            continue;
+                        } else if (age < CACHE_DURATION && rawData && rawData.length > 0) {
+                            shouldUseCache = true;
+                            parsedData = rawData;
+                            usedCacheFormat = cacheCheck.format;
+                            console.log(`📋 Loading OTAG data from ${cacheCheck.format} cache...`);
+                            console.log(`📊 Cached data contains: ${parsedData.length} entries`);
+                            break;
+                        } else {
+                            console.log(`🔄 ${cacheCheck.format} cache expired or empty`);
+                        }
+                    } catch (e) {
+                        console.log(`⚠️ ${cacheCheck.format} cache parse error:`, e.message);
+                        // Clear corrupted cache
+                        storage.removeItem(cacheCheck.key);
+                        storage.removeItem(cacheCheck.time);
                     }
-                } catch (e) {
-                    console.log('⚠️ Cache parse error:', e.message);
-                    // Clear corrupted cache
-                    localStorage.removeItem(cacheKey);
-                    localStorage.removeItem(cacheTimestamp);
                 }
-            } else {
-                console.log('🚫 No valid cache found, will fetch fresh data');
+            }
+            
+            if (!shouldUseCache) {
+                console.log('🚫 No valid cache found in any format, will fetch fresh data');
             }
             
             if (shouldUseCache && parsedData) {
@@ -97,31 +176,121 @@ class ProductionOtagSystem {
             // If we reach here, we need to load fresh data
             console.log('🌐 Loading OTAG data from server...');
             
-            // Try multiple data sources
+            console.log('🌐 Loading OTAG data from server...');
+            
+            // Try multiple data sources - prioritize API endpoints for reliable data delivery
             const dataSources = [
-                './scryfall-card-otags-2025-08-06.csv',
-                './data/scryfall-card-otags-2025-08-06.csv',
-                './assets/scryfall-card-otags-2025-08-06.csv',
-                './otag-data.csv'
+                // API endpoints first - these can serve complete data reliably without SPA routing issues
+                'https://constant-lists-api.onrender.com/api/oracle-tags',
+                `${window.location.origin}/api/oracle-tags`,
+                'https://constant-lists-api.onrender.com/api/otag-data',
+                `${window.location.origin}/api/otag-data`,
+                // Static files - may be blocked by SPA routing on Netlify
+                './oracle-tags.csv',
+                './oracle-tags.csv.gz',
+                './scryfall-COMPLETE-oracle-tags-2025-08-08.csv',
+                './FULL OTAGS.csv',
+                './otag-medium-dataset.csv',
+                './test-otag-data.csv'
             ];
             
             for (const source of dataSources) {
                 try {
                     console.log(`🔍 Trying to load from: ${source}`);
-                    const response = await fetch(source);
-                    console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                    
+                    // Show progress for external sources (likely large files)
+                    const isExternal = source.startsWith('http');
+                    if (isExternal) {
+                        console.log(`🌐 Loading full dataset from external source (this may take 10-30 seconds)...`);
+                    }
+                    
+                    // For large local files, try different approaches
+                    let response, csvText;
+                    
+                    if (source.startsWith('./')) {
+                        // Try multiple methods for local files
+                        console.log(`🔍 Attempting to load large local file: ${source}`);
+                        
+                        try {
+                            // Method 1: Standard fetch
+                            response = await fetch(source, {
+                                method: 'GET',
+                                headers: {
+                                    'Cache-Control': 'no-cache',
+                                },
+                            });
+                            console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                            
+                            if (response.ok) {
+                                const contentLength = response.headers.get('content-length');
+                                console.log(`📏 Content-Length header: ${contentLength}`);
+                                
+                                // Try to read as stream for large files
+                                if (contentLength && parseInt(contentLength) > 1000000) {
+                                    console.log(`📊 Large file detected (${(parseInt(contentLength) / (1024 * 1024)).toFixed(1)}MB), attempting stream read...`);
+                                }
+                                
+                                // Handle compressed files
+                                if (source.endsWith('.gz')) {
+                                    console.log(`📦 Decompressing gzipped file...`);
+                                    const arrayBuffer = await response.arrayBuffer();
+                                    csvText = await this.decompressGzip(arrayBuffer);
+                                } else {
+                                    csvText = await response.text();
+                                }
+                            }
+                        } catch (fetchError) {
+                            console.warn(`⚠️ Standard fetch failed for ${source}:`, fetchError.message);
+                            throw fetchError;
+                        }
+                    } else {
+                        // External sources
+                        response = await fetch(source);
+                        console.log(`📡 Response status for ${source}:`, response.status, response.statusText);
+                        
+                        if (response.ok) {
+                            const contentLength = response.headers.get('content-length');
+                            if (contentLength && source.startsWith('http')) {
+                                const sizeMB = (parseInt(contentLength) / (1024 * 1024)).toFixed(1);
+                                console.log(`📊 Downloading ${sizeMB}MB of Oracle Tag data...`);
+                            }
+                            
+                            // Handle compressed files for external sources too
+                            if (source.endsWith('.gz')) {
+                                console.log(`📦 Decompressing external gzipped file...`);
+                                const arrayBuffer = await response.arrayBuffer();
+                                csvText = await this.decompressGzip(arrayBuffer);
+                            } else {
+                                csvText = await response.text();
+                            }
+                        }
+                    }
                     
                     if (response.ok) {
-                        const csvText = await response.text();
                         console.log(`✅ Loaded OTAG data from: ${source} (${csvText.length} characters)`);
                         
+                        // Debug: Show first and last 200 characters to see what we got
+                        console.log(`🔍 First 200 chars:`, csvText.substring(0, 200));
+                        console.log(`🔍 Last 200 chars:`, csvText.substring(csvText.length - 200));
+                        
+                        // Check if file was truncated (expected size is ~7MB = ~7,000,000 chars)
+                        if (csvText.length < 100000) {
+                            console.warn(`⚠️ File seems truncated! Got ${csvText.length} chars, expected ~7,000,000`);
+                        }
+                        
+                        // Validate we got actual CSV data, not an error page
+                        if (csvText.length < 1000 && !csvText.includes('card_name')) {
+                            throw new Error(`Invalid CSV data received (too short: ${csvText.length} chars)`);
+                        }
+                        
+                        console.log(`🔄 Processing Oracle Tag database...`);
                         const data = this.parseCSV(csvText);
                         this.processOtagData(data);
                         
-                        // Cache the processed data
-                        localStorage.setItem(cacheKey, JSON.stringify(data));
-                        localStorage.setItem(cacheTimestamp, Date.now().toString());
+                        // EMERGENCY: Intelligent caching with compression and chunking
+                        await this.emergencySmartCache(data, cacheKey, cacheTimestamp);
                         
+                        // IMPORTANT: Stop here after successful load and processing
                         return;
                     }
                 } catch (err) {
@@ -139,6 +308,134 @@ class ProductionOtagSystem {
         }
     }
 
+    async decompressGzip(arrayBuffer) {
+        try {
+            // Use the browser's built-in DecompressionStream if available
+            if ('DecompressionStream' in window) {
+                console.log(`🔧 Using browser DecompressionStream...`);
+                const ds = new DecompressionStream('gzip');
+                const stream = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(new Uint8Array(arrayBuffer));
+                        controller.close();
+                    }
+                }).pipeThrough(ds);
+                
+                const reader = stream.getReader();
+                const chunks = [];
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                
+                // Combine chunks and decode as text
+                const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                const combined = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    combined.set(chunk, offset);
+                    offset += chunk.length;
+                }
+                
+                return new TextDecoder('utf-8').decode(combined);
+            } else {
+                console.warn(`⚠️ DecompressionStream not available, cannot decompress gzip file`);
+                throw new Error('Gzip decompression not supported in this browser');
+            }
+        } catch (error) {
+            console.error('❌ Error decompressing gzip file:', error);
+            throw error;
+        }
+    }
+
+    async emergencySmartCache(data, cacheKey, cacheTimestamp) {
+        console.log('🚨 EMERGENCY: Implementing intelligent caching system...');
+        
+        try {
+            // Method 1: Try standard caching first
+            const dataString = JSON.stringify(data);
+            localStorage.setItem(cacheKey, dataString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            console.log('✅ Standard cache successful');
+            return;
+        } catch (standardCacheError) {
+            console.log('⚠️ Standard cache failed:', standardCacheError.message);
+        }
+
+        try {
+            // Method 2: Clear all old storage and try again
+            console.log('🧹 Clearing old storage data...');
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('otag') || key.includes('production-'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // Try again after cleanup
+            const dataString = JSON.stringify(data);
+            localStorage.setItem(cacheKey, dataString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            console.log('✅ Cache successful after cleanup');
+            return;
+        } catch (cleanupCacheError) {
+            console.log('⚠️ Cache failed even after cleanup:', cleanupCacheError.message);
+        }
+
+        try {
+            // Method 3: Compress and chunk the data
+            console.log('🗜️ Attempting compressed chunked storage...');
+            
+            // Create a more compact representation
+            const compactData = data.map(card => ({
+                n: card.cardName, // name
+                t: card.otags || [] // tags only
+            }));
+            
+            const compactString = JSON.stringify(compactData);
+            console.log(`📊 Compact data size: ${(compactString.length / 1024 / 1024).toFixed(1)}MB (was ${(JSON.stringify(data).length / 1024 / 1024).toFixed(1)}MB)`);
+            
+            // Try storing compact version
+            localStorage.setItem(cacheKey + '-compact', compactString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            localStorage.setItem(cacheKey + '-format', 'compact');
+            console.log('✅ Compact cache successful');
+            return;
+        } catch (compactCacheError) {
+            console.log('⚠️ Compact cache also failed:', compactCacheError.message);
+        }
+
+        try {
+            // Method 4: Session storage fallback
+            console.log('💾 Trying sessionStorage fallback...');
+            const compactData = data.map(card => ({
+                n: card.cardName,
+                t: card.otags || []
+            }));
+            
+            sessionStorage.setItem(cacheKey + '-session', JSON.stringify(compactData));
+            sessionStorage.setItem(cacheTimestamp + '-session', Date.now().toString());
+            console.log('✅ Session storage cache successful');
+            return;
+        } catch (sessionCacheError) {
+            console.log('⚠️ Session storage also failed:', sessionCacheError.message);
+        }
+
+        // Method 5: In-memory only with persistence indicator
+        console.log('🧠 Falling back to memory-only storage (no persistence)');
+        this.memoryCache = {
+            data: data,
+            timestamp: Date.now(),
+            persistent: false
+        };
+        console.log('⚠️ WARNING: OTAG data will not persist between page loads due to storage limitations');
+        console.log('💡 Consider clearing browser data or using a different browser for better caching');
+    }
+
     parseCSV(csvText) {
         const lines = csvText.split('\n');
         const data = [];
@@ -151,7 +448,10 @@ class ProductionOtagSystem {
             try {
                 // Parse CSV with quoted fields
                 const columns = this.parseCSVLine(line);
+                
+                // Handle both 8-column and 2-column formats
                 if (columns.length >= 8) {
+                    // Full format: cardId, cardName, colors, cmc, typeLine, set, otagCount, otags
                     data.push({
                         cardId: columns[0],
                         cardName: columns[1],
@@ -161,6 +461,22 @@ class ProductionOtagSystem {
                         set: columns[5],
                         otagCount: parseInt(columns[6]) || 0,
                         otags: columns[7] ? columns[7].split('|').filter(Boolean) : []
+                    });
+                } else if (columns.length >= 2) {
+                    // Simple format: card_name, oracle_tags
+                    const cardName = columns[0].replace(/^"|"$/g, ''); // Remove quotes
+                    const otagString = columns[1].replace(/^"|"$/g, ''); // Remove quotes
+                    const otags = otagString ? otagString.split('|').filter(Boolean) : [];
+                    
+                    data.push({
+                        cardId: cardName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                        cardName: cardName,
+                        colors: '',
+                        cmc: 0,
+                        typeLine: '',
+                        set: '',
+                        otagCount: otags.length,
+                        otags: otags
                     });
                 }
             } catch (err) {
@@ -282,10 +598,10 @@ class ProductionOtagSystem {
             attributeFilter: ['class', 'style']
         });
         
-        // Also check existing modals
-        setTimeout(() => this.scanExistingModals(), 1000);
+        // PERFORMANCE: Reduced initial scan frequency
+        setTimeout(() => this.scanExistingModals(), 3000);
         
-        console.log('👀 Modal monitoring active');
+        console.log('👀 Modal monitoring active (optimized)');
     }
 
     scanExistingModals() {
@@ -603,10 +919,10 @@ class ProductionOtagSystem {
             .replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    handleOtagSearch(otag) {
+    async handleOtagSearch(otag) {
         console.log(`🔍 Searching for OTAG: ${otag}`);
         
-        const results = this.searchCardsByOtag(otag);
+        const results = await this.searchCardsByOtag(otag);
         console.log(`Found ${results.length} cards with OTAG: ${otag}`);
         
         if (results.length === 0) {
@@ -643,7 +959,13 @@ class ProductionOtagSystem {
         }
     }
 
-    searchCardsByOtag(searchOtag) {
+    async searchCardsByOtag(searchOtag) {
+        // PERFORMANCE: Lazy load data only when search is actually used
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for OTAG search...');
+            await this.loadOtagDataFromServer();
+        }
+        
         const lowerOtag = searchOtag.toLowerCase();
         const results = [];
         
@@ -737,7 +1059,13 @@ class ProductionOtagSystem {
         return { ...this.stats };
     }
 
-    searchCards(query) {
+    async searchCards(query) {
+        // PERFORMANCE: Lazy load data only when search is actually used
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for search...');
+            await this.loadOtagDataFromServer();
+        }
+        
         const lowerQuery = query.toLowerCase();
         const results = [];
         
@@ -757,6 +1085,55 @@ class ProductionOtagSystem {
 
     isDataLoaded() {
         return this.isLoaded;
+    }
+
+    // Sync method for immediate checking (returns empty if not loaded)
+    getTagsForCard(cardName) {
+        if (!this.isReady || !cardName) {
+            return [];
+        }
+        
+        // If data not loaded, trigger async load and return empty for now
+        if (!this.isLoaded) {
+            console.log('🔄 Triggering lazy load for OTAG data...');
+            this.loadOtagDataFromServer().catch(console.error);
+            return [];
+        }
+        
+        const cardKey = cardName.toLowerCase();
+        const cardData = this.otagDatabase.get(cardKey);
+        
+        if (cardData && cardData.otags) {
+            console.log(`[ProductionOtagSystem] Found ${cardData.otags.length} tags for "${cardName}":`, cardData.otags);
+            return cardData.otags;
+        }
+        
+        console.log(`[ProductionOtagSystem] No tags found for "${cardName}"`);
+        return [];
+    }
+
+    // Async method for when you can wait for loading
+    async getTagsForCardAsync(cardName) {
+        if (!this.isReady || !cardName) {
+            return [];
+        }
+        
+        // PERFORMANCE: Lazy load data only when actually requested
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for card tags...');
+            await this.loadOtagDataFromServer();
+        }
+        
+        const cardKey = cardName.toLowerCase();
+        const cardData = this.otagDatabase.get(cardKey);
+        
+        if (cardData && cardData.otags) {
+            console.log(`[ProductionOtagSystem] Found ${cardData.otags.length} tags for "${cardName}":`, cardData.otags);
+            return cardData.otags;
+        }
+        
+        console.log(`[ProductionOtagSystem] No tags found for "${cardName}"`);
+        return [];
     }
 }
 

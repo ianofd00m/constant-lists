@@ -10,6 +10,7 @@ class ProductionOtagSystem {
         this.otagDatabase = new Map();
         this.cardNameMap = new Map();
         this.searchCache = new Map();
+        this.memoryCache = null; // Emergency memory cache
         this.stats = {
             totalCards: 0,
             totalOtags: 0,
@@ -97,50 +98,74 @@ class ProductionOtagSystem {
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         try {
-            // Check cache first
-            const cachedData = localStorage.getItem(cacheKey);
-            const cachedTime = localStorage.getItem(cacheTimestamp);
-            
-            console.log('🔍 Cache check:', { 
-                hasCachedData: !!cachedData, 
-                hasCachedTime: !!cachedTime,
-                cachedDataLength: cachedData ? cachedData.length : 0,
-                cachedDataType: typeof cachedData,
-                cachedData: cachedData
-            });
+            // EMERGENCY: Check memory cache first
+            if (this.memoryCache && this.memoryCache.data && (Date.now() - this.memoryCache.timestamp) < CACHE_DURATION) {
+                console.log('🧠 Using memory cache from previous load...');
+                this.processOtagData(this.memoryCache.data);
+                return;
+            }
+
+            // Check all possible cache formats
+            const cacheChecks = [
+                // Standard format
+                { key: cacheKey, time: cacheTimestamp, format: 'standard' },
+                // Compact format
+                { key: cacheKey + '-compact', time: cacheTimestamp, format: 'compact' },
+                // Session storage
+                { key: cacheKey + '-session', time: cacheTimestamp + '-session', format: 'session' }
+            ];
+
+            console.log('🔍 Checking multiple cache formats...');
             
             // More robust cache check - must have both data and time, and data must not be empty
             let shouldUseCache = false;
             let parsedData = null;
+            let usedCacheFormat = null;
             
-            if (cachedData && cachedTime && cachedData.trim() !== '') {
-                try {
-                    parsedData = JSON.parse(cachedData);
-                    const age = Date.now() - parseInt(cachedTime);
-                    console.log(`🕐 Cache age: ${Math.round(age / 1000 / 60)} minutes`);
-                    
-                    // Invalidate cache if it's test data (less than 1000 cards - full dataset has 45k+)
-                    if (parsedData.length < 1000) {
-                        console.log(`🚫 Cache contains only ${parsedData.length} entries (insufficient data), fetching full dataset...`);
-                        shouldUseCache = false;
-                        // Clear the old cache
-                        localStorage.removeItem(cacheKey);
-                        localStorage.removeItem(cacheTimestamp);
-                    } else if (age < CACHE_DURATION && parsedData && parsedData.length > 0) {
-                        shouldUseCache = true;
-                        console.log('📋 Loading OTAG data from cache...');
-                        console.log(`📊 Cached data contains: ${parsedData.length} entries`);
-                    } else {
-                        console.log('🔄 Cache expired or empty, will fetch fresh data');
+            for (const cacheCheck of cacheChecks) {
+                const storage = cacheCheck.format === 'session' ? sessionStorage : localStorage;
+                const cachedData = storage.getItem(cacheCheck.key);
+                const cachedTime = storage.getItem(cacheCheck.time);
+                
+                if (cachedData && cachedTime && cachedData.trim() !== '') {
+                    try {
+                        let rawData = JSON.parse(cachedData);
+                        const age = Date.now() - parseInt(cachedTime);
+                        console.log(`🕐 ${cacheCheck.format} cache age: ${Math.round(age / 1000 / 60)} minutes`);
+                        
+                        // Convert compact format back to full format
+                        if (cacheCheck.format === 'compact' || cacheCheck.format === 'session') {
+                            rawData = rawData.map(card => ({
+                                cardName: card.n,
+                                otags: card.t || []
+                            }));
+                        }
+                        
+                        // Invalidate cache if it's test data (less than 1000 cards - full dataset has 34k+)
+                        if (rawData.length < 1000) {
+                            console.log(`🚫 ${cacheCheck.format} cache contains only ${rawData.length} entries (insufficient data)`);
+                            continue;
+                        } else if (age < CACHE_DURATION && rawData && rawData.length > 0) {
+                            shouldUseCache = true;
+                            parsedData = rawData;
+                            usedCacheFormat = cacheCheck.format;
+                            console.log(`📋 Loading OTAG data from ${cacheCheck.format} cache...`);
+                            console.log(`📊 Cached data contains: ${parsedData.length} entries`);
+                            break;
+                        } else {
+                            console.log(`🔄 ${cacheCheck.format} cache expired or empty`);
+                        }
+                    } catch (e) {
+                        console.log(`⚠️ ${cacheCheck.format} cache parse error:`, e.message);
+                        // Clear corrupted cache
+                        storage.removeItem(cacheCheck.key);
+                        storage.removeItem(cacheCheck.time);
                     }
-                } catch (e) {
-                    console.log('⚠️ Cache parse error:', e.message);
-                    // Clear corrupted cache
-                    localStorage.removeItem(cacheKey);
-                    localStorage.removeItem(cacheTimestamp);
                 }
-            } else {
-                console.log('🚫 No valid cache found, will fetch fresh data');
+            }
+            
+            if (!shouldUseCache) {
+                console.log('🚫 No valid cache found in any format, will fetch fresh data');
             }
             
             if (shouldUseCache && parsedData) {
@@ -262,15 +287,8 @@ class ProductionOtagSystem {
                         const data = this.parseCSV(csvText);
                         this.processOtagData(data);
                         
-                        // Try to cache the processed data (may fail due to size)
-                        try {
-                            localStorage.setItem(cacheKey, JSON.stringify(data));
-                            localStorage.setItem(cacheTimestamp, Date.now().toString());
-                            console.log('✅ Data cached successfully');
-                        } catch (cacheError) {
-                            console.log('⚠️ Could not cache data (probably too large):', cacheError.message);
-                            // Don't cache, but continue - data is already processed
-                        }
+                        // EMERGENCY: Intelligent caching with compression and chunking
+                        await this.emergencySmartCache(data, cacheKey, cacheTimestamp);
                         
                         // IMPORTANT: Stop here after successful load and processing
                         return;
@@ -330,6 +348,92 @@ class ProductionOtagSystem {
             console.error('❌ Error decompressing gzip file:', error);
             throw error;
         }
+    }
+
+    async emergencySmartCache(data, cacheKey, cacheTimestamp) {
+        console.log('🚨 EMERGENCY: Implementing intelligent caching system...');
+        
+        try {
+            // Method 1: Try standard caching first
+            const dataString = JSON.stringify(data);
+            localStorage.setItem(cacheKey, dataString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            console.log('✅ Standard cache successful');
+            return;
+        } catch (standardCacheError) {
+            console.log('⚠️ Standard cache failed:', standardCacheError.message);
+        }
+
+        try {
+            // Method 2: Clear all old storage and try again
+            console.log('🧹 Clearing old storage data...');
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('otag') || key.includes('production-'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // Try again after cleanup
+            const dataString = JSON.stringify(data);
+            localStorage.setItem(cacheKey, dataString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            console.log('✅ Cache successful after cleanup');
+            return;
+        } catch (cleanupCacheError) {
+            console.log('⚠️ Cache failed even after cleanup:', cleanupCacheError.message);
+        }
+
+        try {
+            // Method 3: Compress and chunk the data
+            console.log('🗜️ Attempting compressed chunked storage...');
+            
+            // Create a more compact representation
+            const compactData = data.map(card => ({
+                n: card.cardName, // name
+                t: card.otags || [] // tags only
+            }));
+            
+            const compactString = JSON.stringify(compactData);
+            console.log(`📊 Compact data size: ${(compactString.length / 1024 / 1024).toFixed(1)}MB (was ${(JSON.stringify(data).length / 1024 / 1024).toFixed(1)}MB)`);
+            
+            // Try storing compact version
+            localStorage.setItem(cacheKey + '-compact', compactString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            localStorage.setItem(cacheKey + '-format', 'compact');
+            console.log('✅ Compact cache successful');
+            return;
+        } catch (compactCacheError) {
+            console.log('⚠️ Compact cache also failed:', compactCacheError.message);
+        }
+
+        try {
+            // Method 4: Session storage fallback
+            console.log('💾 Trying sessionStorage fallback...');
+            const compactData = data.map(card => ({
+                n: card.cardName,
+                t: card.otags || []
+            }));
+            
+            sessionStorage.setItem(cacheKey + '-session', JSON.stringify(compactData));
+            sessionStorage.setItem(cacheTimestamp + '-session', Date.now().toString());
+            console.log('✅ Session storage cache successful');
+            return;
+        } catch (sessionCacheError) {
+            console.log('⚠️ Session storage also failed:', sessionCacheError.message);
+        }
+
+        // Method 5: In-memory only with persistence indicator
+        console.log('🧠 Falling back to memory-only storage (no persistence)');
+        this.memoryCache = {
+            data: data,
+            timestamp: Date.now(),
+            persistent: false
+        };
+        console.log('⚠️ WARNING: OTAG data will not persist between page loads due to storage limitations');
+        console.log('💡 Consider clearing browser data or using a different browser for better caching');
     }
 
     parseCSV(csvText) {
