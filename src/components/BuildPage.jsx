@@ -257,7 +257,24 @@ function CreateDeckModal({ open, onClose }) {
             parsed = parseSimpleDeckList(pastedList);
           }
           if (parsed && parsed.length > 0) {
-            body.cards = parsed;
+            // Convert quantity-based format to individual card entries
+            // Server expects each card repeated rather than quantity field
+            body.cards = [];
+            for (const card of parsed) {
+              for (let i = 0; i < card.quantity; i++) {
+                body.cards.push({
+                  name: card.name,
+                  set: card.set,
+                  collectorNumber: card.collectorNumber,
+                  foil: card.foil || false
+                });
+              }
+            }
+            console.log('🔄 Converted quantity format to individual cards:', {
+              originalCount: parsed.length,
+              expandedCount: body.cards.length,
+              sampleCard: body.cards[0]
+            });
           } else {
             // If all parsing failed, send raw text for server-side parsing
             body.pastedList = pastedList;
