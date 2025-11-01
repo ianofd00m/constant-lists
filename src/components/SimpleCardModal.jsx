@@ -220,6 +220,9 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
               // Fallback to text if SVG not found
               e.target.outerHTML = part;
             }}
+            // Prevent browser extensions from scanning mana symbols
+            data-no-qr-scan="true"
+            loading="lazy"
           />
         );
       }

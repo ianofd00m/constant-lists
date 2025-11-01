@@ -802,6 +802,9 @@ const parseManaCost = (manaCost) => {
           // Fallback to text if SVG not found
           e.target.outerHTML = symbol;
         }}
+        // Prevent browser extensions from scanning mana symbols
+        data-no-qr-scan="true"
+        loading="lazy"
       />
     );
   });
