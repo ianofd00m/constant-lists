@@ -983,9 +983,41 @@ class ProductionOtagSystem {
         return this.isLoaded;
     }
 
+    // Sync method for immediate checking (returns empty if not loaded)
     getTagsForCard(cardName) {
         if (!this.isReady || !cardName) {
             return [];
+        }
+        
+        // If data not loaded, trigger async load and return empty for now
+        if (!this.isLoaded) {
+            console.log('🔄 Triggering lazy load for OTAG data...');
+            this.loadOtagDataFromServer().catch(console.error);
+            return [];
+        }
+        
+        const cardKey = cardName.toLowerCase();
+        const cardData = this.otagDatabase.get(cardKey);
+        
+        if (cardData && cardData.otags) {
+            console.log(`[ProductionOtagSystem] Found ${cardData.otags.length} tags for "${cardName}":`, cardData.otags);
+            return cardData.otags;
+        }
+        
+        console.log(`[ProductionOtagSystem] No tags found for "${cardName}"`);
+        return [];
+    }
+
+    // Async method for when you can wait for loading
+    async getTagsForCardAsync(cardName) {
+        if (!this.isReady || !cardName) {
+            return [];
+        }
+        
+        // PERFORMANCE: Lazy load data only when actually requested
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for card tags...');
+            await this.loadOtagDataFromServer();
         }
         
         const cardKey = cardName.toLowerCase();
