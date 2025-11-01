@@ -65,9 +65,11 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
       return <div style={{ display: 'none' }} data-cardpreview-hidden="invalid-type" />;
     }
     
-    // Quick check for basic card data before proceeding
+    // Quick check for basic card data before proceeding - expanded to handle more card structures
     const hasBasicCardData = card?.id || card?.scryfall_id || card?.scryfall_json?.id || card?.card?.id ||
-                            card?.card_faces || card?.scryfall_json?.card_faces || card?.card?.scryfall_json?.card_faces;
+                            card?.card_faces || card?.scryfall_json?.card_faces || card?.card?.scryfall_json?.card_faces ||
+                            card?.name || card?.card?.name || card?.printing || card?.cardObj?.scryfall_id ||
+                            (card?.name && (card?.name.includes('Snow-Covered') || card?.name.includes('Basic')));
     
     if (!hasBasicCardData) {
       console.warn('[CardPreview] Card missing all basic data fields:', {
@@ -77,7 +79,9 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
         has_scryfall_json_id: !!card?.scryfall_json?.id,
         has_card_id: !!card?.card?.id,
         has_card_faces: !!card?.card_faces,
-        card_keys: card ? Object.keys(card) : 'no card'
+        card_keys: card ? Object.keys(card) : 'no card',
+        card_name: card?.name,
+        full_card_structure: JSON.stringify(card, null, 2)
       });
       // Return stable component instead of null to prevent hook count changes
       return <div style={{ display: 'none' }} data-cardpreview-hidden="no-basic-data" />;
