@@ -373,11 +373,21 @@ app.get('/api/cards/search', async (req, res) => {
 // Typesense search endpoint with commander color identity filtering
 app.get('/api/cards/typesense-search', async (req, res) => {
   const { q: query = '', colorIdentity = '', deckFormat = '', limit = 50 } = req.query;
-  console.log(`🔍 Typesense search request: "${query}" (colorId: "${colorIdentity}", format: "${deckFormat}", hasColorId: ${!!colorIdentity})`);
+  console.log(`🔍 Typesense search request: "${query}" (colorId: "${colorIdentity}", format: "${deckFormat}")`);
   
   try {
-    // Build the search query
-    let searchQuery = query.trim() || '*';
+    // Validate and sanitize the query
+    const sanitizedQuery = query.trim();
+    if (!sanitizedQuery) {
+      return res.json({
+        data: [],
+        total_cards: 0,
+        has_more: false
+      });
+    }
+    
+    // Build the search query more carefully
+    let searchQuery = sanitizedQuery;
     
     // Add commander color identity filtering if provided
     const isCommanderFormat = deckFormat && (
@@ -392,20 +402,13 @@ app.get('/api/cards/typesense-search', async (req, res) => {
       if (commanderColors.length === 0) {
         // Colorless commander - only colorless cards
         searchQuery += ' ci:c';
-        console.log(`🎯 Commander color identity filter applied: colorless (format: "${deckFormat}")`);
+        console.log(`🎯 Commander color identity filter applied: colorless`);
       } else {
         // For Commander format, restrict to cards within commander's color identity
         const colorString = commanderColors.join('');
         searchQuery += ` ci<=${colorString}`;
-        console.log(`🎯 Commander color identity filter applied: ${colorString} (format: "${deckFormat}")`);
+        console.log(`🎯 Commander color identity filter applied: ${colorString}`);
       }
-    } else {
-      console.log(`❌ Color identity filtering NOT applied:`, {
-        hasColorIdentity: !!colorIdentity,
-        colorIdentity,
-        deckFormat,
-        isCommanderFormat
-      });
     }
     
     // Add format legality if specified
@@ -433,55 +436,92 @@ app.get('/api/cards/typesense-search', async (req, res) => {
       searchQuery += ' game:paper';
     }
     
-    // Fetch all pages from Scryfall to ensure we get complete results
+    // Fetch from Scryfall with robust error handling
     const allCards = [];
     let page = 1;
     let totalCards = 0;
     let hasMore = true;
+    const maxPages = 10; // Reduced from 50 to prevent timeouts
     
-    console.log(`📡 Starting Typesense Scryfall query: ${searchQuery}`);
+    console.log(`📡 Starting Scryfall query: ${searchQuery}`);
     
-    while (hasMore && page <= 50) { // Safety limit of 50 pages
-      const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards&page=${page}`;
-      console.log(`📡 Fetching Typesense Scryfall page ${page}...`);
-      
-      const response = await fetch(scryfallUrl);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          if (page === 1) {
-            return res.json({
-              data: [],
-              total_cards: 0,
-              has_more: false
-            });
-          } else {
-            hasMore = false;
-            break;
+    while (hasMore && page <= maxPages) {
+      try {
+        const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQuery)}&format=json&order=name&dir=asc&unique=cards&page=${page}`;
+        console.log(`📡 Fetching page ${page}...`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(scryfallUrl, { 
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'ConstantLists/1.0'
           }
-        }
-        throw new Error(`Scryfall API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.data && data.data.length > 0) {
-        allCards.push(...data.data);
-        totalCards = data.total_cards || totalCards;
-        hasMore = data.has_more || false;
-        page++;
+        });
         
-        console.log(`📦 Typesense page ${page - 1}: ${data.data.length} cards (${allCards.length}/${totalCards} total)`);
+        clearTimeout(timeoutId);
         
-        // Small delay to be respectful to Scryfall's API
-        if (hasMore) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(`📭 No results found (404) on page ${page}`);
+            if (page === 1) {
+              return res.json({
+                data: [],
+                total_cards: 0,
+                has_more: false
+              });
+            } else {
+              hasMore = false;
+              break;
+            }
+          }
+          
+          if (response.status === 429) {
+            console.log(`⏳ Rate limited, waiting before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue; // Retry the same page
+          }
+          
+          throw new Error(`Scryfall API error: ${response.status} ${response.statusText}`);
         }
-      } else {
-        hasMore = false;
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+          allCards.push(...data.data);
+          totalCards = data.total_cards || totalCards;
+          hasMore = data.has_more || false;
+          page++;
+          
+          console.log(`📦 Page ${page - 1}: ${data.data.length} cards (${allCards.length}/${totalCards} total)`);
+          
+          // Small delay to be respectful to Scryfall's API
+          if (hasMore) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+          }
+        } else {
+          hasMore = false;
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error fetching page ${page}:`, error.message);
+        if (error.name === 'AbortError') {
+          console.log(`⏰ Request timed out on page ${page}`);
+        }
+        // If we have some results, return them; otherwise throw
+        if (allCards.length > 0) {
+          console.log(`⚠️ Partial results: returning ${allCards.length} cards due to error`);
+          break;
+        } else if (page === 1) {
+          throw error; // No results at all, propagate the error
+        } else {
+          break; // We have some results from previous pages
+        }
       }
     }
     
+    console.log(`✅ Search complete: ${allCards.length} cards found`);
     res.json({
       data: allCards,
       total_cards: totalCards,
@@ -490,9 +530,21 @@ app.get('/api/cards/typesense-search', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Typesense search error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to search cards';
+    if (error.message.includes('fetch')) {
+      errorMessage = 'Network error connecting to card database';
+    } else if (error.message.includes('timeout') || error.name === 'AbortError') {
+      errorMessage = 'Search request timed out';
+    } else if (error.message.includes('429')) {
+      errorMessage = 'Search rate limit exceeded, please try again';
+    }
+    
     res.status(500).json({ 
-      error: 'Failed to search cards',
-      message: error.message 
+      error: errorMessage,
+      message: error.message,
+      query: req.query.q
     });
   }
 });
