@@ -6,10 +6,16 @@ function enhanceFetchWithRetry() {
   const originalFetch = window.fetch;
   
   window.fetch = async function(url, options = {}) {
+    // CRITICAL: Check for AbortController usage - don't interfere with user cancellation
+    const hasAbortSignal = options.signal && options.signal instanceof AbortSignal;
+    if (hasAbortSignal && options.signal.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+
     // Default options for better Brave compatibility
     const enhancedOptions = {
       ...options,
-      credentials: 'same-origin', // More conservative for Brave
+      credentials: options.credentials || 'same-origin', // More conservative for Brave
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
@@ -17,13 +23,18 @@ function enhanceFetchWithRetry() {
       }
     };
 
-    // Retry logic for network errors (common on Windows tablets)
-    const maxRetries = 3;
+    // If there's an abort signal, don't retry - honor the cancellation
+    const maxRetries = hasAbortSignal ? 1 : 3;
     let lastError;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(`🌐 Fetch attempt ${attempt}/${maxRetries} to:`, url);
+        
+        // CRITICAL: Check if request was aborted before making the call
+        if (hasAbortSignal && options.signal.aborted) {
+          throw new DOMException('The operation was aborted.', 'AbortError');
+        }
         
         const response = await originalFetch(url, enhancedOptions);
         
@@ -41,16 +52,52 @@ function enhanceFetchWithRetry() {
         console.error(`❌ Fetch attempt ${attempt} failed:`, error.message);
         lastError = error;
         
+        // CRITICAL: Don't retry on abort errors - user cancelled
+        if (error.name === 'AbortError' || error.message.includes('aborted')) {
+          throw error;
+        }
+        
         // Don't retry on authentication errors
         if (error.message.includes('401') || error.message.includes('403')) {
           throw error;
+        }
+        
+        // Check abort signal before retrying
+        if (hasAbortSignal && options.signal.aborted) {
+          throw new DOMException('The operation was aborted.', 'AbortError');
         }
         
         // Wait before retry (exponential backoff)
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
           console.log(`⏳ Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Create a promise that can be aborted
+          await new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(resolve, delay);
+            
+            // If there's an abort signal, listen for it
+            if (hasAbortSignal) {
+              const abortHandler = () => {
+                clearTimeout(timeoutId);
+                reject(new DOMException('The operation was aborted.', 'AbortError'));
+              };
+              
+              if (options.signal.aborted) {
+                clearTimeout(timeoutId);
+                reject(new DOMException('The operation was aborted.', 'AbortError'));
+              } else {
+                options.signal.addEventListener('abort', abortHandler, { once: true });
+                
+                // Clean up listener when promise resolves
+                const originalResolve = resolve;
+                resolve = (value) => {
+                  options.signal.removeEventListener('abort', abortHandler);
+                  originalResolve(value);
+                };
+              }
+            }
+          });
         }
       }
     }
