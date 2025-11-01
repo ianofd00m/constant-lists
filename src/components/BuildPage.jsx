@@ -68,8 +68,8 @@ function DeckList({ onCreate }) {
 
 const DANDAN_DECKLIST = `4 Accumulated Knowledge\n2 Brainstorm\n10 Dandân\n2 Diminishing Returns\n1 Foil\n2 Halimar Depths\n22 Island\n2 Izzet Boilerworks\n2 Lonely Sandbar\n4 Magical Hack\n8 Memory Lapse\n2 Mental Note\n1 Mind Bend\n1 Miscalculation\n2 Mystic Retrieval\n2 Portent\n2 Ray of Command\n2 Remote Isle\n1 Supplant Form\n4 Telling Time\n2 Temple of Epiphany\n2 Vision Charm`;
 
-function CreateDeckModal({ open, onClose }) {
-  console.log('CreateDeckModal rendered, open:', open);
+const CreateDeckModal = React.memo(function CreateDeckModal({ open, onClose }) {
+  // PERFORMANCE: Memoized to prevent unnecessary re-renders
   const [name, setName] = useState('');
   const [format, setFormat] = useState(FORMATS[0]);
   const [importType, setImportType] = useState('');
@@ -523,9 +523,9 @@ function CreateDeckModal({ open, onClose }) {
       </div>
     </div>
   );
-}
+});
 
-function RecentDecks({ decks, onSelect }) {
+const RecentDecks = React.memo(function RecentDecks({ decks, onSelect }) {
   if (!decks || decks.length === 0) return null;
   const sorted = [...decks].sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
   const recent = sorted.slice(0, 5);
@@ -573,7 +573,6 @@ function RecentDecks({ decks, onSelect }) {
                           commander?.card?.image_uris?.art_crop;
       
       if (commanderArt) {
-        console.log('🖼️ Found commander art crop from data:', deck.name, commanderArt);
         return commanderArt;
       }
       
@@ -586,7 +585,7 @@ function RecentDecks({ decks, onSelect }) {
       
       if (commanderId) {
         const generatedArt = getArtCropUrl(commanderId);
-        console.log('🖼️ Generated commander art crop URL for:', deck.name, generatedArt);
+                  return url;
         return generatedArt;
       }
     }
@@ -798,9 +797,9 @@ function RecentDecks({ decks, onSelect }) {
       </div>
     </div>
   );
-}
+});
 
-function AllDecksTable({ decks, onSelect, refreshDecks }) {
+const AllDecksTable = React.memo(function AllDecksTable({ decks, onSelect, refreshDecks }) {
   if (!decks || decks.length === 0) return null;
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [contextMenu, setContextMenu] = useState({
@@ -1026,7 +1025,6 @@ function AllDecksTable({ decks, onSelect, refreshDecks }) {
               onContextMenu={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Context menu triggered', { x: e.clientX, y: e.clientY, deck: deck.name });
                 setContextMenu({
                   open: true,
                   x: e.clientX,
@@ -1163,10 +1161,10 @@ function AllDecksTable({ decks, onSelect, refreshDecks }) {
       )}
     </div>
   );
-}
+});
 
 export default function BuildPage() {
-  console.log('BuildPage rendered');
+  // PERFORMANCE: Reduced console logging
   const [modalOpen, setModalOpen] = useState(false);
   const [decks, setDecks] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -1176,11 +1174,7 @@ export default function BuildPage() {
 
   // Function to refresh decks data
   const refreshDecks = useCallback(() => {
-    console.log('🚀 refreshDecks called, incrementing refreshKey');
-    setRefreshKey(prev => {
-      console.log('🔢 refreshKey changed from', prev, 'to', prev + 1);
-      return prev + 1;
-    });
+    setRefreshKey(prev => prev + 1);
   }, []);
 
   // Check for recent deck updates on component mount
@@ -1191,7 +1185,6 @@ export default function BuildPage() {
       const timeSinceUpdate = Date.now() - updateTime;
       // If update was within the last 2 minutes, refresh immediately
       if (timeSinceUpdate < 2 * 60 * 1000) {
-        console.log('Detected recent deck update on mount, refreshing...');
         refreshDecks();
       }
     }
@@ -1207,7 +1200,6 @@ export default function BuildPage() {
         const timeSinceUpdate = Date.now() - updateTime;
         // If update was within the last 5 minutes, refresh
         if (timeSinceUpdate < 5 * 60 * 1000) {
-          console.log('Detected recent deck update, refreshing...');
           refreshDecks();
         }
       }
@@ -1266,23 +1258,20 @@ export default function BuildPage() {
         credentials: 'include',
       })
         .then(async r => {
-          console.log('🌐 Fetch response received:', r.status, r.statusText);
           if (r.status === 429) {
-            console.log('🚫 Rate limited, setting empty decks');
             setDecks([]);
             return;
           }
           try {
             const json = await r.json();
-            console.log('✅ JSON parsed successfully:', json);
             return json;
           } catch (error) {
-            console.error('❌ JSON parse error:', error);
+            console.error('JSON parse error:', error);
             return [];
           }
         })
         .catch(error => {
-          console.error('🚨 Fetch failed:', error);
+          console.error('Fetch failed:', error);
           setDecks([]);
           setIsLoading(false);
           return [];

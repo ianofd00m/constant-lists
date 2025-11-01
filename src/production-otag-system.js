@@ -25,8 +25,9 @@ class ProductionOtagSystem {
             // Clear any old cache keys from previous versions
             this.clearOldCaches();
             
-            // Auto-load OTAG data from your server
-            await this.loadOtagDataFromServer();
+            // PERFORMANCE: Only load OTAG data when actually needed (lazy loading)
+            this.isReady = true; // Mark as ready without loading data
+            console.log('✅ Production OTAG System ready (lazy loading enabled)');
             
             // Start monitoring for modals
             this.startModalMonitoring();
@@ -493,10 +494,10 @@ class ProductionOtagSystem {
             attributeFilter: ['class', 'style']
         });
         
-        // Also check existing modals
-        setTimeout(() => this.scanExistingModals(), 1000);
+        // PERFORMANCE: Reduced initial scan frequency
+        setTimeout(() => this.scanExistingModals(), 3000);
         
-        console.log('👀 Modal monitoring active');
+        console.log('👀 Modal monitoring active (optimized)');
     }
 
     scanExistingModals() {
@@ -814,10 +815,10 @@ class ProductionOtagSystem {
             .replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    handleOtagSearch(otag) {
+    async handleOtagSearch(otag) {
         console.log(`🔍 Searching for OTAG: ${otag}`);
         
-        const results = this.searchCardsByOtag(otag);
+        const results = await this.searchCardsByOtag(otag);
         console.log(`Found ${results.length} cards with OTAG: ${otag}`);
         
         if (results.length === 0) {
@@ -854,7 +855,13 @@ class ProductionOtagSystem {
         }
     }
 
-    searchCardsByOtag(searchOtag) {
+    async searchCardsByOtag(searchOtag) {
+        // PERFORMANCE: Lazy load data only when search is actually used
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for OTAG search...');
+            await this.loadOtagDataFromServer();
+        }
+        
         const lowerOtag = searchOtag.toLowerCase();
         const results = [];
         
@@ -948,7 +955,13 @@ class ProductionOtagSystem {
         return { ...this.stats };
     }
 
-    searchCards(query) {
+    async searchCards(query) {
+        // PERFORMANCE: Lazy load data only when search is actually used
+        if (!this.isLoaded) {
+            console.log('🔄 Lazy loading OTAG data for search...');
+            await this.loadOtagDataFromServer();
+        }
+        
         const lowerQuery = query.toLowerCase();
         const results = [];
         
