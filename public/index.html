@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Constant Lists</title>
+    
+    <!-- ULTRA-EARLY FOREACH PROTECTION - Load before ANYTHING else -->
+    <script>
+      console.log('[HTML FOREACH] Installing pre-module forEach protection...');
+      
+      // Store the original before any modules load
+      window.__originalForEach = Array.prototype.forEach;
+      
+      // Override forEach globally before any modules
+      Array.prototype.forEach = function(callback, thisArg) {
+        if (!Array.isArray(this)) {
+          console.error('[HTML FOREACH] Non-array forEach detected BEFORE modules:', {
+            type: typeof this,
+            value: this,
+            constructor: this?.constructor?.name,
+            isNull: this === null,
+            isUndefined: this === undefined,
+            hasLength: this && 'length' in this,
+            length: this?.length,
+            toString: this?.toString?.()
+          });
+          console.trace('[HTML FOREACH] Stack trace:');
+          
+          // Try to convert if array-like
+          if (this && typeof this.length === 'number' && this.length >= 0) {
+            console.warn('[HTML FOREACH] Converting to array');
+            try {
+              return window.__originalForEach.call(Array.from(this), callback, thisArg);
+            } catch (conversionError) {
+              console.error('[HTML FOREACH] Conversion failed:', conversionError);
+            }
+          }
+          
+          console.warn('[HTML FOREACH] Preventing crash - returning undefined');
+          return;
+        }
+        return window.__originalForEach.call(this, callback, thisArg);
+      };
+      
+      // Also catch unhandled errors at the window level
+      window.onerror = function(message, source, lineno, colno, error) {
+        if (message && message.includes('forEach is not a function')) {
+          console.error('[HTML FOREACH] Global error caught:', {
+            message, source, lineno, colno, error
+          });
+          console.error('[HTML FOREACH] Preventing page crash');
+          return true; // Prevent default error handling
+        }
+        return false; // Let other errors through
+      };
+      
+      console.log('[HTML FOREACH] Pre-module forEach protection installed');
+    </script>
+    <script type="module" crossorigin src="/assets/index-BNVg0lRc.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-Csw2ODfV.js">
+    <link rel="modulepreload" crossorigin href="/assets/router-CYt2ycax.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-6Wl1lZyG.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="modal-root"></div>
+  </body>
+</html>

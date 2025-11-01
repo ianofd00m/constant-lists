@@ -69,9 +69,10 @@ const SimpleCardModal = ({ card, isOpen, onClose, userDecks, onOracleTagSearch }
     try {
       console.log(`[SimpleCardModal] Loading printings for: "${cardName}"`);
       
-      // Direct Scryfall call
-      const scryfallUrl = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(`!"${cardName}"`)}&unique=prints&order=released&dir=desc`;
-      const response = await fetch(scryfallUrl);
+      // Use API proxy instead of direct Scryfall call
+      const encodedName = encodeURIComponent(cardName);
+      const proxyUrl = `https://constant-lists-api.onrender.com/api/cards/printings?name=${encodedName}`;
+      const response = await fetch(proxyUrl);
       
       let allPrintings = [];
       

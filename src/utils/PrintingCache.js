@@ -359,9 +359,9 @@ class PrintingCache {
   // Fetch and cache a single card's printings
   static async fetchAndCacheCard(cardName) {
     try {
-      // Use the same API pattern as CardActionsModal
+      // Use the same API pattern as CardActionsModal via proxy
       const encodedName = encodeURIComponent(cardName);
-      const uri = `https://api.scryfall.com/cards/search?q=!"${encodedName}"+game:paper&unique=prints&order=released`;
+      const uri = `https://constant-lists-api.onrender.com/api/cards/printings?name=${encodedName}`;
       
       const response = await fetch(uri);
       if (!response.ok) {

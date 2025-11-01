@@ -392,10 +392,10 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
         // This ensures users can see all basic land printings, not just the preferred one
       }
       
-      // Standard API fetch for other cards
+      // Standard API fetch for other cards via proxy
       const encodedName = encodeURIComponent(cardName);
-      const uri = `https://api.scryfall.com/cards/search?q=!"${encodedName}"+game:paper&unique=prints&order=released`;
-      // console.log(`[CardActionsModal] Fetching printings for ${cardName} from API`);
+      const uri = `https://constant-lists-api.onrender.com/api/cards/printings?name=${encodedName}`;
+      // console.log(`[CardActionsModal] Fetching printings for ${cardName} from API proxy`);
       
       const response = await fetch(uri);
       
@@ -552,9 +552,9 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
     try {
       console.log(`[CardActionsModal] 🔄 Background fetch starting for ${cardName}`);
       
-      // Use same API pattern but don't show loading to user
+      // Use same API pattern but don't show loading to user via proxy
       const encodedName = encodeURIComponent(cardName);
-      const uri = `https://api.scryfall.com/cards/search?q=!"${encodedName}"+game:paper&unique=prints&order=released`;
+      const uri = `https://constant-lists-api.onrender.com/api/cards/printings?name=${encodedName}`;
       
       const response = await fetch(uri);
       if (!response.ok) {
