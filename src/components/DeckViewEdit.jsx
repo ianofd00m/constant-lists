@@ -794,10 +794,14 @@ const parseManaCost = (manaCost) => {
     return (
       <img
         key={index}
-        src={`https://svgs.scryfall.io/card-symbols/${code}.svg`}
+        src={`/svgs/${code}.svg`}
         alt={symbol}
         className="mana-symbol"
         style={{ height: "1em", verticalAlign: "middle", marginRight: "1px" }}
+        onError={(e) => {
+          // Fallback to text if SVG not found
+          e.target.outerHTML = symbol;
+        }}
       />
     );
   });
@@ -1639,7 +1643,7 @@ let globalRenderCounter = 0;
 export default function DeckViewEdit({ isPublic = false }) {
   // EMERGENCY: Circuit breaker MUST be first - before any hooks
   globalRenderCounter++;
-  if (globalRenderCounter % 50 === 0) {
+  if (globalRenderCounter % 100 === 0) {
     console.warn(`[PERFORMANCE] DeckViewEdit has re-rendered ${globalRenderCounter} times! Possible render loop.`);
   }
   

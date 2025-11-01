@@ -550,7 +550,7 @@ app.get('/api/cards/typesense-search', async (req, res) => {
 });
 
 // Image proxy endpoint
-app.get('/api/cards/image-proxy', (req, res) => {
+app.get('/api/cards/image-proxy', async (req, res) => {
   const imageUrl = req.query.url;
   console.log(`🖼️ Image proxy request for: ${imageUrl}`);
   
@@ -558,9 +558,26 @@ app.get('/api/cards/image-proxy', (req, res) => {
     return res.status(400).json({ error: 'No image URL provided' });
   }
   
-  // For now, just redirect to the original image
-  // In production, you'd want to actually proxy the image
-  res.redirect(imageUrl);
+  try {
+    // Fetch the image and proxy it through our server
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status}`);
+    }
+    
+    // Set appropriate headers
+    const contentType = response.headers.get('content-type') || 'image/svg+xml';
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET');
+    
+    // Stream the image data
+    response.body.pipe(res);
+  } catch (error) {
+    console.error('Image proxy error:', error);
+    res.status(500).json({ error: 'Failed to proxy image' });
+  }
 });
 
 // Printings endpoint - fetches all printings of a card by name
