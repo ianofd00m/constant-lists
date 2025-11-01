@@ -284,15 +284,29 @@ function CreateDeckModal({ open, onClose }) {
         console.log('📡 Response status:', res.status, res.statusText);
       }
       data = await res.json();
+      console.log('📋 Response data:', data);
+      console.log('🆔 Response has ID:', !!data._id, 'ID value:', data._id);
       if (!res.ok) throw new Error(data.error || 'Import failed');
+      console.log('🎯 Setting deck preview:', data.deck);
       setDeckPreview(data.deck);
       if (data.deck && data.deck._id) {
+        console.log('✅ Deck created successfully, navigating to:', `/decks/${data.deck._id}`);
         // Clear loading state before navigation
         setLoading(false);
         // Close the modal
         onClose();
         navigate(`/decks/${data.deck._id}`);
         return;
+      } else if (data._id) {
+        console.log('✅ Deck created (direct ID), navigating to:', `/decks/${data._id}`);
+        // Clear loading state before navigation
+        setLoading(false);
+        // Close the modal
+        onClose();
+        navigate(`/decks/${data._id}`);
+        return;
+      } else {
+        console.log('❌ No deck ID found in response');
       }
     } catch (e) {
       if (
