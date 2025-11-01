@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ColorIdentity = React.memo(({ colorIdentity, size = 16 }) => {
+const ColorIdentity = React.memo(({ colorIdentity, size = 12 }) => {
   if (!colorIdentity || !Array.isArray(colorIdentity) || colorIdentity.length === 0) {
     // Return colorless mana symbol if no color identity
     return (

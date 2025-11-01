@@ -1701,8 +1701,8 @@ html body div.card-actions-modal div.modal-content div.modal-body div.printings-
 
 /* Mana symbol styling */
 .card-actions-modal .mana-symbol {
-    width: 10px !important;
-    height: 10px !important;
+    width: 12px !important;
+    height: 12px !important;
     display: inline-block !important;
     vertical-align: middle !important;
     margin: 0 0.5px !important;

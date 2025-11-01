@@ -115,7 +115,7 @@ export default function Navbar() {
           <img
             src="/svgs/heart-outline.svg" 
             alt="Wishlist" 
-            style={{ width: '20px', height: '20px', opacity: 0.8 }}
+            style={{ width: '12px', height: '12px', opacity: 0.8 }}
           />
           {wishlistItemCount > 0 && (
             <span style={{
@@ -154,7 +154,7 @@ export default function Navbar() {
           <img
             src="/svgs/shopping-cart-outline.svg" 
             alt="Shopping Cart" 
-            style={{ width: '20px', height: '20px', opacity: 0.8 }}
+            style={{ width: '12px', height: '12px', opacity: 0.8 }}
           />
           {cartItemCount > 0 && (
             <span style={{

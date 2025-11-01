@@ -208,7 +208,7 @@ function ManaCostSVG({ manaCost }) {
             key={i}
             src={`/svgs/${code.toLowerCase()}.svg`}
             alt={sym}
-            style={{ width: 15, height: 15, verticalAlign: 'middle', marginRight: 1 }}
+            style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 1 }}
             onError={(e) => {
               e.target.outerHTML = sym;
             }}
@@ -490,7 +490,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                                 key={`front-${i}`}
                                 src={`/svgs/${code.toLowerCase()}.svg`}
                                 alt={code}
-                                style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
+                                style={{ width: 12, height: 12, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 12, overflow: 'hidden' }}
                               />
                             );
                           })}
@@ -508,7 +508,7 @@ function ResultsList({ results, error, view, sort, sortDir, setSort, setSortDir,
                                 key={`back-${i}`}
                                 src={`/svgs/${code.toLowerCase()}.svg`}
                                 alt={code}
-                                style={{ width: 15, height: 15, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 15, overflow: 'hidden' }}
+                                style={{ width: 12, height: 12, verticalAlign: 'middle', margin: 0, padding: 0, display: 'block', maxHeight: 12, overflow: 'hidden' }}
                               />
                             );
                           })}

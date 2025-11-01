@@ -859,7 +859,7 @@ const COLUMN_RENDERERS = {
             src="/svgs/c.svg"
             alt="Colorless"
             title="Colorless"
-            style={{ width: '14px', height: '14px' }}
+            style={{ width: '12px', height: '12px' }}
             onError={(e) => {
               // Fallback to text if SVG doesn't load
               e.target.style.display = 'none';
@@ -885,7 +885,7 @@ const COLUMN_RENDERERS = {
             src="/svgs/c.svg"
             alt="Colorless"
             title="Colorless"
-            style={{ width: '14px', height: '14px' }}
+            style={{ width: '12px', height: '12px' }}
           />
         </div>
       );
@@ -899,7 +899,7 @@ const COLUMN_RENDERERS = {
             src={`/svgs/${colorMap[color]?.symbol || color.toLowerCase()}.svg`}
             alt={colorMap[color]?.name || color}
             title={colorMap[color]?.name || color}
-            style={{ width: '14px', height: '14px' }}
+            style={{ width: '12px', height: '12px' }}
           />
         ))}
       </div>
