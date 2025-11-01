@@ -6936,10 +6936,8 @@ export default function DeckViewEdit({ isPublic = false }) {
             // CRITICAL FIX: Flexible printing matching to handle modal/deck mismatches
             // Priority 1: Exact printing match
             const exactPrintingMatch = cardPrinting && cPrinting && cardPrinting === cPrinting;
-            // Priority 2: Basic land flexibility (any printing)
-            const isBasicLand = cardName && ['Island', 'Plains', 'Swamp', 'Mountain', 'Forest', 'Wastes', 
-                                              'Snow-Covered Island', 'Snow-Covered Plains', 'Snow-Covered Swamp', 
-                                              'Snow-Covered Mountain', 'Snow-Covered Forest', 'Snow-Covered Wastes'].includes(cardName);
+            // Priority 2: Basic land flexibility (any printing) - use BASIC_LAND_PRINTINGS as source of truth
+            const isBasicLand = cardName && BASIC_LAND_PRINTINGS[cardName];
             // Priority 3: Fall back to name+foil match if no printing info available
             const noPrintingInfo = !cardPrinting || !cPrinting;
             
