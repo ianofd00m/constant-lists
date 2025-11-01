@@ -4,6 +4,39 @@ import RequireAuth from './RequireAuth';
 import CommanderSuggest from './CommanderSuggest';
 import { parseMoxfieldList } from '../utils/parseMoxfieldList';
 
+// Parse simple deck list format like "4 Lightning Bolt" or "2 Frostwalk Bastion [MH1] 240"
+function parseSimpleDeckList(listText) {
+  const lines = listText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const result = [];
+  
+  for (const line of lines) {
+    // Skip headers and dividers
+    if (line.includes('MAIN DECK:') || line.includes('TECH IDEAS:') || line.includes('SIDEBOARD:') || 
+        line.includes('===') || line.includes('Generated on') || line.includes('Format:') || 
+        line.includes('Total:') || line === '') {
+      continue;
+    }
+    
+    // Match patterns like:
+    // "4 Lightning Bolt"
+    // "2 Frostwalk Bastion [MH1] 240"
+    // "1 Jorn, God of Winter // Kaldring, the Rimestaff"
+    const match = line.match(/^(\d+)\s+(.+?)(?:\s+\[([^\]]+)\]\s+(\S+))?$/);
+    if (match) {
+      const [, count, name, set, collectorNumber] = match;
+      result.push({
+        count: parseInt(count, 10),
+        name: name.trim(),
+        set: set?.trim(),
+        collectorNumber: collectorNumber?.trim(),
+        foil: false // Default to non-foil
+      });
+    }
+  }
+  
+  return result;
+}
+
 const FORMATS = [
   'Alchemy', 'Alpha 40', 'Archon', 'Australian Highlander', 'Brawl', 'Canadian Highlander', 'Centurion',
   'Commander / EDH', 'Conquest', 'Dandan', 'Duel Commander', 'European Highlander', 'Gladiator',
@@ -204,20 +237,27 @@ function CreateDeckModal({ open, onClose }) {
         formData.append('format', format);
         if (commander && COMMANDER_FORMATS.includes(format)) formData.append('commander', commander);
         const apiUrl = import.meta.env.VITE_API_URL;
-        res = await fetch(`${apiUrl}/api/deck-import-export/universal-import`, {
+        // Use standard deck creation endpoint for file imports too
+        res = await fetch(`${apiUrl}/api/decks`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
           headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
       } else {
+        // Use standard deck creation endpoint with parsed cards
         let body = { name, format };
         if (importType === 'Paste List') {
-          // Try to parse as Moxfield/MTG text decklist
-          const parsed = parseMoxfieldList(pastedList);
+          // Try to parse as Moxfield/MTG text decklist first
+          let parsed = parseMoxfieldList(pastedList);
+          if (!parsed || parsed.length === 0) {
+            // If Moxfield parsing failed, try simple format parsing
+            parsed = parseSimpleDeckList(pastedList);
+          }
           if (parsed && parsed.length > 0) {
             body.cards = parsed;
           } else {
+            // If all parsing failed, send raw text for server-side parsing
             body.pastedList = pastedList;
           }
         }
@@ -227,7 +267,8 @@ function CreateDeckModal({ open, onClose }) {
           body.commander = typeof commander === 'string' ? commander : commander.name;
         }
         const apiUrl = import.meta.env.VITE_API_URL;
-        res = await fetch(`${apiUrl}/api/deck-import-export/universal-import`, {
+        // Use standard deck creation endpoint instead of import endpoint
+        res = await fetch(`${apiUrl}/api/decks`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
