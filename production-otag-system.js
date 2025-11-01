@@ -109,6 +109,8 @@ class ProductionOtagSystem {
             const cacheChecks = [
                 // Standard format
                 { key: cacheKey, time: cacheTimestamp, format: 'standard' },
+                // Ultra-compressed format (highest priority - most space efficient)
+                { key: cacheKey + '-ultra', time: cacheTimestamp, format: 'ultra' },
                 // Compact format
                 { key: cacheKey + '-compact', time: cacheTimestamp, format: 'compact' },
                 // Session storage
@@ -133,8 +135,16 @@ class ProductionOtagSystem {
                         const age = Date.now() - parseInt(cachedTime);
                         console.log(`🕐 ${cacheCheck.format} cache age: ${Math.round(age / 1000 / 60)} minutes`);
                         
-                        // Convert compact format back to full format
-                        if (cacheCheck.format === 'compact' || cacheCheck.format === 'session') {
+                        // Convert compressed formats back to full format
+                        if (cacheCheck.format === 'ultra') {
+                            // Decompress ultra-compact format using tag dictionary
+                            const tagDict = rawData.d;
+                            rawData = rawData.c.map(card => ({
+                                cardName: card.n,
+                                otags: card.t ? card.t.map(index => tagDict[index]) : []
+                            }));
+                            console.log(`🗜️ Decompressed ultra-compact format with ${tagDict.length} unique tags`);
+                        } else if (cacheCheck.format === 'compact' || cacheCheck.format === 'session') {
                             rawData = rawData.map(card => ({
                                 cardName: card.n,
                                 otags: card.t || []
@@ -408,8 +418,47 @@ class ProductionOtagSystem {
         }
 
         try {
-            // Method 3: Compress and chunk the data
-            console.log('🗜️ Attempting compressed chunked storage...');
+            // Method 3: Ultra-compressed dictionary-based storage
+            console.log('🗜️ Attempting ultra-compressed dictionary storage...');
+            
+            // Build tag dictionary to save space (most tags are repeated across many cards)
+            const tagSet = new Set();
+            data.forEach(card => {
+                if (card.otags) {
+                    card.otags.forEach(tag => tagSet.add(tag));
+                }
+            });
+            
+            const tagDict = Array.from(tagSet);
+            const tagToIndex = new Map();
+            tagDict.forEach((tag, index) => tagToIndex.set(tag, index));
+            
+            // Create ultra-compact representation using tag indices
+            const ultraCompactData = {
+                d: tagDict, // tag dictionary
+                c: data.map(card => ({
+                    n: card.cardName, // name
+                    t: card.otags ? card.otags.map(tag => tagToIndex.get(tag)) : [] // tag indices
+                }))
+            };
+            
+            const ultraCompactString = JSON.stringify(ultraCompactData);
+            const originalSize = JSON.stringify(data).length;
+            console.log(`� Ultra-compact data size: ${(ultraCompactString.length / 1024 / 1024).toFixed(1)}MB (was ${(originalSize / 1024 / 1024).toFixed(1)}MB, ${Math.round((1 - ultraCompactString.length / originalSize) * 100)}% reduction)`);
+            
+            // Try storing ultra-compact version
+            localStorage.setItem(cacheKey + '-ultra', ultraCompactString);
+            localStorage.setItem(cacheTimestamp, Date.now().toString());
+            localStorage.setItem(cacheKey + '-format', 'ultra');
+            console.log('✅ Ultra-compact cache successful');
+            return;
+        } catch (ultraCompactError) {
+            console.log('⚠️ Ultra-compact cache failed:', ultraCompactError.message);
+        }
+
+        try {
+            // Method 4: Regular compact fallback
+            console.log('🗜️ Attempting regular compact storage...');
             
             // Create a more compact representation
             const compactData = data.map(card => ({
@@ -1221,6 +1270,24 @@ class ProductionOtagSystem {
         
         console.log(`[ProductionOtagSystem] No tags found for "${cardName}"`);
         return [];
+    }
+
+    // PERFORMANCE: Preload Oracle Tags data in background after deck loads
+    // This eliminates the 10-30 second wait when users first click an Oracle Tag
+    async preloadOtagData() {
+        if (this.isLoaded) {
+            console.log('🏷️ [PRELOAD] Oracle Tags already loaded');
+            return;
+        }
+
+        try {
+            console.log('🏷️ [PRELOAD] Starting Oracle Tags background preload...');
+            await this.loadOtagDataFromServer();
+            console.log('🏷️ [PRELOAD] Background preload completed successfully');
+        } catch (error) {
+            console.log('🏷️ [PRELOAD] Background preload failed (not critical):', error.message);
+            throw error;
+        }
     }
 }
 

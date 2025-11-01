@@ -506,7 +506,12 @@ const OracleTagsIntegration = ({ card, onOracleTagSearch }) => {
         </div>
         <div className="loading-spinner"></div>
         <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', marginTop: '8px' }}>
-          Loading 34,425 cards and 4,288 categories...
+          {window.productionOtagSystem?.isLoaded ? 
+            "Loading Oracle Tags for this card..." :
+            window.productionOtagSystem?.memoryCache ? 
+              "Loading from memory cache..." :
+              "Loading 34,425 cards and 4,288 categories..."
+          }
         </div>
       </div>
     );

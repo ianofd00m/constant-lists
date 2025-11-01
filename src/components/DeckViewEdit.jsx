@@ -4743,6 +4743,21 @@ export default function DeckViewEdit({ isPublic = false }) {
           setFastLoading(false); // Deck content is ready immediately
           setLoading(false);
 
+          // 🏷️ PERFORMANCE: Start preloading Oracle Tags data immediately after deck loads
+          // This eliminates the 10-30 second wait when users first click an Oracle Tag
+          setTimeout(() => {
+            if (window.productionOtagSystem && !window.productionOtagSystem.isLoaded) {
+              console.log('🏷️ [DECK LOADED] Starting Oracle Tags preload in background...');
+              window.productionOtagSystem.preloadOtagData()
+                .then(() => {
+                  console.log('🏷️ [DECK LOADED] Oracle Tags preload completed successfully');
+                })
+                .catch(err => {
+                  console.log('🏷️ [DECK LOADED] Oracle Tags preload failed (not critical):', err.message);
+                });
+            }
+          }, 1000); // Small delay to let deck rendering settle
+
           preloadCardImages(finalCardsWithCommander, preloadedImages.current);
 
           // AUTO-SHOW COMMANDER: Set commander as fixed preview with high-res English image
@@ -6096,8 +6111,9 @@ export default function DeckViewEdit({ isPublic = false }) {
       // Format the search query for oracle tags
       const searchQuery = `oracletag:${oracleTag}`;
       
-      // Clear the modal search input so users can search freely
-      setModalSearch("");
+      // Populate the modal search input with the Oracle Tag search query
+      const displayQuery = `oracletag:${oracleTag}`;
+      setModalSearch(displayQuery);
       setModalSearchTerm(searchQuery); // Keep the original search term for reference
       
       // Set the search term so the modal title shows correctly
