@@ -78,7 +78,7 @@ const CardActionsModal = ({ isOpen, onClose, card, onUpdateCard, onRemoveCard, o
   const [priceUpdateTrigger, setPriceUpdateTrigger] = useState(0); // Force price display updates
   const [tempQuantity, setTempQuantity] = useState(''); // For improved quantity UX
   const [isEditingQuantity, setIsEditingQuantity] = useState(false); // Track if user is editing
-  const PLACEHOLDER_IMG = 'https://via.placeholder.com/120x170?text=No+Image';
+  const PLACEHOLDER_IMG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjE3MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   
   // INSTANT LOADING: Replace component-level cache with global cache usage
   // Remove local cache state and directly use global PrintingCache
