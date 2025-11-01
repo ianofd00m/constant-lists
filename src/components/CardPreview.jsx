@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './CardPreview.css';
 import PrintingPreferences from '../utils/PrintingPreferences';
 
+// Global render counter for CardPreview to prevent infinite loops
+let cardPreviewRenderCounter = 0;
+let cardPreviewLastReset = Date.now();
+
 // Helper function to get fastest image URL (prioritize direct CDN for performance)
 function getFastImageUrl(cardId, imageUris = null) {
   if (!cardId) return null;
@@ -17,28 +21,48 @@ function getFastImageUrl(cardId, imageUris = null) {
 }
 
 export default function CardPreview({ preview, isFixed, showPreview, externalFlipState }) {
+  // EMERGENCY: Circuit breaker for CardPreview - must be first before any hooks
+  cardPreviewRenderCounter++;
+  
+  // Reset counter every 60 seconds to prevent permanent lockout
+  const now = Date.now();
+  if (now - cardPreviewLastReset > 60000) {
+    cardPreviewRenderCounter = 0;
+    cardPreviewLastReset = now;
+  }
+  
+  if (cardPreviewRenderCounter % 100 === 0) {
+    console.warn(`[PERFORMANCE] CardPreview has re-rendered ${cardPreviewRenderCounter} times! Possible render loop.`);
+  }
+  
+  // EMERGENCY: Circuit breaker to prevent infinite render loops from crashing the app
+  if (cardPreviewRenderCounter > 200) {
+    console.error(`[EMERGENCY] CardPreview has re-rendered ${cardPreviewRenderCounter} times! Activating circuit breaker.`);
+    return (
+      <div style={{ padding: '10px', border: '1px solid orange', margin: '5px', fontSize: '12px' }}>
+        <strong>⚠️ CardPreview Render Loop</strong>
+        <p>CardPreview encountered a render loop and was stopped. Counter will reset in {Math.ceil((60000 - (now - cardPreviewLastReset)) / 1000)}s.</p>
+      </div>
+    );
+  }
+
   // Comprehensive error handling wrapper to prevent crashes
   try {
-    const [showBackFace, setShowBackFace] = useState(false);
-    const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(true);
-    const [hasEverLoaded, setHasEverLoaded] = useState(false);
-    
-    // Use external flip state if provided, otherwise use internal state
-    const currentFlipState = externalFlipState !== undefined ? externalFlipState : showBackFace;
-    
-    // Debug logging for flip state
+    // CRITICAL: Validate preview and card data BEFORE any hooks to prevent React #300 errors
     const card = preview?.card || preview;
     const cardName = card?.name || card?.scryfall_json?.name || card?.card?.name || card?.card?.scryfall_json?.name || "Unknown Card";
     
+    // Early exit conditions that must happen before useState hooks
     if (!showPreview || !preview || !card) {
-      return null;
+      // Return stable component instead of null to prevent hook count changes
+      return <div style={{ display: 'none' }} data-cardpreview-hidden="no-data" />;
     }
     
     // Enhanced safety check for dual-faced cards and malformed card objects
     if (typeof card !== 'object') {
       console.warn('[CardPreview] Invalid card object type:', typeof card, card);
-      return null;
+      // Return stable component instead of null to prevent hook count changes
+      return <div style={{ display: 'none' }} data-cardpreview-hidden="invalid-type" />;
     }
     
     // Quick check for basic card data before proceeding
@@ -46,9 +70,27 @@ export default function CardPreview({ preview, isFixed, showPreview, externalFli
                             card?.card_faces || card?.scryfall_json?.card_faces || card?.card?.scryfall_json?.card_faces;
     
     if (!hasBasicCardData) {
-      console.warn('[CardPreview] Card missing all basic data fields:', card);
-      return null;
+      console.warn('[CardPreview] Card missing all basic data fields:', {
+        card_type: typeof card,
+        has_id: !!card?.id,
+        has_scryfall_id: !!card?.scryfall_id,
+        has_scryfall_json_id: !!card?.scryfall_json?.id,
+        has_card_id: !!card?.card?.id,
+        has_card_faces: !!card?.card_faces,
+        card_keys: card ? Object.keys(card) : 'no card'
+      });
+      // Return stable component instead of null to prevent hook count changes
+      return <div style={{ display: 'none' }} data-cardpreview-hidden="no-basic-data" />;
     }
+
+    // NOW it's safe to use React hooks since we've validated all the data
+    const [showBackFace, setShowBackFace] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+    const [hasEverLoaded, setHasEverLoaded] = useState(false);
+    
+    // Use external flip state if provided, otherwise use internal state
+    const currentFlipState = externalFlipState !== undefined ? externalFlipState : showBackFace;
 
   // Reset error state when card changes, but be smarter about loading state
   useEffect(() => {
