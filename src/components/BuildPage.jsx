@@ -124,18 +124,20 @@ function CreateDeckModal({ open, onClose }) {
   }, [format]);
 
   const handleCreate = async () => {
+    console.log('🚀 handleCreate called!', { name, format, importType, pastedList: pastedList?.substring(0, 100) });
     setError('');
     setDeckPreview(null);
     if (!name.trim()) {
       setError('Deck name is required');
+      console.log('❌ Error: Deck name is required');
       return;
     }
-    setLoading(true);
-    try {
-      let res, data;
-      const token = localStorage.getItem('token');
-      
-      // If no import type is selected, create a blank deck using the regular deck API
+        console.log('✅ Starting deck creation process...');
+        setLoading(true);
+        try {
+          let res, data;
+          const token = localStorage.getItem('token');
+          console.log('🔑 Token available:', !!token);      // If no import type is selected, create a blank deck using the regular deck API
       if (!importType) {
         let body = { name, format, cards: [] };
         
@@ -268,6 +270,8 @@ function CreateDeckModal({ open, onClose }) {
         }
         const apiUrl = import.meta.env.VITE_API_URL;
         // Use standard deck creation endpoint instead of import endpoint
+        console.log('🌐 Making request to:', `${apiUrl}/api/decks`);
+        console.log('📦 Request body:', JSON.stringify(body, null, 2));
         res = await fetch(`${apiUrl}/api/decks`, {
           method: 'POST',
           headers: {
@@ -277,6 +281,7 @@ function CreateDeckModal({ open, onClose }) {
           body: JSON.stringify(body),
           credentials: 'include',
         });
+        console.log('📡 Response status:', res.status, res.statusText);
       }
       data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Import failed');
