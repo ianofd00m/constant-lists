@@ -585,7 +585,6 @@ const RecentDecks = React.memo(function RecentDecks({ decks, onSelect }) {
       
       if (commanderId) {
         const generatedArt = getArtCropUrl(commanderId);
-                  return url;
         return generatedArt;
       }
     }
