@@ -380,19 +380,19 @@ function groupCardsByType(cards, commanderNames = []) {
 
     if (cardObj && typeof cardObj === "object") {
       if (cardObj.card && typeof cardObj.card === "object") {
-        name = cardObj.card.name || cardObj.name; // CRITICAL FIX: Fallback to cardObj.name if cardObj.card.name is undefined
+        name = cardObj.card?.name || cardObj.name; // CRITICAL FIX: Fallback to cardObj.name if cardObj.card.name is undefined
         // If this card is a commander, force type to 'Commander'
-        if ((cardObj.isCommander || cardObj.card.isCommander) || (name && commanderNames.includes(name.toLowerCase()))) {
+        if ((cardObj.isCommander || cardObj.card?.isCommander) || (name && commanderNames.includes(name.toLowerCase()))) {
           type = "Commander";
         } else {
           try {
             // Try multiple possible locations for type_line
-            const typeLine = cardObj.card.type_line || 
+            const typeLine = cardObj.card?.type_line || 
                             cardObj.type_line || 
                             cardObj.scryfallCard?.type_line ||
                             cardObj.scryfall_json?.type_line ||
-                            cardObj.card.scryfallCard?.type_line ||
-                            cardObj.card.scryfall_json?.type_line;
+                            cardObj.card?.scryfallCard?.type_line ||
+                            cardObj.card?.scryfall_json?.type_line;
 
             type =
               (name && CARD_TYPE_HINTS[name]) ||
@@ -608,15 +608,15 @@ function ensureCommanderInCards(deck) {
         // Check all possible locations for cmc in the card data
         let manaValue = null;
         if (comm.cmc !== undefined) manaValue = comm.cmc;
-        else if (comm.card?.cmc !== undefined) manaValue = comm.card.cmc;
+        else if (comm.card?.cmc !== undefined) manaValue = comm.card?.cmc;
         else if (comm.scryfall_json?.cmc !== undefined)
           manaValue = comm.scryfall_json.cmc;
         else if (comm.card?.scryfall_json?.cmc !== undefined)
-          manaValue = comm.card.scryfall_json.cmc;
+          manaValue = comm.card?.scryfall_json?.cmc;
 
         // Apply the mana value to both the card and main object
         if (manaValue !== null) {
-          commanderCard.card.cmc = manaValue;
+          if (commanderCard.card) commanderCard.card.cmc = manaValue;
           commanderCard.cmc = manaValue; // Add directly for easier access
         }
 
@@ -624,21 +624,21 @@ function ensureCommanderInCards(deck) {
         let price = null;
         if (comm.prices?.usd !== undefined) price = comm.prices.usd;
         else if (comm.card?.prices?.usd !== undefined)
-          price = comm.card.prices.usd;
+          price = comm.card?.prices?.usd;
         else if (comm.scryfall_json?.prices?.usd !== undefined)
           price = comm.scryfall_json.prices.usd;
         else if (comm.card?.scryfall_json?.prices?.usd !== undefined)
-          price = comm.card.scryfall_json.prices.usd;
+          price = comm.card?.scryfall_json?.prices?.usd;
         else if (comm.price) price = comm.price;
 
         // Apply the price to both the card and main object
         if (price !== null) {
           // Ensure price objects exist
-          if (!commanderCard.card.prices) commanderCard.card.prices = {};
+          if (commanderCard.card && !commanderCard.card.prices) commanderCard.card.prices = {};
           if (!commanderCard.prices) commanderCard.prices = {};
 
           // Apply price to both locations
-          commanderCard.card.prices.usd = price;
+          if (commanderCard.card) commanderCard.card.prices.usd = price;
           commanderCard.prices.usd = price;
         }
 
