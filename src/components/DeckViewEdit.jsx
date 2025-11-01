@@ -394,10 +394,7 @@ function groupCardsByType(cards, commanderNames = []) {
                             cardObj.card?.scryfallCard?.type_line ||
                             cardObj.card?.scryfall_json?.type_line;
                             
-            // Debug: Check if we're missing type data
-            if (!typeLine && Math.random() < 0.1) {
-              console.log('[TYPE DEBUG] Missing type_line for', name, 'keys:', Object.keys(cardObj));
-            }
+            // Type data validation (debug logging removed for performance)
 
             type =
               (name && CARD_TYPE_HINTS[name]) ||
