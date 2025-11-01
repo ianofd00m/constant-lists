@@ -250,17 +250,23 @@ function CreateDeckModal({ open, onClose }) {
         // Use standard deck creation endpoint with parsed cards
         let body = { name, format };
         if (importType === 'Paste List') {
+          console.log('🔍 Starting paste list parsing...');
           // Try to parse as Moxfield/MTG text decklist first
           let parsed = parseMoxfieldList(pastedList);
+          console.log('📋 Moxfield parsing result:', { parsed, length: parsed?.length });
           if (!parsed || parsed.length === 0) {
+            console.log('🔄 Moxfield parsing failed, trying simple format...');
             // If Moxfield parsing failed, try simple format parsing
             parsed = parseSimpleDeckList(pastedList);
+            console.log('📋 Simple parsing result:', { parsed, length: parsed?.length });
           }
           if (parsed && parsed.length > 0) {
+            console.log('✅ Parsing successful, converting to individual cards...');
             // Convert quantity-based format to individual card entries
             // Server expects each card repeated rather than quantity field
             body.cards = [];
             for (const card of parsed) {
+              console.log(`🔢 Expanding ${card.name}: ${card.quantity} copies`);
               for (let i = 0; i < card.quantity; i++) {
                 body.cards.push({
                   name: card.name,
@@ -273,9 +279,11 @@ function CreateDeckModal({ open, onClose }) {
             console.log('🔄 Converted quantity format to individual cards:', {
               originalCount: parsed.length,
               expandedCount: body.cards.length,
-              sampleCard: body.cards[0]
+              sampleOriginal: parsed[0],
+              sampleExpanded: body.cards[0]
             });
           } else {
+            console.log('❌ All parsing failed, sending raw text for server-side parsing');
             // If all parsing failed, send raw text for server-side parsing
             body.pastedList = pastedList;
           }
